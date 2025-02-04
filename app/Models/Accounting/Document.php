@@ -32,7 +32,7 @@ abstract class Document extends Model
         return $this->lineItems()->exists();
     }
 
-    abstract public function documentType(): DocumentType;
+    abstract public static function documentType(): DocumentType;
 
     abstract public function documentNumber(): ?string;
 

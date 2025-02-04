@@ -120,7 +120,7 @@ class RecurringInvoice extends Document
         return $this->hasMany(Invoice::class, 'recurring_invoice_id');
     }
 
-    public function documentType(): DocumentType
+    public static function documentType(): DocumentType
     {
         return DocumentType::RecurringInvoice;
     }

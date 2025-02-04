@@ -140,7 +140,7 @@ class Invoice extends Document
         });
     }
 
-    public function documentType(): DocumentType
+    public static function documentType(): DocumentType
     {
         return DocumentType::Invoice;
     }

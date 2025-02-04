@@ -67,7 +67,7 @@ readonly class DocumentDTO
             company: CompanyDTO::fromModel($document->company),
             client: ClientDTO::fromModel($document->client),
             lineItems: $document->lineItems->map(fn ($item) => LineItemDTO::fromModel($item)),
-            label: $document->documentType()->getLabels(),
+            label: $document::documentType()->getLabels(),
             columnLabel: DocumentColumnLabelDTO::fromModel($settings),
             accentColor: $settings->accent_color ?? '#000000',
             showLogo: $settings->show_logo ?? false,

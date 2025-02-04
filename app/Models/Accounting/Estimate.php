@@ -89,7 +89,7 @@ class Estimate extends Document
         return $this->hasOne(Invoice::class);
     }
 
-    public function documentType(): DocumentType
+    public static function documentType(): DocumentType
     {
         return DocumentType::Estimate;
     }

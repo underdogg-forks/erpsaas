@@ -106,7 +106,7 @@ class Bill extends Document
             ->where('type', TransactionType::Journal);
     }
 
-    public function documentType(): DocumentType
+    public static function documentType(): DocumentType
     {
         return DocumentType::Bill;
     }

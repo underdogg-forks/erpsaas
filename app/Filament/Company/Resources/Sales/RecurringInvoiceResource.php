@@ -8,6 +8,8 @@ use App\Enums\Accounting\RecurringInvoiceStatus;
 use App\Enums\Setting\PaymentTerms;
 use App\Filament\Company\Resources\Sales\RecurringInvoiceResource\Pages;
 use App\Filament\Forms\Components\CreateCurrencySelect;
+use App\Filament\Forms\Components\DocumentFooterSection;
+use App\Filament\Forms\Components\DocumentHeaderSection;
 use App\Filament\Forms\Components\DocumentTotals;
 use App\Filament\Tables\Columns;
 use App\Models\Accounting\Adjustment;
@@ -20,14 +22,11 @@ use App\Utilities\RateCalculator;
 use Awcodes\TableRepeater\Components\TableRepeater;
 use Awcodes\TableRepeater\Header;
 use Filament\Forms;
-use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
-use Filament\Support\Enums\MaxWidth;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Auth;
-use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class RecurringInvoiceResource extends Resource
 {
@@ -39,50 +38,9 @@ class RecurringInvoiceResource extends Resource
 
         return $form
             ->schema([
-                Forms\Components\Section::make('Invoice Header')
-                    ->collapsible()
-                    ->collapsed()
-                    ->schema([
-                        Forms\Components\Split::make([
-                            Forms\Components\Group::make([
-                                FileUpload::make('logo')
-                                    ->openable()
-                                    ->maxSize(1024)
-                                    ->localizeLabel()
-                                    ->visibility('public')
-                                    ->disk('public')
-                                    ->directory('logos/document')
-                                    ->imageResizeMode('contain')
-                                    ->imageCropAspectRatio('3:2')
-                                    ->panelAspectRatio('3:2')
-                                    ->maxWidth(MaxWidth::ExtraSmall)
-                                    ->panelLayout('integrated')
-                                    ->removeUploadedFileButtonPosition('center bottom')
-                                    ->uploadButtonPosition('center bottom')
-                                    ->uploadProgressIndicatorPosition('center bottom')
-                                    ->getUploadedFileNameForStorageUsing(
-                                        static fn (TemporaryUploadedFile $file): string => (string) str($file->getClientOriginalName())
-                                            ->prepend(Auth::user()->currentCompany->id . '_'),
-                                    )
-                                    ->acceptedFileTypes(['image/png', 'image/jpeg', 'image/gif']),
-                            ]),
-                            Forms\Components\Group::make([
-                                Forms\Components\TextInput::make('header')
-                                    ->default(fn () => $company->defaultInvoice->header),
-                                Forms\Components\TextInput::make('subheader')
-                                    ->default(fn () => $company->defaultInvoice->subheader),
-                                Forms\Components\View::make('filament.forms.components.company-info')
-                                    ->viewData([
-                                        'company_name' => $company->name,
-                                        'company_address' => $company->profile->address,
-                                        'company_city' => $company->profile->city?->name,
-                                        'company_state' => $company->profile->state?->name,
-                                        'company_zip' => $company->profile->zip_code,
-                                        'company_country' => $company->profile->state?->country->name,
-                                    ]),
-                            ])->grow(true),
-                        ])->from('md'),
-                    ]),
+                DocumentHeaderSection::make('Invoice Header')
+                    ->defaultHeader(static fn () => $company->defaultInvoice->header)
+                    ->defaultSubheader(static fn () => $company->defaultInvoice->subheader),
                 Forms\Components\Section::make('Invoice Details')
                     ->schema([
                         Forms\Components\Split::make([
@@ -258,13 +216,7 @@ class RecurringInvoiceResource extends Resource
                         Forms\Components\Textarea::make('terms')
                             ->columnSpanFull(),
                     ]),
-                Forms\Components\Section::make('Invoice Footer')
-                    ->collapsible()
-                    ->collapsed()
-                    ->schema([
-                        Forms\Components\Textarea::make('footer')
-                            ->columnSpanFull(),
-                    ]),
+                DocumentFooterSection::make('Invoice Footer'),
             ]);
     }
 

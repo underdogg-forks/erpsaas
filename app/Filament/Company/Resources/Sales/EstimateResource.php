@@ -8,6 +8,8 @@ use App\Enums\Accounting\EstimateStatus;
 use App\Filament\Company\Resources\Sales\EstimateResource\Pages;
 use App\Filament\Company\Resources\Sales\EstimateResource\Widgets;
 use App\Filament\Forms\Components\CreateCurrencySelect;
+use App\Filament\Forms\Components\DocumentFooterSection;
+use App\Filament\Forms\Components\DocumentHeaderSection;
 use App\Filament\Forms\Components\DocumentTotals;
 use App\Filament\Tables\Actions\ReplicateBulkAction;
 use App\Filament\Tables\Columns;
@@ -22,7 +24,6 @@ use App\Utilities\RateCalculator;
 use Awcodes\TableRepeater\Components\TableRepeater;
 use Awcodes\TableRepeater\Header;
 use Filament\Forms;
-use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
@@ -31,7 +32,6 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
-use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class EstimateResource extends Resource
 {
@@ -43,49 +43,8 @@ class EstimateResource extends Resource
 
         return $form
             ->schema([
-                Forms\Components\Section::make('Estimate Header')
-                    ->collapsible()
-                    ->collapsed()
-                    ->schema([
-                        Forms\Components\Split::make([
-                            Forms\Components\Group::make([
-                                FileUpload::make('logo')
-                                    ->openable()
-                                    ->maxSize(1024)
-                                    ->localizeLabel()
-                                    ->visibility('public')
-                                    ->disk('public')
-                                    ->directory('logos/document')
-                                    ->imageResizeMode('contain')
-                                    ->imageCropAspectRatio('3:2')
-                                    ->panelAspectRatio('3:2')
-                                    ->maxWidth(MaxWidth::ExtraSmall)
-                                    ->panelLayout('integrated')
-                                    ->removeUploadedFileButtonPosition('center bottom')
-                                    ->uploadButtonPosition('center bottom')
-                                    ->uploadProgressIndicatorPosition('center bottom')
-                                    ->getUploadedFileNameForStorageUsing(
-                                        static fn (TemporaryUploadedFile $file): string => (string) str($file->getClientOriginalName())
-                                            ->prepend(Auth::user()->currentCompany->id . '_'),
-                                    )
-                                    ->acceptedFileTypes(['image/png', 'image/jpeg', 'image/gif']),
-                            ]),
-                            Forms\Components\Group::make([
-                                Forms\Components\TextInput::make('header')
-                                    ->default('Estimate'),
-                                Forms\Components\TextInput::make('subheader'),
-                                Forms\Components\View::make('filament.forms.components.company-info')
-                                    ->viewData([
-                                        'company_name' => $company->name,
-                                        'company_address' => $company->profile->address,
-                                        'company_city' => $company->profile->city?->name,
-                                        'company_state' => $company->profile->state?->name,
-                                        'company_zip' => $company->profile->zip_code,
-                                        'company_country' => $company->profile->state?->country->name,
-                                    ]),
-                            ])->grow(true),
-                        ])->from('md'),
-                    ]),
+                DocumentHeaderSection::make('Estimate Header')
+                    ->defaultHeader('Estimate'),
                 Forms\Components\Section::make('Estimate Details')
                     ->schema([
                         Forms\Components\Split::make([
@@ -272,13 +231,7 @@ class EstimateResource extends Resource
                         Forms\Components\Textarea::make('terms')
                             ->columnSpanFull(),
                     ]),
-                Forms\Components\Section::make('Estimate Footer')
-                    ->collapsible()
-                    ->collapsed()
-                    ->schema([
-                        Forms\Components\Textarea::make('footer')
-                            ->columnSpanFull(),
-                    ]),
+                DocumentFooterSection::make('Estimate Footer'),
             ]);
     }
 
