@@ -61,4 +61,12 @@ class DocumentDefaultFactory extends Factory
     {
         return $this->state($this->baseState(DocumentType::Bill, 'BILL-', 'Bill'));
     }
+
+    /**
+     * Indicate that the model's type is estimate.
+     */
+    public function estimate(): self
+    {
+        return $this->state($this->baseState(DocumentType::Estimate, 'EST-', 'Estimate'));
+    }
 }

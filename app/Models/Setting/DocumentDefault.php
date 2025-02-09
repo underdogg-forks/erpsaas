@@ -88,6 +88,11 @@ class DocumentDefault extends Model
         return $query->scopes(['type' => [DocumentType::Bill]]);
     }
 
+    public function scopeEstimate(Builder $query): Builder
+    {
+        return $query->scopes(['type' => [DocumentType::Estimate]]);
+    }
+
     public static function availableNumberDigits(): array
     {
         return array_combine(range(1, 20), range(1, 20));

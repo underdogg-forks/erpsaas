@@ -9,6 +9,7 @@ enum DocumentType: string implements HasIcon, HasLabel
 {
     case Invoice = 'invoice';
     case Bill = 'bill';
+    case Estimate = 'estimate';
 
     public const DEFAULT = self::Invoice->value;
 
@@ -22,6 +23,7 @@ enum DocumentType: string implements HasIcon, HasLabel
         return match ($this->value) {
             self::Invoice->value => 'heroicon-o-document-duplicate',
             self::Bill->value => 'heroicon-o-clipboard-document-list',
+            self::Estimate->value => 'heroicon-o-currency-dollar',
         };
     }
 }
