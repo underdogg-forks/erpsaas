@@ -44,7 +44,9 @@ readonly class DocumentDTO
     public static function fromModel(Document $document): self
     {
         /** @var DocumentDefault $settings */
-        $settings = $document->company->defaultInvoice;
+        $settings = $document->company->documentDefaults()
+            ->type($document::documentType())
+            ->first();
 
         $currencyCode = $document->currency_code ?? CurrencyAccessor::getDefaultCurrency();
 

@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Http\Responses\LoginRedirectResponse;
 use App\Services\DateRangeService;
 use Filament\Http\Responses\Auth\Contracts\LoginResponse;
 use Filament\Notifications\Livewire\Notifications;
@@ -18,7 +19,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(DateRangeService::class);
-        $this->app->singleton(LoginResponse::class, \App\Http\Responses\LoginResponse::class);
+        $this->app->singleton(LoginResponse::class, LoginRedirectResponse::class);
     }
 
     /**

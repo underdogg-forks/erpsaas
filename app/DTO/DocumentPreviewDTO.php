@@ -2,7 +2,6 @@
 
 namespace App\DTO;
 
-use App\Enums\Accounting\DocumentType;
 use App\Enums\Setting\Font;
 use App\Enums\Setting\PaymentTerms;
 use App\Models\Setting\DocumentDefault;
@@ -35,7 +34,7 @@ readonly class DocumentPreviewDTO extends DocumentDTO
             company: CompanyDTO::fromModel($company),
             client: ClientPreviewDTO::fake(),
             lineItems: LineItemPreviewDTO::fakeItems(),
-            label: DocumentType::Invoice->getLabels(),
+            label: $settings->type->getLabels(),
             columnLabel: self::generateColumnLabels($settings, $data),
             accentColor: $data['accent_color'] ?? $settings->accent_color ?? '#000000',
             showLogo: $data['show_logo'] ?? $settings->show_logo ?? true,

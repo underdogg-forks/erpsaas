@@ -5,7 +5,7 @@ namespace App\Models\Setting;
 use App\Casts\TrimLeadingZeroCast;
 use App\Concerns\Blamable;
 use App\Concerns\CompanyOwned;
-use App\Enums\Setting\DocumentType;
+use App\Enums\Accounting\DocumentType;
 use App\Enums\Setting\Font;
 use App\Enums\Setting\PaymentTerms;
 use App\Enums\Setting\Template;
@@ -51,6 +51,7 @@ class DocumentDefault extends Model
     ];
 
     protected $casts = [
+        'type' => DocumentType::class,
         'show_logo' => 'boolean',
         'number_next' => TrimLeadingZeroCast::class,
         'payment_terms' => PaymentTerms::class,
@@ -80,17 +81,22 @@ class DocumentDefault extends Model
 
     public function scopeInvoice(Builder $query): Builder
     {
-        return $query->scopes(['type' => [DocumentType::Invoice]]);
+        return $query->type(DocumentType::Invoice);
+    }
+
+    public function scopeRecurringInvoice(Builder $query): Builder
+    {
+        return $query->type(DocumentType::RecurringInvoice);
     }
 
     public function scopeBill(Builder $query): Builder
     {
-        return $query->scopes(['type' => [DocumentType::Bill]]);
+        return $query->type(DocumentType::Bill);
     }
 
     public function scopeEstimate(Builder $query): Builder
     {
-        return $query->scopes(['type' => [DocumentType::Estimate]]);
+        return $query->type(DocumentType::Estimate);
     }
 
     public static function availableNumberDigits(): array

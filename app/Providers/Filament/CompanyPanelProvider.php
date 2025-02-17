@@ -99,6 +99,7 @@ class CompanyPanelProvider extends PanelProvider
                     ->profilePhotos()
                     ->api()
                     ->companies(invitations: true)
+                    ->autoAcceptInvitations()
                     ->termsAndPrivacyPolicy()
                     ->notifications()
                     ->modals()

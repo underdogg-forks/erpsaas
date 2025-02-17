@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Enums\Setting\DocumentType;
+use App\Enums\Accounting\DocumentType;
 use App\Models\Accounting\AccountSubtype;
 use App\Models\Banking\BankAccount;
 use App\Models\Banking\ConnectedBankAccount;
@@ -125,16 +125,33 @@ class Company extends FilamentCompaniesCompany implements HasAvatar
         return $this->hasOne(CompanyDefault::class, 'company_id');
     }
 
+    public function documentDefaults(): HasMany
+    {
+        return $this->hasMany(DocumentDefault::class, 'company_id');
+    }
+
     public function defaultBill(): HasOne
     {
         return $this->hasOne(DocumentDefault::class, 'company_id')
             ->where('type', DocumentType::Bill);
     }
 
+    public function defaultEstimate(): HasOne
+    {
+        return $this->hasOne(DocumentDefault::class, 'company_id')
+            ->where('type', DocumentType::Estimate);
+    }
+
     public function defaultInvoice(): HasOne
     {
         return $this->hasOne(DocumentDefault::class, 'company_id')
             ->where('type', DocumentType::Invoice);
+    }
+
+    public function defaultRecurringInvoice(): HasOne
+    {
+        return $this->hasOne(DocumentDefault::class, 'company_id')
+            ->where('type', DocumentType::RecurringInvoice);
     }
 
     public function departments(): HasMany

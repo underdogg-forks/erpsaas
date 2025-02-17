@@ -3,6 +3,8 @@
 namespace App\Filament\Infolists\Components;
 
 use App\Enums\Accounting\DocumentType;
+use App\Enums\Setting\Template;
+use App\Models\Setting\DocumentDefault;
 use Filament\Infolists\Components\Grid;
 
 class DocumentPreview extends Grid
@@ -32,5 +34,14 @@ class DocumentPreview extends Grid
     public function getType(): DocumentType
     {
         return $this->documentType;
+    }
+
+    public function getTemplate(): Template
+    {
+        $defaults = DocumentDefault::query()
+            ->type($this->documentType)
+            ->first();
+
+        return $defaults?->template ?? Template::Default;
     }
 }
