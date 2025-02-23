@@ -10,7 +10,6 @@ use App\Models\Common\Client;
 use App\Models\Common\Contact;
 use App\Models\Common\Offering;
 use App\Models\Core\Department;
-use App\Models\Setting\Appearance;
 use App\Models\Setting\CompanyDefault;
 use App\Models\Setting\CompanyProfile;
 use App\Models\Setting\Currency;
@@ -92,11 +91,6 @@ class Company extends FilamentCompaniesCompany implements HasAvatar
     public function bills(): HasMany
     {
         return $this->hasMany(Accounting\Bill::class, 'company_id');
-    }
-
-    public function appearance(): HasOne
-    {
-        return $this->hasOne(Appearance::class, 'company_id');
     }
 
     public function accountSubtypes(): HasMany

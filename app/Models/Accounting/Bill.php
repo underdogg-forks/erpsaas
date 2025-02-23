@@ -14,7 +14,9 @@ use App\Enums\Accounting\TransactionType;
 use App\Filament\Company\Resources\Purchases\BillResource;
 use App\Models\Banking\BankAccount;
 use App\Models\Common\Vendor;
+use App\Models\Company;
 use App\Models\Setting\Currency;
+use App\Models\Setting\DocumentDefault;
 use App\Observers\BillObserver;
 use App\Utilities\Currency\CurrencyAccessor;
 use App\Utilities\Currency\CurrencyConverter;
@@ -171,9 +173,9 @@ class Bill extends Document
         return $this->payments->isNotEmpty();
     }
 
-    public static function getNextDocumentNumber(): string
+    public static function getNextDocumentNumber(?Company $company = null): string
     {
-        $company = auth()->user()->currentCompany;
+        $company ??= auth()->user()?->currentCompany;
 
         if (! $company) {
             throw new \RuntimeException('No current company is set for the user.');
@@ -181,8 +183,7 @@ class Bill extends Document
 
         $defaultBillSettings = $company->defaultBill;
 
-        $numberPrefix = $defaultBillSettings->number_prefix;
-        $numberDigits = $defaultBillSettings->number_digits;
+        $numberPrefix = $defaultBillSettings->number_prefix ?? '';
 
         $latestDocument = static::query()
             ->whereNotNull('bill_number')
@@ -191,15 +192,12 @@ class Bill extends Document
 
         $lastNumberNumericPart = $latestDocument
             ? (int) substr($latestDocument->bill_number, strlen($numberPrefix))
-            : 0;
+            : DocumentDefault::getBaseNumber();
 
         $numberNext = $lastNumberNumericPart + 1;
 
         return $defaultBillSettings->getNumberNext(
-            padded: true,
-            format: true,
             prefix: $numberPrefix,
-            digits: $numberDigits,
             next: $numberNext
         );
     }

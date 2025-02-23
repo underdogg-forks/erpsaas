@@ -8,6 +8,7 @@ use App\Models\Accounting\Bill;
 use App\Models\Accounting\DocumentLineItem;
 use App\Models\Banking\BankAccount;
 use App\Models\Common\Vendor;
+use App\Models\Setting\DocumentDefault;
 use App\Utilities\Currency\CurrencyConverter;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Carbon;
@@ -42,8 +43,8 @@ class BillFactory extends Factory
         return [
             'company_id' => 1,
             'vendor_id' => Vendor::inRandomOrder()->value('id'),
-            'bill_number' => $this->faker->unique()->numerify('BILL-#####'),
-            'order_number' => $this->faker->unique()->numerify('PO-#####'),
+            'bill_number' => $this->faker->unique()->numerify('BILL-####'),
+            'order_number' => $this->faker->unique()->numerify('PO-####'),
             'date' => $billDate,
             'due_date' => Carbon::parse($billDate)->addDays($dueDays),
             'status' => BillStatus::Open,
@@ -179,11 +180,11 @@ class BillFactory extends Factory
         return $this->afterCreating(function (Bill $bill) {
             $this->ensureInitialized($bill);
 
-            $paddedId = str_pad((string) $bill->id, 5, '0', STR_PAD_LEFT);
+            $number = DocumentDefault::getBaseNumber() + $bill->id;
 
             $bill->updateQuietly([
-                'bill_number' => "BILL-{$paddedId}",
-                'order_number' => "PO-{$paddedId}",
+                'bill_number' => "BILL-{$number}",
+                'order_number' => "PO-{$number}",
             ]);
 
             if ($bill->wasInitialized() && $bill->is_currently_overdue) {

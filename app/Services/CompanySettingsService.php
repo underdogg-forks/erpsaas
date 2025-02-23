@@ -3,8 +3,6 @@
 namespace App\Services;
 
 use App\Enums\Setting\DateFormat;
-use App\Enums\Setting\Font;
-use App\Enums\Setting\PrimaryColor;
 use App\Enums\Setting\WeekStart;
 use App\Models\Company;
 use Illuminate\Support\Facades\Cache;
@@ -16,7 +14,7 @@ class CompanySettingsService
         $cacheKey = "company_settings_{$companyId}";
 
         return Cache::rememberForever($cacheKey, function () use ($companyId) {
-            $company = Company::with(['locale', 'appearance'])->find($companyId);
+            $company = Company::with(['locale'])->find($companyId);
 
             if (! $company) {
                 return self::getDefaultSettings();
@@ -26,8 +24,6 @@ class CompanySettingsService
                 'default_language' => $company->locale->language ?? config('transmatic.source_locale'),
                 'default_timezone' => $company->locale->timezone ?? config('app.timezone'),
                 'default_currency' => $company->currency_code ?? 'USD',
-                'default_primary_color' => $company->appearance->primary_color->value ?? PrimaryColor::DEFAULT,
-                'default_font' => $company->appearance->font->value ?? Font::DEFAULT,
                 'default_date_format' => $company->locale->date_format->value ?? DateFormat::DEFAULT,
                 'default_week_start' => $company->locale->week_start->value ?? WeekStart::DEFAULT,
             ];
@@ -46,8 +42,6 @@ class CompanySettingsService
             'default_language' => config('transmatic.source_locale'),
             'default_timezone' => config('app.timezone'),
             'default_currency' => 'USD',
-            'default_primary_color' => PrimaryColor::DEFAULT,
-            'default_font' => Font::DEFAULT,
             'default_date_format' => DateFormat::DEFAULT,
             'default_week_start' => WeekStart::DEFAULT,
         ];
@@ -73,16 +67,6 @@ class CompanySettingsService
     public static function getDefaultCurrency(int $companyId): string
     {
         return self::getSpecificSetting($companyId, 'default_currency', 'USD');
-    }
-
-    public static function getDefaultPrimaryColor(int $companyId): string
-    {
-        return self::getSpecificSetting($companyId, 'default_primary_color', PrimaryColor::DEFAULT);
-    }
-
-    public static function getDefaultFont(int $companyId): string
-    {
-        return self::getSpecificSetting($companyId, 'default_font', Font::DEFAULT);
     }
 
     public static function getDefaultDateFormat(int $companyId): string

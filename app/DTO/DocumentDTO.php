@@ -46,7 +46,7 @@ readonly class DocumentDTO
         /** @var DocumentDefault $settings */
         $settings = $document->company->documentDefaults()
             ->type($document::documentType())
-            ->first();
+            ->first() ?? $document->company->defaultInvoice;
 
         $currencyCode = $document->currency_code ?? CurrencyAccessor::getDefaultCurrency();
 

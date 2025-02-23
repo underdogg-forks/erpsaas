@@ -2,7 +2,6 @@
 
 namespace App\Models\Setting;
 
-use App\Casts\TrimLeadingZeroCast;
 use App\Concerns\Blamable;
 use App\Concerns\CompanyOwned;
 use App\Enums\Accounting\DocumentType;
@@ -32,8 +31,6 @@ class DocumentDefault extends Model
         'logo',
         'show_logo',
         'number_prefix',
-        'number_digits',
-        'number_next',
         'payment_terms',
         'header',
         'subheader',
@@ -53,7 +50,6 @@ class DocumentDefault extends Model
     protected $casts = [
         'type' => DocumentType::class,
         'show_logo' => 'boolean',
-        'number_next' => TrimLeadingZeroCast::class,
         'payment_terms' => PaymentTerms::class,
         'font' => Font::class,
         'template' => Template::class,
@@ -99,39 +95,17 @@ class DocumentDefault extends Model
         return $query->type(DocumentType::Estimate);
     }
 
-    public static function availableNumberDigits(): array
+    public function getNumberNext(?string $prefix = null, int | string | null $next = null): string
     {
-        return array_combine(range(1, 20), range(1, 20));
+        $numberPrefix = $prefix ?? $this->number_prefix ?? '';
+        $numberNext = (string) ($next ?? (static::getBaseNumber() + 1));
+
+        return $numberPrefix . $numberNext;
     }
 
-    public function getNumberNext(?bool $padded = null, ?bool $format = null, ?string $prefix = null, int | string | null $digits = null, int | string | null $next = null): string
+    public static function getBaseNumber(): int
     {
-        [$number_prefix, $number_digits, $number_next] = $this->initializeAttributes($prefix, $digits, $next);
-
-        return match (true) {
-            $format && $padded => $number_prefix . $this->getPaddedNumberNext($number_next, $number_digits),
-            $format => $number_prefix . $number_next,
-            $padded => $this->getPaddedNumberNext($number_next, $number_digits),
-            default => $number_next,
-        };
-    }
-
-    public function initializeAttributes(?string $prefix, int | string | null $digits, int | string | null $next): array
-    {
-        $number_prefix = $prefix ?? $this->number_prefix;
-        $number_digits = $digits ?? $this->number_digits;
-        $number_next = $next ?? $this->number_next;
-
-        return [$number_prefix, $number_digits, $number_next];
-    }
-
-    /**
-     * Get the next number with padding for dynamic display purposes.
-     * Even if number_next is a string, it will be cast to an integer.
-     */
-    public function getPaddedNumberNext(int | string | null $number_next, int | string | null $number_digits): string
-    {
-        return str_pad($number_next, $number_digits, '0', STR_PAD_LEFT);
+        return 1000;
     }
 
     public static function getAvailableItemNameOptions(): array

@@ -58,7 +58,7 @@ enum DocumentType: string implements HasIcon, HasLabel
     {
         return match ($this) {
             self::Invoice => new DocumentLabelDTO(
-                title: 'Invoice',
+                title: self::Invoice->getLabel(),
                 number: 'Invoice Number',
                 referenceNumber: 'P.O/S.O Number',
                 date: 'Invoice Date',
@@ -66,7 +66,7 @@ enum DocumentType: string implements HasIcon, HasLabel
                 amountDue: 'Amount Due',
             ),
             self::RecurringInvoice => new DocumentLabelDTO(
-                title: 'Recurring Invoice',
+                title: self::RecurringInvoice->getLabel(),
                 number: 'Invoice Number',
                 referenceNumber: 'P.O/S.O Number',
                 date: 'Invoice Date',
@@ -74,7 +74,7 @@ enum DocumentType: string implements HasIcon, HasLabel
                 amountDue: 'Amount Due',
             ),
             self::Estimate => new DocumentLabelDTO(
-                title: 'Estimate',
+                title: self::Estimate->getLabel(),
                 number: 'Estimate Number',
                 referenceNumber: 'Reference Number',
                 date: 'Estimate Date',
@@ -82,13 +82,23 @@ enum DocumentType: string implements HasIcon, HasLabel
                 amountDue: 'Grand Total',
             ),
             self::Bill => new DocumentLabelDTO(
-                title: 'Bill',
+                title: self::Bill->getLabel(),
                 number: 'Bill Number',
                 referenceNumber: 'P.O/S.O Number',
                 date: 'Bill Date',
                 dueDate: 'Payment Due',
                 amountDue: 'Amount Due',
             ),
+        };
+    }
+
+    public function getDefaultPrefix(): ?string
+    {
+        return match ($this) {
+            self::Invoice => 'INV-',
+            self::Estimate => 'EST-',
+            self::Bill => 'BILL-',
+            default => null,
         };
     }
 }

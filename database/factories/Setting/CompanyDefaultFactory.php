@@ -4,7 +4,6 @@ namespace Database\Factories\Setting;
 
 use App\Faker\CurrencyCode;
 use App\Models\Company;
-use App\Models\Setting\Appearance;
 use App\Models\Setting\CompanyDefault;
 use App\Models\Setting\Currency;
 use App\Models\Setting\DocumentDefault;
@@ -44,7 +43,6 @@ class CompanyDefaultFactory extends Factory
         }
 
         $currency = $this->createCurrency($company, $user, $currencyCode);
-        $this->createAppearance($company, $user);
         $this->createDocumentDefaults($company, $user);
         $this->createLocalization($company, $user, $countryCode, $language);
 
@@ -63,15 +61,6 @@ class CompanyDefaultFactory extends Factory
         return Currency::factory()->forCurrency($currencyCode)->createQuietly([
             'company_id' => $company->id,
             'enabled' => true,
-            'created_by' => $user->id,
-            'updated_by' => $user->id,
-        ]);
-    }
-
-    private function createAppearance(Company $company, User $user): void
-    {
-        Appearance::factory()->createQuietly([
-            'company_id' => $company->id,
             'created_by' => $user->id,
             'updated_by' => $user->id,
         ]);

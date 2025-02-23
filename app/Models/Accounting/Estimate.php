@@ -13,6 +13,8 @@ use App\Enums\Accounting\InvoiceStatus;
 use App\Filament\Company\Resources\Sales\EstimateResource;
 use App\Filament\Company\Resources\Sales\InvoiceResource;
 use App\Models\Common\Client;
+use App\Models\Company;
+use App\Models\Setting\DocumentDefault;
 use App\Observers\EstimateObserver;
 use Filament\Actions\Action;
 use Filament\Actions\MountableAction;
@@ -212,18 +214,17 @@ class Estimate extends Document
         ]);
     }
 
-    public static function getNextDocumentNumber(): string
+    public static function getNextDocumentNumber(?Company $company = null): string
     {
-        $company = auth()->user()->currentCompany;
+        $company ??= auth()->user()?->currentCompany;
 
         if (! $company) {
             throw new \RuntimeException('No current company is set for the user.');
         }
 
-        $defaultEstimateSettings = $company->defaultInvoice;
+        $defaultEstimateSettings = $company->defaultEstimate;
 
-        $numberPrefix = 'EST-';
-        $numberDigits = $defaultEstimateSettings->number_digits;
+        $numberPrefix = $defaultEstimateSettings->number_prefix ?? '';
 
         $latestDocument = static::query()
             ->whereNotNull('estimate_number')
@@ -232,15 +233,12 @@ class Estimate extends Document
 
         $lastNumberNumericPart = $latestDocument
             ? (int) substr($latestDocument->estimate_number, strlen($numberPrefix))
-            : 0;
+            : DocumentDefault::getBaseNumber();
 
         $numberNext = $lastNumberNumericPart + 1;
 
         return $defaultEstimateSettings->getNumberNext(
-            padded: true,
-            format: true,
             prefix: $numberPrefix,
-            digits: $numberDigits,
             next: $numberNext
         );
     }

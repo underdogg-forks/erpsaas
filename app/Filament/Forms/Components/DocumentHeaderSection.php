@@ -19,14 +19,14 @@ class DocumentHeaderSection extends Section
 
     protected string | Closure | null $defaultSubheader = null;
 
-    public function defaultHeader(string | Closure $header): static
+    public function defaultHeader(string | Closure | null $header): static
     {
         $this->defaultHeader = $header;
 
         return $this;
     }
 
-    public function defaultSubheader(string | Closure $subheader): static
+    public function defaultSubheader(string | Closure | null $subheader): static
     {
         $this->defaultSubheader = $subheader;
 

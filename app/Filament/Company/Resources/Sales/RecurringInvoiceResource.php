@@ -36,11 +36,13 @@ class RecurringInvoiceResource extends Resource
     {
         $company = Auth::user()->currentCompany;
 
+        $settings = $company->defaultInvoice;
+
         return $form
             ->schema([
                 DocumentHeaderSection::make('Invoice Header')
-                    ->defaultHeader(static fn () => $company->defaultInvoice->header)
-                    ->defaultSubheader(static fn () => $company->defaultInvoice->subheader),
+                    ->defaultHeader($settings->header)
+                    ->defaultSubheader($settings->subheader),
                 Forms\Components\Section::make('Invoice Details')
                     ->schema([
                         Forms\Components\Split::make([
@@ -77,7 +79,7 @@ class RecurringInvoiceResource extends Resource
                                     ->label('Payment due')
                                     ->options(PaymentTerms::class)
                                     ->softRequired()
-                                    ->default($company->defaultInvoice->payment_terms)
+                                    ->default($settings->payment_terms)
                                     ->live(),
                                 Forms\Components\Select::make('discount_method')
                                     ->label('Discount method')
@@ -98,22 +100,29 @@ class RecurringInvoiceResource extends Resource
                             ->relationship()
                             ->saveRelationshipsUsing(null)
                             ->dehydrated(true)
-                            ->headers(function (Forms\Get $get) {
+                            ->headers(function (Forms\Get $get) use ($settings) {
                                 $hasDiscounts = DocumentDiscountMethod::parse($get('discount_method'))->isPerLineItem();
 
                                 $headers = [
-                                    Header::make('Items')->width($hasDiscounts ? '15%' : '20%'),
-                                    Header::make('Description')->width($hasDiscounts ? '25%' : '30%'),  // Increase when no discounts
-                                    Header::make('Quantity')->width('10%'),
-                                    Header::make('Price')->width('10%'),
-                                    Header::make('Taxes')->width($hasDiscounts ? '15%' : '20%'),       // Increase when no discounts
+                                    Header::make($settings->resolveColumnLabel('item_name', 'Items'))
+                                        ->width($hasDiscounts ? '15%' : '20%'),
+                                    Header::make('Description')
+                                        ->width($hasDiscounts ? '25%' : '30%'),
+                                    Header::make($settings->resolveColumnLabel('unit_name', 'Quantity'))
+                                        ->width('10%'),
+                                    Header::make($settings->resolveColumnLabel('price_name', 'Price'))
+                                        ->width('10%'),
+                                    Header::make('Taxes')
+                                        ->width($hasDiscounts ? '15%' : '20%'),
                                 ];
 
                                 if ($hasDiscounts) {
                                     $headers[] = Header::make('Discounts')->width('15%');
                                 }
 
-                                $headers[] = Header::make('Amount')->width('10%')->align('right');
+                                $headers[] = Header::make($settings->resolveColumnLabel('amount_name', 'Amount'))
+                                    ->width('10%')
+                                    ->align('right');
 
                                 return $headers;
                             })
@@ -214,9 +223,11 @@ class RecurringInvoiceResource extends Resource
                         DocumentTotals::make()
                             ->type(DocumentType::Invoice),
                         Forms\Components\Textarea::make('terms')
+                            ->default($settings->terms)
                             ->columnSpanFull(),
                     ]),
-                DocumentFooterSection::make('Invoice Footer'),
+                DocumentFooterSection::make('Invoice Footer')
+                    ->defaultFooter($settings->footer),
             ]);
     }
 
