@@ -30,7 +30,8 @@ class AppServiceProvider extends ServiceProvider
         Notifications::alignment(Alignment::Center);
 
         FilamentAsset::register([
-            Js::make('TopNavigation', __DIR__ . '/../../resources/js/TopNavigation.js'),
+            Js::make('top-navigation', __DIR__ . '/../../resources/js/top-navigation.js'),
+            Js::make('history-fix', __DIR__ . '/../../resources/js/history-fix.js'),
         ]);
     }
 }
