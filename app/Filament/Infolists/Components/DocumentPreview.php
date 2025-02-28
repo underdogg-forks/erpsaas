@@ -38,8 +38,14 @@ class DocumentPreview extends Grid
 
     public function getTemplate(): Template
     {
+        if ($this->documentType === DocumentType::RecurringInvoice) {
+            $lookupType = DocumentType::Invoice;
+        } else {
+            $lookupType = $this->documentType;
+        }
+
         $defaults = DocumentDefault::query()
-            ->type($this->documentType)
+            ->type($lookupType)
             ->first();
 
         return $defaults?->template ?? Template::Default;
