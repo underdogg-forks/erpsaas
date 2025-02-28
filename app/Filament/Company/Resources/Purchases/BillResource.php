@@ -44,6 +44,8 @@ class BillResource extends Resource
     {
         $company = Auth::user()->currentCompany;
 
+        $settings = $company->defaultBill;
+
         return $form
             ->schema([
                 Forms\Components\Section::make('Bill Details')
@@ -108,22 +110,29 @@ class BillResource extends Resource
                             ->relationship()
                             ->saveRelationshipsUsing(null)
                             ->dehydrated(true)
-                            ->headers(function (Forms\Get $get) {
+                            ->headers(function (Forms\Get $get) use ($settings) {
                                 $hasDiscounts = DocumentDiscountMethod::parse($get('discount_method'))->isPerLineItem();
 
                                 $headers = [
-                                    Header::make('Items')->width($hasDiscounts ? '15%' : '20%'),
-                                    Header::make('Description')->width($hasDiscounts ? '25%' : '30%'),  // Increase when no discounts
-                                    Header::make('Quantity')->width('10%'),
-                                    Header::make('Price')->width('10%'),
-                                    Header::make('Taxes')->width($hasDiscounts ? '15%' : '20%'),       // Increase when no discounts
+                                    Header::make($settings->resolveColumnLabel('item_name', 'Items'))
+                                        ->width($hasDiscounts ? '15%' : '20%'),
+                                    Header::make('Description')
+                                        ->width($hasDiscounts ? '25%' : '30%'),
+                                    Header::make($settings->resolveColumnLabel('unit_name', 'Quantity'))
+                                        ->width('10%'),
+                                    Header::make($settings->resolveColumnLabel('price_name', 'Price'))
+                                        ->width('10%'),
+                                    Header::make('Taxes')
+                                        ->width($hasDiscounts ? '15%' : '20%'),
                                 ];
 
                                 if ($hasDiscounts) {
                                     $headers[] = Header::make('Discounts')->width('15%');
                                 }
 
-                                $headers[] = Header::make('Amount')->width('10%')->align('right');
+                                $headers[] = Header::make($settings->resolveColumnLabel('amount_name', 'Amount'))
+                                    ->width('10%')
+                                    ->align('right');
 
                                 return $headers;
                             })
