@@ -195,5 +195,7 @@
     "Frequency": "Frequency",
     "Dates & Time": "Dates & Time",
     "account": "account",
-    "currency": "currency"
+    "currency": "currency",
+    "Estimate": "Estimate",
+    "Column Labels": "Column Labels"
 }

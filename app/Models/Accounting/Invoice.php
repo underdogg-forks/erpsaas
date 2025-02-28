@@ -15,6 +15,7 @@ use App\Filament\Company\Resources\Sales\InvoiceResource;
 use App\Models\Banking\BankAccount;
 use App\Models\Common\Client;
 use App\Models\Company;
+use App\Models\Setting\DocumentDefault;
 use App\Observers\InvoiceObserver;
 use App\Utilities\Currency\CurrencyAccessor;
 use App\Utilities\Currency\CurrencyConverter;
@@ -140,7 +141,7 @@ class Invoice extends Document
         });
     }
 
-    public function documentType(): DocumentType
+    public static function documentType(): DocumentType
     {
         return DocumentType::Invoice;
     }
@@ -268,8 +269,7 @@ class Invoice extends Document
 
         $defaultInvoiceSettings = $company->defaultInvoice;
 
-        $numberPrefix = $defaultInvoiceSettings->number_prefix;
-        $numberDigits = $defaultInvoiceSettings->number_digits;
+        $numberPrefix = $defaultInvoiceSettings->number_prefix ?? '';
 
         $latestDocument = static::query()
             ->whereNotNull('invoice_number')
@@ -278,15 +278,12 @@ class Invoice extends Document
 
         $lastNumberNumericPart = $latestDocument
             ? (int) substr($latestDocument->invoice_number, strlen($numberPrefix))
-            : 0;
+            : DocumentDefault::getBaseNumber();
 
         $numberNext = $lastNumberNumericPart + 1;
 
         return $defaultInvoiceSettings->getNumberNext(
-            padded: true,
-            format: true,
             prefix: $numberPrefix,
-            digits: $numberDigits,
             next: $numberNext
         );
     }

@@ -72,7 +72,7 @@ class BillResource extends Resource
                             Forms\Components\Group::make([
                                 Forms\Components\TextInput::make('bill_number')
                                     ->label('Bill number')
-                                    ->default(fn () => Bill::getNextDocumentNumber())
+                                    ->default(static fn () => Bill::getNextDocumentNumber())
                                     ->required(),
                                 Forms\Components\TextInput::make('order_number')
                                     ->label('P.O/S.O Number'),

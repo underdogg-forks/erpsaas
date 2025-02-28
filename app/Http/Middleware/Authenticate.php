@@ -2,8 +2,10 @@
 
 namespace App\Http\Middleware;
 
+use Filament\Exceptions\NoDefaultPanelSetException;
 use Filament\Facades\Filament;
 use Filament\Http\Middleware\Authenticate as Middleware;
+use Wallo\FilamentCompanies\FilamentCompanies;
 
 class Authenticate extends Middleware
 {
@@ -12,6 +14,12 @@ class Authenticate extends Middleware
      */
     protected function redirectTo($request): ?string
     {
-        return Filament::getDefaultPanel()->getLoginUrl();
+        try {
+            $defaultPanelLoginUrl = Filament::getDefaultPanel()->getLoginUrl();
+        } catch (NoDefaultPanelSetException) {
+            $defaultPanelLoginUrl = Filament::getPanel(FilamentCompanies::getCompanyPanel())->getLoginUrl();
+        }
+
+        return $defaultPanelLoginUrl;
     }
 }

@@ -38,7 +38,7 @@ class RecurringInvoiceFactory extends Factory
             'client_id' => Client::inRandomOrder()->value('id'),
             'header' => 'Invoice',
             'subheader' => 'Invoice',
-            'order_number' => $this->faker->unique()->numerify('ORD-#####'),
+            'order_number' => $this->faker->unique()->numerify('ORD-####'),
             'payment_terms' => PaymentTerms::Net30,
             'status' => RecurringInvoiceStatus::Draft,
             'currency_code' => 'USD',

@@ -2,7 +2,6 @@
 
 namespace App\Listeners;
 
-use App\Enums\Setting\PrimaryColor;
 use App\Events\CompanyConfigured;
 use App\Services\CompanySettingsService;
 use App\Utilities\Currency\ConfigureCurrencies;
@@ -11,7 +10,6 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Tabs\Tab;
 use Filament\Resources\Components\Tab as ResourcesTab;
-use Filament\Support\Facades\FilamentColor;
 
 class ConfigureCompanyDefault
 {
@@ -32,12 +30,7 @@ class ConfigureCompanyDefault
         config(['app.timezone' => $settings['default_timezone']]);
         date_default_timezone_set($settings['default_timezone']);
 
-        FilamentColor::register([
-            'primary' => PrimaryColor::from($settings['default_primary_color'])->getColor(),
-        ]);
-
         Filament::getPanel('company')
-            ->font($settings['default_font'])
             ->brandName($company->name);
 
         DatePicker::configureUsing(static function (DatePicker $component) use ($settings) {

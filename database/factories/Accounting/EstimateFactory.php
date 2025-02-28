@@ -6,6 +6,7 @@ use App\Enums\Accounting\EstimateStatus;
 use App\Models\Accounting\DocumentLineItem;
 use App\Models\Accounting\Estimate;
 use App\Models\Common\Client;
+use App\Models\Setting\DocumentDefault;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Carbon;
 
@@ -33,8 +34,8 @@ class EstimateFactory extends Factory
             'client_id' => Client::inRandomOrder()->value('id'),
             'header' => 'Estimate',
             'subheader' => 'Estimate',
-            'estimate_number' => $this->faker->unique()->numerify('EST-#####'),
-            'reference_number' => $this->faker->unique()->numerify('REF-#####'),
+            'estimate_number' => $this->faker->unique()->numerify('EST-####'),
+            'reference_number' => $this->faker->unique()->numerify('REF-####'),
             'date' => $estimateDate,
             'expiration_date' => Carbon::parse($estimateDate)->addDays($this->faker->numberBetween(14, 30)),
             'status' => EstimateStatus::Draft,
@@ -152,11 +153,11 @@ class EstimateFactory extends Factory
         return $this->afterCreating(function (Estimate $estimate) {
             $this->ensureLineItems($estimate);
 
-            $paddedId = str_pad((string) $estimate->id, 5, '0', STR_PAD_LEFT);
+            $number = DocumentDefault::getBaseNumber() + $estimate->id;
 
             $estimate->updateQuietly([
-                'estimate_number' => "EST-{$paddedId}",
-                'reference_number' => "REF-{$paddedId}",
+                'estimate_number' => "EST-{$number}",
+                'reference_number' => "REF-{$number}",
             ]);
 
             if ($estimate->wasApproved() && $estimate->is_currently_expired) {

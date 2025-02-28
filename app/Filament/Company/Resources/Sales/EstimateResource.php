@@ -8,6 +8,8 @@ use App\Enums\Accounting\EstimateStatus;
 use App\Filament\Company\Resources\Sales\EstimateResource\Pages;
 use App\Filament\Company\Resources\Sales\EstimateResource\Widgets;
 use App\Filament\Forms\Components\CreateCurrencySelect;
+use App\Filament\Forms\Components\DocumentFooterSection;
+use App\Filament\Forms\Components\DocumentHeaderSection;
 use App\Filament\Forms\Components\DocumentTotals;
 use App\Filament\Tables\Actions\ReplicateBulkAction;
 use App\Filament\Tables\Columns;
@@ -22,7 +24,6 @@ use App\Utilities\RateCalculator;
 use Awcodes\TableRepeater\Components\TableRepeater;
 use Awcodes\TableRepeater\Header;
 use Filament\Forms;
-use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
@@ -31,7 +32,6 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
-use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class EstimateResource extends Resource
 {
@@ -41,51 +41,13 @@ class EstimateResource extends Resource
     {
         $company = Auth::user()->currentCompany;
 
+        $settings = $company->defaultEstimate;
+
         return $form
             ->schema([
-                Forms\Components\Section::make('Estimate Header')
-                    ->collapsible()
-                    ->collapsed()
-                    ->schema([
-                        Forms\Components\Split::make([
-                            Forms\Components\Group::make([
-                                FileUpload::make('logo')
-                                    ->openable()
-                                    ->maxSize(1024)
-                                    ->localizeLabel()
-                                    ->visibility('public')
-                                    ->disk('public')
-                                    ->directory('logos/document')
-                                    ->imageResizeMode('contain')
-                                    ->imageCropAspectRatio('3:2')
-                                    ->panelAspectRatio('3:2')
-                                    ->maxWidth(MaxWidth::ExtraSmall)
-                                    ->panelLayout('integrated')
-                                    ->removeUploadedFileButtonPosition('center bottom')
-                                    ->uploadButtonPosition('center bottom')
-                                    ->uploadProgressIndicatorPosition('center bottom')
-                                    ->getUploadedFileNameForStorageUsing(
-                                        static fn (TemporaryUploadedFile $file): string => (string) str($file->getClientOriginalName())
-                                            ->prepend(Auth::user()->currentCompany->id . '_'),
-                                    )
-                                    ->acceptedFileTypes(['image/png', 'image/jpeg', 'image/gif']),
-                            ]),
-                            Forms\Components\Group::make([
-                                Forms\Components\TextInput::make('header')
-                                    ->default('Estimate'),
-                                Forms\Components\TextInput::make('subheader'),
-                                Forms\Components\View::make('filament.forms.components.company-info')
-                                    ->viewData([
-                                        'company_name' => $company->name,
-                                        'company_address' => $company->profile->address,
-                                        'company_city' => $company->profile->city?->name,
-                                        'company_state' => $company->profile->state?->name,
-                                        'company_zip' => $company->profile->zip_code,
-                                        'company_country' => $company->profile->state?->country->name,
-                                    ]),
-                            ])->grow(true),
-                        ])->from('md'),
-                    ]),
+                DocumentHeaderSection::make('Estimate Header')
+                    ->defaultHeader($settings->header)
+                    ->defaultSubheader($settings->subheader),
                 Forms\Components\Section::make('Estimate Details')
                     ->schema([
                         Forms\Components\Split::make([
@@ -112,7 +74,7 @@ class EstimateResource extends Resource
                             Forms\Components\Group::make([
                                 Forms\Components\TextInput::make('estimate_number')
                                     ->label('Estimate number')
-                                    ->default(fn () => Estimate::getNextDocumentNumber()),
+                                    ->default(static fn () => Estimate::getNextDocumentNumber()),
                                 Forms\Components\TextInput::make('reference_number')
                                     ->label('Reference number'),
                                 Forms\Components\DatePicker::make('date')
@@ -129,8 +91,8 @@ class EstimateResource extends Resource
                                     }),
                                 Forms\Components\DatePicker::make('expiration_date')
                                     ->label('Expiration date')
-                                    ->default(function () use ($company) {
-                                        return now()->addDays($company->defaultInvoice->payment_terms->getDays());
+                                    ->default(function () use ($settings) {
+                                        return now()->addDays($settings->payment_terms->getDays());
                                     })
                                     ->minDate(static function (Forms\Get $get) {
                                         return $get('date') ?? now();
@@ -154,22 +116,29 @@ class EstimateResource extends Resource
                             ->relationship()
                             ->saveRelationshipsUsing(null)
                             ->dehydrated(true)
-                            ->headers(function (Forms\Get $get) {
+                            ->headers(function (Forms\Get $get) use ($settings) {
                                 $hasDiscounts = DocumentDiscountMethod::parse($get('discount_method'))->isPerLineItem();
 
                                 $headers = [
-                                    Header::make('Items')->width($hasDiscounts ? '15%' : '20%'),
-                                    Header::make('Description')->width($hasDiscounts ? '25%' : '30%'),  // Increase when no discounts
-                                    Header::make('Quantity')->width('10%'),
-                                    Header::make('Price')->width('10%'),
-                                    Header::make('Taxes')->width($hasDiscounts ? '15%' : '20%'),       // Increase when no discounts
+                                    Header::make($settings->resolveColumnLabel('item_name', 'Items'))
+                                        ->width($hasDiscounts ? '15%' : '20%'),
+                                    Header::make('Description')
+                                        ->width($hasDiscounts ? '25%' : '30%'),
+                                    Header::make($settings->resolveColumnLabel('unit_name', 'Quantity'))
+                                        ->width('10%'),
+                                    Header::make($settings->resolveColumnLabel('price_name', 'Price'))
+                                        ->width('10%'),
+                                    Header::make('Taxes')
+                                        ->width($hasDiscounts ? '15%' : '20%'),
                                 ];
 
                                 if ($hasDiscounts) {
                                     $headers[] = Header::make('Discounts')->width('15%');
                                 }
 
-                                $headers[] = Header::make('Amount')->width('10%')->align('right');
+                                $headers[] = Header::make($settings->resolveColumnLabel('amount_name', 'Amount'))
+                                    ->width('10%')
+                                    ->align('right');
 
                                 return $headers;
                             })
@@ -270,15 +239,11 @@ class EstimateResource extends Resource
                         DocumentTotals::make()
                             ->type(DocumentType::Estimate),
                         Forms\Components\Textarea::make('terms')
+                            ->default($settings->terms)
                             ->columnSpanFull(),
                     ]),
-                Forms\Components\Section::make('Estimate Footer')
-                    ->collapsible()
-                    ->collapsed()
-                    ->schema([
-                        Forms\Components\Textarea::make('footer')
-                            ->columnSpanFull(),
-                    ]),
+                DocumentFooterSection::make('Estimate Footer')
+                    ->defaultFooter($settings->footer),
             ]);
     }
 

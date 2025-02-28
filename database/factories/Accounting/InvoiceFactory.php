@@ -8,6 +8,7 @@ use App\Models\Accounting\DocumentLineItem;
 use App\Models\Accounting\Invoice;
 use App\Models\Banking\BankAccount;
 use App\Models\Common\Client;
+use App\Models\Setting\DocumentDefault;
 use App\Utilities\Currency\CurrencyConverter;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Carbon;
@@ -36,8 +37,8 @@ class InvoiceFactory extends Factory
             'client_id' => Client::inRandomOrder()->value('id'),
             'header' => 'Invoice',
             'subheader' => 'Invoice',
-            'invoice_number' => $this->faker->unique()->numerify('INV-#####'),
-            'order_number' => $this->faker->unique()->numerify('ORD-#####'),
+            'invoice_number' => $this->faker->unique()->numerify('INV-####'),
+            'order_number' => $this->faker->unique()->numerify('ORD-####'),
             'date' => $invoiceDate,
             'due_date' => Carbon::parse($invoiceDate)->addDays($this->faker->numberBetween(14, 60)),
             'status' => InvoiceStatus::Draft,
@@ -197,11 +198,11 @@ class InvoiceFactory extends Factory
         return $this->afterCreating(function (Invoice $invoice) {
             $this->ensureLineItems($invoice);
 
-            $paddedId = str_pad((string) $invoice->id, 5, '0', STR_PAD_LEFT);
+            $number = DocumentDefault::getBaseNumber() + $invoice->id;
 
             $invoice->updateQuietly([
-                'invoice_number' => "INV-{$paddedId}",
-                'order_number' => "ORD-{$paddedId}",
+                'invoice_number' => "INV-{$number}",
+                'order_number' => "ORD-{$number}",
             ]);
 
             if ($invoice->wasApproved() && $invoice->is_currently_overdue) {

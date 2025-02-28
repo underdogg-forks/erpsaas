@@ -2,7 +2,6 @@
 
 namespace App\DTO;
 
-use App\Enums\Accounting\DocumentType;
 use App\Enums\Setting\Font;
 use App\Enums\Setting\PaymentTerms;
 use App\Models\Setting\DocumentDefault;
@@ -23,7 +22,7 @@ readonly class DocumentPreviewDTO extends DocumentDTO
             terms: $data['terms'] ?? $settings->terms,
             logo: $settings->logo_url,
             number: self::generatePreviewNumber($settings, $data),
-            referenceNumber: 'ORD-00001',
+            referenceNumber: $settings->getNumberNext('ORD-'),
             date: $company->locale->date_format->getLabel(),
             dueDate: $paymentTerms->getDueDate($company->locale->date_format->value),
             currencyCode: CurrencyAccessor::getDefaultCurrency(),
@@ -35,7 +34,7 @@ readonly class DocumentPreviewDTO extends DocumentDTO
             company: CompanyDTO::fromModel($company),
             client: ClientPreviewDTO::fake(),
             lineItems: LineItemPreviewDTO::fakeItems(),
-            label: DocumentType::Invoice->getLabels(),
+            label: $settings->type->getLabels(),
             columnLabel: self::generateColumnLabels($settings, $data),
             accentColor: $data['accent_color'] ?? $settings->accent_color ?? '#000000',
             showLogo: $data['show_logo'] ?? $settings->show_logo ?? true,
@@ -46,10 +45,8 @@ readonly class DocumentPreviewDTO extends DocumentDTO
     protected static function generatePreviewNumber(DocumentDefault $settings, ?array $data): string
     {
         $prefix = $data['number_prefix'] ?? $settings->number_prefix ?? 'INV-';
-        $digits = $data['number_digits'] ?? $settings->number_digits ?? 5;
-        $next = $data['number_next'] ?? $settings->number_next;
 
-        return $settings->getNumberNext(padded: true, format: true, prefix: $prefix, digits: $digits, next: $next);
+        return $settings->getNumberNext($prefix);
     }
 
     protected static function generateColumnLabels(DocumentDefault $settings, ?array $data): DocumentColumnLabelDTO

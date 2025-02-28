@@ -44,7 +44,9 @@ readonly class DocumentDTO
     public static function fromModel(Document $document): self
     {
         /** @var DocumentDefault $settings */
-        $settings = $document->company->defaultInvoice;
+        $settings = $document->company->documentDefaults()
+            ->type($document::documentType())
+            ->first() ?? $document->company->defaultInvoice;
 
         $currencyCode = $document->currency_code ?? CurrencyAccessor::getDefaultCurrency();
 
@@ -67,7 +69,7 @@ readonly class DocumentDTO
             company: CompanyDTO::fromModel($document->company),
             client: ClientDTO::fromModel($document->client),
             lineItems: $document->lineItems->map(fn ($item) => LineItemDTO::fromModel($item)),
-            label: $document->documentType()->getLabels(),
+            label: $document::documentType()->getLabels(),
             columnLabel: DocumentColumnLabelDTO::fromModel($settings),
             accentColor: $settings->accent_color ?? '#000000',
             showLogo: $settings->show_logo ?? false,

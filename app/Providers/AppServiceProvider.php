@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Http\Responses\LoginRedirectResponse;
 use App\Services\DateRangeService;
 use Filament\Http\Responses\Auth\Contracts\LoginResponse;
 use Filament\Notifications\Livewire\Notifications;
@@ -18,7 +19,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(DateRangeService::class);
-        $this->app->singleton(LoginResponse::class, \App\Http\Responses\LoginResponse::class);
+        $this->app->singleton(LoginResponse::class, LoginRedirectResponse::class);
     }
 
     /**
@@ -29,7 +30,8 @@ class AppServiceProvider extends ServiceProvider
         Notifications::alignment(Alignment::Center);
 
         FilamentAsset::register([
-            Js::make('TopNavigation', __DIR__ . '/../../resources/js/TopNavigation.js'),
+            Js::make('top-navigation', __DIR__ . '/../../resources/js/top-navigation.js'),
+            Js::make('history-fix', __DIR__ . '/../../resources/js/history-fix.js'),
         ]);
     }
 }

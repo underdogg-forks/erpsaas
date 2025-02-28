@@ -33,16 +33,11 @@
     <x-company.invoice.metadata class="classic-template-metadata">
         <div class="items-center flex">
             <hr class="grow-[2] py-0.5 border-solid border-y-2" style="border-color: {{ $document->accentColor }};">
-            <div class="items-center flex mx-5">
-                <x-icons.decor-border-left color="{{ $document->accentColor }}"/>
-                <div class="px-2.5 border-solid border-y-2 py-1 -mx-3" style="border-color: {{ $document->accentColor }};">
-                    <div class="px-2.5 border-solid border-y-2 py-3" style="border-color: {{ $document->accentColor }};">
-                        <div class="inline text-2xl font-semibold"
-                             style="color: {{ $document->accentColor }};">{{ $document->header }}</div>
-                    </div>
-                </div>
-                <x-icons.decor-border-right color="{{ $document->accentColor }}"/>
-            </div>
+            <x-icons.document-header-decoration
+                color="{{ $document->accentColor }}"
+                text="{{ $document->header }}"
+                class="w-48"
+            />
             <hr class="grow-[2] py-0.5 border-solid border-y-2" style="border-color: {{ $document->accentColor }};">
         </div>
         <div class="mt-2 text-sm text-center text-gray-600 dark:text-gray-400">{{ $document->subheader }}</div>

@@ -6,6 +6,7 @@ use App\Filament\Components\PanelShiftDropdown;
 use App\Filament\User\Clusters\Account;
 use App\Http\Middleware\Authenticate;
 use Exception;
+use Filament\Facades\Filament;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\NavigationBuilder;
@@ -20,7 +21,9 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Wallo\FilamentCompanies\FilamentCompanies;
 use Wallo\FilamentCompanies\Pages\User\PersonalAccessTokens;
 use Wallo\FilamentCompanies\Pages\User\Profile;
 
@@ -45,7 +48,15 @@ class UserPanelProvider extends PanelProvider
                                 NavigationItem::make('company')
                                     ->label('Company Dashboard')
                                     ->icon('heroicon-s-building-office-2')
-                                    ->url(static fn (): string => Pages\Dashboard::getUrl(panel: 'company', tenant: auth()->user()->personalCompany())),
+                                    ->url(static function (): ?string {
+                                        $user = Auth::user();
+
+                                        if ($company = $user?->primaryCompany()) {
+                                            return Pages\Dashboard::getUrl(panel: FilamentCompanies::getCompanyPanel(), tenant: $company);
+                                        }
+
+                                        return Filament::getPanel(FilamentCompanies::getCompanyPanel())->getTenantRegistrationUrl();
+                                    }),
                             ]);
                     }),
             )
