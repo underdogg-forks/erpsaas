@@ -26,6 +26,8 @@ class DocumentDefaultResource extends Resource
 
     protected static ?string $cluster = Settings::class;
 
+    protected static ?string $modelLabel = 'document template';
+
     public static function form(Form $form): Form
     {
         return $form
