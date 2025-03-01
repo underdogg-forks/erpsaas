@@ -15,7 +15,6 @@ use App\Filament\Company\Resources\Purchases\BillResource;
 use App\Models\Banking\BankAccount;
 use App\Models\Common\Vendor;
 use App\Models\Company;
-use App\Models\Setting\Currency;
 use App\Models\Setting\DocumentDefault;
 use App\Observers\BillObserver;
 use App\Utilities\Currency\CurrencyAccessor;

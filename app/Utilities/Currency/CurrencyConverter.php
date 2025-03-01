@@ -101,12 +101,9 @@ class CurrencyConverter
 
     public static function handleCurrencyChange(Set $set, $state): void
     {
-        $currency = currency($state);
         $defaultCurrencyCode = CurrencyAccessor::getDefaultCurrency();
         $forexEnabled = Forex::isEnabled();
         $exchangeRate = $forexEnabled ? Forex::getCachedExchangeRate($defaultCurrencyCode, $state) : null;
-
-        $set('name', $currency->getName() ?? '');
 
         if ($forexEnabled && $exchangeRate !== null) {
             $set('rate', $exchangeRate);
