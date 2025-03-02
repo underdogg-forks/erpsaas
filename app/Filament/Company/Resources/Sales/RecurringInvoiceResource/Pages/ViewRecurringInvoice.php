@@ -34,6 +34,20 @@ class ViewRecurringInvoice extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('printPdf')
+                ->label('Export PDF')
+                ->icon('heroicon-o-document-arrow-down')
+                ->outlined()
+                ->action(function (RecurringInvoice $record) {
+                    $url = route('documents.print', [
+                        'documentType' => $record::documentType(),
+                        'id' => $record->id,
+                    ]);
+
+                    $title = 'Print Recurring Invoice';
+
+                    $this->js("window.printPdf('{$url}', '{$title}')");
+                }),
             Actions\EditAction::make()
                 ->label('Edit recurring invoice')
                 ->outlined(),

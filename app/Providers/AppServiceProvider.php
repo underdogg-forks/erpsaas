@@ -32,6 +32,7 @@ class AppServiceProvider extends ServiceProvider
         FilamentAsset::register([
             Js::make('top-navigation', __DIR__ . '/../../resources/js/top-navigation.js'),
             Js::make('history-fix', __DIR__ . '/../../resources/js/history-fix.js'),
+            Js::make('custom-print', __DIR__ . '/../../resources/js/custom-print.js'),
         ]);
     }
 }
