@@ -91,7 +91,7 @@
                 </tr>
             @endforeach
             </tbody>
-            <tfoot class="text-sm tracking-tight">
+            <tfoot class="text-sm tracking-tight summary-section">
             <tr>
                 <td class="pl-6 py-2" colspan="2"></td>
                 <td class="text-right font-semibold py-2">Subtotal:</td>
