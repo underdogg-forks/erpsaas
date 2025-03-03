@@ -130,17 +130,17 @@ class DocumentDefaultResource extends Resource
                             ->columnSpan(2)
                             ->hiddenLabel()
                             ->visible(static fn (Get $get) => $get('template') === 'default')
-                            ->view('filament.company.components.invoice-layouts.default'),
+                            ->view('filament.company.components.document-templates.default'),
                         Forms\Components\ViewField::make('preview.modern')
                             ->columnSpan(2)
                             ->hiddenLabel()
                             ->visible(static fn (Get $get) => $get('template') === 'modern')
-                            ->view('filament.company.components.invoice-layouts.modern'),
+                            ->view('filament.company.components.document-templates.modern'),
                         Forms\Components\ViewField::make('preview.classic')
                             ->columnSpan(2)
                             ->hiddenLabel()
                             ->visible(static fn (Get $get) => $get('template') === 'classic')
-                            ->view('filament.company.components.invoice-layouts.classic'),
+                            ->view('filament.company.components.document-templates.classic'),
                     ])->columnSpan(2),
             ])->columns(3);
     }

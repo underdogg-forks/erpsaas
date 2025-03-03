@@ -6,19 +6,19 @@
 {!! $document->getFontHtml() !!}
 
 <style>
-    .inv-paper {
+    .doc-template-paper {
         font-family: '{{ $document->font->getLabel() }}', sans-serif;
     }
 </style>
 
-<x-company.invoice.container class="modern-template-container" preview>
+<x-company.document-template.container class="modern-template-container" preview>
 
     <!-- Colored Header with Logo -->
-    <x-company.invoice.header class="bg-gray-800 h-20">
+    <x-company.document-template.header class="bg-gray-800 h-20">
         <!-- Logo -->
         <div class="w-2/3">
             @if($document->logo && $document->showLogo)
-                <x-company.invoice.logo class="ml-6" :src="$document->logo"/>
+                <x-company.document-template.logo class="ml-6" :src="$document->logo"/>
             @endif
         </div>
 
@@ -29,10 +29,10 @@
                 <h1 class="text-3xl font-bold text-white text-center uppercase">{{ $document->header }}</h1>
             @endif
         </div>
-    </x-company.invoice.header>
+    </x-company.document-template.header>
 
     <!-- Company Details -->
-    <x-company.invoice.metadata class="modern-template-metadata space-y-6">
+    <x-company.document-template.metadata class="modern-template-metadata space-y-6">
         <div class="text-xs">
             <h2 class="text-base font-semibold">{{ $document->company->name }}</h2>
             @if($formattedAddress = $document->company->getFormattedAddressHtml())
@@ -77,10 +77,10 @@
                 </table>
             </div>
         </div>
-    </x-company.invoice.metadata>
+    </x-company.document-template.metadata>
 
     <!-- Line Items Table -->
-    <x-company.invoice.line-items class="modern-template-line-items">
+    <x-company.document-template.line-items class="modern-template-line-items">
         <table class="w-full text-left table-fixed">
             <thead class="text-sm leading-8">
             <tr class="text-gray-600 dark:text-gray-400">
@@ -143,15 +143,15 @@
             @endif
             </tfoot>
         </table>
-    </x-company.invoice.line-items>
+    </x-company.document-template.line-items>
 
     <!-- Footer Notes -->
-    <x-company.invoice.footer class="modern-template-footer tracking-tight">
+    <x-company.document-template.footer class="modern-template-footer tracking-tight">
         <h4 class="font-semibold px-6" style="color: {{ $document->accentColor }}">Terms & Conditions</h4>
         <span class="border-t-2 my-2 border-gray-300 block w-full"></span>
         <div class="flex justify-between space-x-4 px-6">
             <p class="w-1/2 break-words line-clamp-4">{{ $document->terms }}</p>
             <p class="w-1/2 break-words line-clamp-4">{{ $document->footer }}</p>
         </div>
-    </x-company.invoice.footer>
-</x-company.invoice.container>
+    </x-company.document-template.footer>
+</x-company.document-template.container>

@@ -6,7 +6,7 @@
 <img {{
     $attributes
         ->class([
-            'inv-logo object-contain',
+            'doc-template-logo object-contain',
             match ($size) {
                 'sm' => 'max-h-8',
                 'md' => 'max-h-16',

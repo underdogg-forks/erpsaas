@@ -34,20 +34,6 @@ class ViewInvoice extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\Action::make('printPdf')
-                ->label('Export PDF')
-                ->icon('heroicon-o-document-arrow-down')
-                ->outlined()
-                ->action(function (Invoice $record) {
-                    $url = route('documents.print', [
-                        'documentType' => $record::documentType(),
-                        'id' => $record->id,
-                    ]);
-
-                    $title = 'Print Invoice';
-
-                    $this->js("window.printPdf('{$url}', '{$title}')");
-                }),
             Actions\EditAction::make()
                 ->label('Edit invoice')
                 ->outlined(),
@@ -55,6 +41,7 @@ class ViewInvoice extends ViewRecord
                 Actions\ActionGroup::make([
                     Invoice::getApproveDraftAction(),
                     Invoice::getMarkAsSentAction(),
+                    Invoice::getPrintDocumentAction(),
                     Invoice::getReplicateAction(),
                 ])->dropdown(false),
                 Actions\DeleteAction::make(),

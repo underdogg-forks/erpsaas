@@ -4,29 +4,19 @@
     <title>Invoice #{{ $document->number }}</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="color-scheme" content="light">
 
     <!-- Include Tailwind -->
-    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class'
-        }
-    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
 
     {!! $document->getFontHtml() !!}
 
     <style>
-        :root {
-            color-scheme: light;
-        }
-
         body {
             background-color: white;
             color: black;
         }
 
-        .inv-paper {
+        .doc-template-paper {
             font-family: '{{ $document->font->getLabel() }}', sans-serif;
         }
 
@@ -40,39 +30,43 @@
 
             @page {
                 size: auto;
-                margin: 0;
+                margin: 7.5mm 0;
             }
 
-            .inv-container {
+            @page:first {
+                margin-top: 0;
+            }
+
+            .doc-template-container {
                 padding: 0 !important;
                 margin: 0 !important;
             }
 
-            .inv-paper {
+            .doc-template-paper {
                 box-shadow: none !important;
                 border-radius: 0 !important;
                 overflow: hidden !important;
                 max-height: none !important;
             }
 
-            .inv-line-items .summary-section {
+            .doc-template-line-items .summary-section {
                 display: table-row-group;
                 page-break-inside: avoid;
             }
 
-            .inv-line-items tr {
+            .doc-template-line-items tr {
                 page-break-inside: avoid;
                 page-break-after: auto;
             }
 
-            .inv-footer {
+            .doc-template-footer {
                 page-break-inside: avoid;
                 page-break-before: auto;
             }
         }
     </style>
 </head>
-<body class="bg-white">
+<body>
     @include("filament.infolists.components.document-templates.{$template->value}", [
         'document' => $document,
         'preview' => false,

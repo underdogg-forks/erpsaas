@@ -6,17 +6,17 @@
 {!! $document->getFontHtml() !!}
 
 <style>
-    .inv-paper {
+    .doc-template-paper {
         font-family: '{{ $document->font->getLabel() }}', sans-serif;
     }
 </style>
 
-<x-company.invoice.container class="default-template-container" preview>
+<x-company.document-template.container class="default-template-container" preview>
 
-    <x-company.invoice.header class="default-template-header border-b-2 p-6 pb-4">
+    <x-company.document-template.header class="default-template-header border-b-2 p-6 pb-4">
         <div class="w-2/3">
             @if($document->logo && $document->showLogo)
-                <x-company.invoice.logo :src="$document->logo"/>
+                <x-company.document-template.logo :src="$document->logo"/>
             @endif
         </div>
 
@@ -28,9 +28,9 @@
                 @endif
             </div>
         </div>
-    </x-company.invoice.header>
+    </x-company.document-template.header>
 
-    <x-company.invoice.metadata class="default-template-metadata space-y-6">
+    <x-company.document-template.metadata class="default-template-metadata space-y-6">
         <div>
             <h1 class="text-3xl font-light uppercase">{{ $document->header }}</h1>
             @if ($document->subheader)
@@ -71,10 +71,10 @@
                 </table>
             </div>
         </div>
-    </x-company.invoice.metadata>
+    </x-company.document-template.metadata>
 
     <!-- Line Items Table -->
-    <x-company.invoice.line-items class="default-template-line-items">
+    <x-company.document-template.line-items class="default-template-line-items">
         <table class="w-full text-left table-fixed">
             <thead class="text-sm leading-8" style="background: {{ $document->accentColor }}">
             <tr class="text-white">
@@ -122,13 +122,13 @@
             </tr>
             </tfoot>
         </table>
-    </x-company.invoice.line-items>
+    </x-company.document-template.line-items>
 
     <!-- Footer Notes -->
-    <x-company.invoice.footer class="default-template-footer">
+    <x-company.document-template.footer class="default-template-footer">
         <p class="px-6">{{ $document->footer }}</p>
         <span class="border-t-2 my-2 border-gray-300 block w-full"></span>
         <h4 class="font-semibold px-6 mb-2">Terms & Conditions</h4>
         <p class="px-6 break-words line-clamp-4">{{ $document->terms }}</p>
-    </x-company.invoice.footer>
-</x-company.invoice.container>
+    </x-company.document-template.footer>
+</x-company.document-template.container>
