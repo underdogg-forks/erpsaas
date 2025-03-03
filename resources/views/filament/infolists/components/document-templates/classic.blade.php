@@ -1,6 +1,6 @@
-<x-company.invoice.container class="classic-template-container">
+<x-company.document-template.container class="classic-template-container">
     <!-- Header Section -->
-    <x-company.invoice.header class="default-template-header">
+    <x-company.document-template.header class="default-template-header">
         <div class="w-2/3 text-left ml-6">
             <div class="text-sm tracking-tight">
                 <h2 class="text-lg font-semibold">{{ $document->company->name }}</h2>
@@ -12,12 +12,12 @@
 
         <div class="w-1/3 flex justify-end mr-6">
             @if($document->logo && $document->showLogo)
-                <x-company.invoice.logo :src="$document->logo"/>
+                <x-company.document-template.logo :src="$document->logo"/>
             @endif
         </div>
-    </x-company.invoice.header>
+    </x-company.document-template.header>
 
-    <x-company.invoice.metadata class="classic-template-metadata space-y-8">
+    <x-company.document-template.metadata class="classic-template-metadata space-y-8">
         <div class="items-center flex">
             <hr class="grow-[2] py-0.5 border-solid border-y-2" style="border-color: {{ $document->accentColor }};">
             <x-icons.document-header-decoration
@@ -62,10 +62,10 @@
                 </table>
             </div>
         </div>
-    </x-company.invoice.metadata>
+    </x-company.document-template.metadata>
 
     <!-- Line Items -->
-    <x-company.invoice.line-items class="classic-template-line-items">
+    <x-company.document-template.line-items class="classic-template-line-items">
         <table class="w-full text-left table-fixed">
             <thead class="text-sm leading-relaxed">
             <tr>
@@ -138,11 +138,11 @@
                 </table>
             </div>
         </div>
-    </x-company.invoice.line-items>
+    </x-company.document-template.line-items>
 
     <!-- Footer -->
-    <x-company.invoice.footer class="classic-template-footer tracking-tight min-h-48">
+    <x-company.document-template.footer class="classic-template-footer tracking-tight min-h-48">
         <h4 class="font-semibold px-6 mb-2 text-sm">Terms & Conditions</h4>
         <p class="px-6 break-words line-clamp-4 text-sm">{{ $document->terms }}</p>
-    </x-company.invoice.footer>
-</x-company.invoice.container>
+    </x-company.document-template.footer>
+</x-company.document-template.container>

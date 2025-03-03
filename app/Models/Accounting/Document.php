@@ -6,10 +6,13 @@ use App\Concerns\Blamable;
 use App\Concerns\CompanyOwned;
 use App\Enums\Accounting\DocumentType;
 use App\Models\Setting\Currency;
+use Filament\Actions\Action;
+use Filament\Actions\MountableAction;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Livewire\Component;
 
 abstract class Document extends Model
 {
@@ -30,6 +33,21 @@ abstract class Document extends Model
     public function hasLineItems(): bool
     {
         return $this->lineItems()->exists();
+    }
+
+    public static function getPrintDocumentAction(string $action = Action::class): MountableAction
+    {
+        return $action::make('printPdf')
+            ->label('Print')
+            ->icon('heroicon-m-printer')
+            ->action(function (self $record, Component $livewire) {
+                $url = route('documents.print', [
+                    'documentType' => $record::documentType(),
+                    'id' => $record->id,
+                ]);
+
+                $livewire->js("window.printPdf('{$url}')");
+            });
     }
 
     abstract public static function documentType(): DocumentType;

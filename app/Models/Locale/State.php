@@ -3,7 +3,6 @@
 namespace App\Models\Locale;
 
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Squire\Model;
 
 /**
@@ -70,10 +69,5 @@ class State extends Model
     public function country(): BelongsTo
     {
         return $this->belongsTo(Country::class, 'country_id', 'id');
-    }
-
-    public function cities(): HasMany
-    {
-        return $this->hasMany(City::class, 'state_id', 'id');
     }
 }

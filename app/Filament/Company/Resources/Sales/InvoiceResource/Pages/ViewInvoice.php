@@ -41,6 +41,7 @@ class ViewInvoice extends ViewRecord
                 Actions\ActionGroup::make([
                     Invoice::getApproveDraftAction(),
                     Invoice::getMarkAsSentAction(),
+                    Invoice::getPrintDocumentAction(),
                     Invoice::getReplicateAction(),
                 ])->dropdown(false),
                 Actions\DeleteAction::make(),

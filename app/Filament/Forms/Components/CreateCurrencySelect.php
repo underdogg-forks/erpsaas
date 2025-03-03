@@ -2,7 +2,7 @@
 
 namespace App\Filament\Forms\Components;
 
-use App\Actions\OptionAction\CreateCurrency;
+use App\Models\Setting\Currency;
 use App\Utilities\Currency\CurrencyAccessor;
 use App\Utilities\Currency\CurrencyConverter;
 use Filament\Forms\Components\Actions\Action;
@@ -31,11 +31,10 @@ class CreateCurrencySelect extends Select
 
         $this->createOptionUsing(static function (array $data) {
             return DB::transaction(static function () use ($data) {
-                $currency = CreateCurrency::create(
-                    $data['code'],
-                    $data['name'],
-                    $data['rate']
-                );
+                $currency = Currency::create([
+                    'code' => $data['code'],
+                    'rate' => $data['rate'],
+                ]);
 
                 return $currency->code;
             });
@@ -53,10 +52,6 @@ class CreateCurrencySelect extends Select
                 ->afterStateUpdated(static function (Set $set, $state) {
                     CurrencyConverter::handleCurrencyChange($set, $state);
                 })
-                ->required(),
-            TextInput::make('name')
-                ->localizeLabel()
-                ->maxLength(100)
                 ->required(),
             TextInput::make('rate')
                 ->localizeLabel()

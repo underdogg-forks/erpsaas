@@ -4,7 +4,6 @@ namespace App\Models\Locale;
 
 use App\Models\Common\Address;
 use Illuminate\Database\Eloquent\Casts\Attribute;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 use Squire\Model;
@@ -44,11 +43,6 @@ class Country extends Model
         'flag' => 'string',
     ];
 
-    public function currency(): BelongsTo
-    {
-        return $this->belongsTo(Currency::class, 'currency_code', 'code');
-    }
-
     public function addresses(): HasMany
     {
         return $this->hasMany(Address::class, 'country_code', 'id');
@@ -57,11 +51,6 @@ class Country extends Model
     public function states(): HasMany
     {
         return $this->hasMany(State::class, 'country_id', 'id');
-    }
-
-    public function cities(): HasMany
-    {
-        return $this->hasMany(City::class, 'country_id', 'id');
     }
 
     protected function name(): Attribute

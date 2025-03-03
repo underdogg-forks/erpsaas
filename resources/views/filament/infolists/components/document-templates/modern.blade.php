@@ -1,10 +1,10 @@
-<x-company.invoice.container class="modern-template-container">
+<x-company.document-template.container class="modern-template-container">
     <!-- Colored Header with Logo -->
-    <x-company.invoice.header class="bg-gray-800 h-24">
+    <x-company.document-template.header class="bg-gray-800 h-24">
         <!-- Logo -->
         <div class="w-2/3">
             @if($document->logo && $document->showLogo)
-                <x-company.invoice.logo class="ml-8" :src="$document->logo"/>
+                <x-company.document-template.logo class="ml-8" :src="$document->logo"/>
             @endif
         </div>
 
@@ -15,10 +15,10 @@
                 <h1 class="text-4xl font-bold text-white text-center uppercase">{{ $document->header }}</h1>
             @endif
         </div>
-    </x-company.invoice.header>
+    </x-company.document-template.header>
 
     <!-- Company Details -->
-    <x-company.invoice.metadata class="modern-template-metadata space-y-8">
+    <x-company.document-template.metadata class="modern-template-metadata space-y-8">
         <div class="text-sm">
             <h2 class="text-lg font-semibold">{{ $document->company->name }}</h2>
             @if($formattedAddress = $document->company->getFormattedAddressHtml())
@@ -63,10 +63,10 @@
                 </table>
             </div>
         </div>
-    </x-company.invoice.metadata>
+    </x-company.document-template.metadata>
 
     <!-- Line Items Table -->
-    <x-company.invoice.line-items class="modern-template-line-items">
+    <x-company.document-template.line-items class="modern-template-line-items">
         <table class="w-full text-left table-fixed">
             <thead class="text-sm leading-relaxed">
             <tr class="text-gray-600 dark:text-gray-400">
@@ -91,7 +91,7 @@
                 </tr>
             @endforeach
             </tbody>
-            <tfoot class="text-sm tracking-tight">
+            <tfoot class="text-sm tracking-tight summary-section">
             <tr>
                 <td class="pl-6 py-2" colspan="2"></td>
                 <td class="text-right font-semibold py-2">Subtotal:</td>
@@ -129,10 +129,10 @@
             @endif
             </tfoot>
         </table>
-    </x-company.invoice.line-items>
+    </x-company.document-template.line-items>
 
     <!-- Footer Notes -->
-    <x-company.invoice.footer class="modern-template-footer tracking-tight">
+    <x-company.document-template.footer class="modern-template-footer tracking-tight">
         <h4 class="font-semibold px-6 text-sm" style="color: {{ $document->accentColor }}">
             Terms & Conditions
         </h4>
@@ -141,5 +141,5 @@
             <p class="w-1/2 break-words line-clamp-4">{{ $document->terms }}</p>
             <p class="w-1/2 break-words line-clamp-4">{{ $document->footer }}</p>
         </div>
-    </x-company.invoice.footer>
-</x-company.invoice.container>
+    </x-company.document-template.footer>
+</x-company.document-template.container>

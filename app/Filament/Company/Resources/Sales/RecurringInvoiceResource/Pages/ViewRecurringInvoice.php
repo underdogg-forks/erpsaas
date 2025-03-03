@@ -41,6 +41,7 @@ class ViewRecurringInvoice extends ViewRecord
                 Actions\ActionGroup::make([
                     RecurringInvoice::getManageScheduleAction(),
                     RecurringInvoice::getApproveDraftAction(),
+                    RecurringInvoice::getPrintDocumentAction(),
                 ])->dropdown(false),
                 Actions\DeleteAction::make(),
             ])

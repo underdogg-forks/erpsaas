@@ -6,7 +6,7 @@
 {!! $document->getFontHtml() !!}
 
 <style>
-    .inv-paper {
+    .doc-template-paper {
         font-family: '{{ $document->font->getLabel() }}', sans-serif;
     }
 </style>
