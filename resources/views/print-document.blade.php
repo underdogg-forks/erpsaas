@@ -55,17 +55,17 @@
                 max-height: none !important;
             }
 
-            .modern-template-line-items .summary-section {
+            .inv-line-items .summary-section {
                 display: table-row-group;
                 page-break-inside: avoid;
             }
 
-            .modern-template-line-items tr {
+            .inv-line-items tr {
                 page-break-inside: avoid;
                 page-break-after: auto;
             }
 
-            .modern-template-footer {
+            .inv-footer {
                 page-break-inside: avoid;
                 page-break-before: auto;
             }
