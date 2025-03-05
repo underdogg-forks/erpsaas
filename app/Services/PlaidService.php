@@ -157,7 +157,7 @@ class PlaidService
         return 'en';
     }
 
-    public function getCountry(string $country): string
+    public function getCountry(?string $country = null): string
     {
         if (in_array($country, $this->plaidSupportedCountries, true)) {
             return $country;

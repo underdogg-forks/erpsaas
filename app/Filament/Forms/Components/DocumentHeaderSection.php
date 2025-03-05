@@ -2,6 +2,7 @@
 
 namespace App\Filament\Forms\Components;
 
+use App\DTO\CompanyDTO;
 use Closure;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Group;
@@ -73,12 +74,7 @@ class DocumentHeaderSection extends Section
                         ->default(fn () => $this->getDefaultSubheader()),
                     View::make('filament.forms.components.company-info')
                         ->viewData([
-                            'company_name' => $company->name,
-                            'company_address' => $company->profile->address,
-                            'company_city' => $company->profile->city?->name,
-                            'company_state' => $company->profile->state?->name,
-                            'company_zip' => $company->profile->zip_code,
-                            'company_country' => $company->profile->state?->country->name,
+                            'companyDTO' => CompanyDTO::fromModel($company),
                         ]),
                 ])->grow(true),
             ])->from('md'),

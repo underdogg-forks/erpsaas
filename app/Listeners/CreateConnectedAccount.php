@@ -35,7 +35,7 @@ class CreateConnectedAccount
 
         $authResponse = $this->plaidService->getAccounts($accessToken);
 
-        $institutionResponse = $this->plaidService->getInstitution($authResponse->item->institution_id, $company->profile->country);
+        $institutionResponse = $this->plaidService->getInstitution($authResponse->item->institution_id, $company->profile?->address?->country_code);
 
         $this->processInstitution($authResponse, $institutionResponse, $company, $accessToken);
     }

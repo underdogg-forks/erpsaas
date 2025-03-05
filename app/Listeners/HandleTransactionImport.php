@@ -47,6 +47,6 @@ class HandleTransactionImport
             $bankAccount,
             $connectedBankAccount,
             $startDate,
-        )->onQueue('transactions');
+        );
     }
 }

@@ -45,7 +45,9 @@ class TransactionService
     public function createStartingBalanceTransaction(Company $company, Account $account, BankAccount $bankAccount, float $startingBalance, string $startDate): void
     {
         $transactionType = $startingBalance >= 0 ? TransactionType::Deposit : TransactionType::Withdrawal;
-        $chartAccount = $account->where('category', AccountCategory::Equity)->where('name', 'Owner\'s Equity')->first();
+        $accountName = $startingBalance >= 0 ? "Owner's Investment" : "Owner's Drawings";
+        $chartAccount = $account->where('category', AccountCategory::Equity)->where('name', $accountName)->first();
+
         $postedAt = Carbon::parse($startDate)->subDay()->toDateTimeString();
 
         Transaction::create([
