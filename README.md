@@ -221,7 +221,7 @@ After integrating Plaid, you can connect your account on the "Connected Accounts
 institution. Before importing transactions, ensure to run the following command to process the queued transactions:
 
 ```bash
-php artisan queue:work --queue=transactions
+php artisan queue:listen
 ```
 
 ## Testing
