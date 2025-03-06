@@ -4,18 +4,11 @@ namespace App\Listeners;
 
 use App\Events\StartTransactionImport;
 use App\Jobs\ProcessTransactionImport;
-use App\Services\ConnectedBankAccountService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 
 class HandleTransactionImport
 {
-    /**
-     * Create the event listener.
-     */
-    public function __construct(
-        protected ConnectedBankAccountService $connectedBankAccountService
-    ) {}
-
     /**
      * Handle the event.
      */
@@ -33,8 +26,40 @@ class HandleTransactionImport
         $selectedBankAccountId = $event->selectedBankAccountId;
         $startDate = $event->startDate;
 
-        $bankAccount = $this->connectedBankAccountService->getOrProcessBankAccountForConnectedBankAccount($company, $connectedBankAccount, $selectedBankAccountId);
-        $account = $this->connectedBankAccountService->getOrProcessAccountForConnectedBankAccount($bankAccount, $company, $connectedBankAccount);
+        if ($selectedBankAccountId === 'new') {
+            $defaultAccountSubtypeName = $connectedBankAccount->type->getDefaultSubtype();
+
+            $accountSubtype = $company->accountSubtypes()
+                ->where('name', $defaultAccountSubtypeName)
+                ->first();
+
+            if ($accountSubtype === null) {
+                throw new ModelNotFoundException("Account subtype '{$defaultAccountSubtypeName}' not found for company '{$company->name}'");
+            }
+
+            $account = $company->accounts()->create([
+                'name' => $connectedBankAccount->name,
+                'currency_code' => $connectedBankAccount->currency_code,
+                'description' => $connectedBankAccount->name,
+                'subtype_id' => $accountSubtype->id,
+            ]);
+
+            $bankAccount = $account->bankAccount()->create([
+                'company_id' => $company->id,
+                'institution_id' => $connectedBankAccount->institution_id,
+                'type' => $connectedBankAccount->type,
+                'number' => $connectedBankAccount->mask,
+                'enabled' => $company->bankAccounts()->where('enabled', true)->doesntExist(),
+            ]);
+        } else {
+            $bankAccount = $company->bankAccounts()->find($selectedBankAccountId);
+
+            if ($bankAccount === null) {
+                throw new ModelNotFoundException("Bank account '{$selectedBankAccountId}' not found for company '{$company->name}'");
+            }
+
+            $account = $bankAccount->account;
+        }
 
         $connectedBankAccount->update([
             'bank_account_id' => $bankAccount->id,
