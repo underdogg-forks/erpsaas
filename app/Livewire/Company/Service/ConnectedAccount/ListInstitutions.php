@@ -245,7 +245,7 @@ class ListInstitutions extends Component implements HasActions, HasForms
             $company = $this->user->currentCompany;
 
             $companyLanguage = $company->locale->language ?? 'en';
-            $companyCountry = $company->profile->country ?? 'US';
+            $companyCountry = $company->profile?->address?->country_code ?? 'US';
 
             $plaidUser = $this->plaidService->createPlaidUser($company);
 

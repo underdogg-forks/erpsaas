@@ -44,7 +44,7 @@ class AccountObserver
         }
     }
 
-    private function setFieldsForBankAccount(Account $account): void
+    private function setAccountCode(Account $account): void
     {
         $generatedAccountCode = AccountCode::generate($account->subtype);
 
@@ -56,8 +56,8 @@ class AccountObserver
      */
     public function created(Account $account): void
     {
-        if ($account->bankAccount && $account->code === null) {
-            $this->setFieldsForBankAccount($account);
+        if (! $account->code) {
+            $this->setAccountCode($account);
             $account->save();
         }
     }
