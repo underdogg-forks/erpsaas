@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('category')->default('tax');
             $table->string('type')->default('sales');
             $table->boolean('recoverable')->default(false);
-            $table->integer('rate')->default(0);
+            $table->bigInteger('rate')->default(0);
             $table->string('computation')->default('percentage');
             $table->string('scope')->nullable();
             $table->dateTime('start_date')->nullable();

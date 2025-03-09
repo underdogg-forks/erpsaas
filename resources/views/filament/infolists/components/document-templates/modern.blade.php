@@ -28,9 +28,9 @@
 
         <div class="flex justify-between items-end">
             <!-- Billing Details -->
-            <div class="text-sm tracking-tight">
-                <h3 class="text-gray-600 dark:text-gray-400 font-medium tracking-tight mb-1">BILL TO</h3>
-                <p class="text-base font-bold"
+            <div class="text-sm">
+                <h3 class="text-gray-600 dark:text-gray-400 font-medium mb-1">BILL TO</h3>
+                <p class="text-sm font-bold"
                    style="color: {{ $document->accentColor }}">{{ $document->client->name }}</p>
 
                 @if($formattedAddress = $document->client->getFormattedAddressHtml())
@@ -38,7 +38,7 @@
                 @endif
             </div>
 
-            <div class="text-sm tracking-tight">
+            <div class="text-sm">
                 <table class="min-w-full">
                     <tbody>
                     <tr>
@@ -76,7 +76,7 @@
                 <th class="text-right pr-6 w-[20%] py-4">{{ $document->columnLabel->amount }}</th>
             </tr>
             </thead>
-            <tbody class="text-sm tracking-tight border-y-2">
+            <tbody class="text-sm border-y-2">
             @foreach($document->lineItems as $index => $item)
                 <tr @class(['bg-gray-100 dark:bg-gray-800' => $index % 2 === 0])>
                     <td class="text-left pl-6 font-semibold py-3">
@@ -91,7 +91,7 @@
                 </tr>
             @endforeach
             </tbody>
-            <tfoot class="text-sm tracking-tight summary-section">
+            <tfoot class="text-sm summary-section">
             <tr>
                 <td class="pl-6 py-2" colspan="2"></td>
                 <td class="text-right font-semibold py-2">Subtotal:</td>
@@ -132,7 +132,7 @@
     </x-company.document-template.line-items>
 
     <!-- Footer Notes -->
-    <x-company.document-template.footer class="modern-template-footer tracking-tight">
+    <x-company.document-template.footer class="modern-template-footer">
         <h4 class="font-semibold px-6 text-sm" style="color: {{ $document->accentColor }}">
             Terms & Conditions
         </h4>
