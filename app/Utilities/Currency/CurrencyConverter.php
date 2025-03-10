@@ -46,7 +46,13 @@ class CurrencyConverter
     {
         $currency ??= CurrencyAccessor::getDefaultCurrency();
 
-        return money($amount, $currency, true)->getAmount();
+        $amountInCents = money($amount, $currency, true)->getAmount();
+
+        if (is_float($amountInCents)) {
+            $amountInCents = (int) round($amountInCents);
+        }
+
+        return $amountInCents;
     }
 
     public static function formatCentsToMoney(int $amount, ?string $currency = null, bool $withCode = false): string

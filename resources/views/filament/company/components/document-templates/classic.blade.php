@@ -14,16 +14,16 @@
 <x-company.document-template.container class="classic-template-container" preview>
     <!-- Header Section -->
     <x-company.document-template.header class="default-template-header">
-        <div class="w-2/3 text-left ml-6">
+        <div class="w-2/3 text-left">
             <div class="text-xs">
-                <h2 class="text-base font-semibold">{{ $document->company->name }}</h2>
+                <h2 class="text-xs font-semibold">{{ $document->company->name }}</h2>
                 @if($formattedAddress = $document->company->getFormattedAddressHtml())
                     {!! $formattedAddress !!}
                 @endif
             </div>
         </div>
 
-        <div class="w-1/3 flex justify-end mr-6">
+        <div class="w-1/3 flex justify-end">
             @if($document->logo && $document->showLogo)
                 <x-company.document-template.logo :src="$document->logo"/>
             @endif
@@ -40,13 +40,13 @@
             />
             <hr class="grow-[2] py-0.5 border-solid border-y-2" style="border-color: {{ $document->accentColor }};">
         </div>
-        <div class="mt-2 text-sm text-center text-gray-600 dark:text-gray-400">{{ $document->subheader }}</div>
+        <div class="mt-2 text-xs text-center text-gray-600 dark:text-gray-400">{{ $document->subheader }}</div>
 
         <div class="flex justify-between items-end">
             <!-- Billing Details -->
             <div class="text-xs">
-                <h3 class="text-gray-600 dark:text-gray-400 font-medium tracking-tight mb-1">BILL TO</h3>
-                <p class="text-base font-bold">{{ $document->client->name }}</p>
+                <h3 class="text-gray-600 dark:text-gray-400 font-medium mb-1">BILL TO</h3>
+                <p class="text-xs font-bold">{{ $document->client->name }}</p>
                 @if($formattedAddress = $document->client->getFormattedAddressHtml())
                     {!! $formattedAddress !!}
                 @endif
@@ -80,7 +80,7 @@
     <!-- Line Items -->
     <x-company.document-template.line-items class="classic-template-line-items px-6">
         <table class="w-full text-left table-fixed">
-            <thead class="text-sm leading-8">
+            <thead class="text-xs leading-8">
             <tr>
                 <th class="text-left">{{ $document->columnLabel->items }}</th>
                 <th class="text-center">{{ $document->columnLabel->units }}</th>
@@ -139,7 +139,7 @@
     </x-company.document-template.line-items>
 
     <!-- Footer -->
-    <x-company.document-template.footer class="classic-template-footer">
+    <x-company.document-template.footer class="classic-template-footer text-xs">
         <h4 class="font-semibold px-6 mb-2">Terms & Conditions</h4>
         <p class="px-6 break-words line-clamp-4">{{ $document->terms }}</p>
     </x-company.document-template.footer>

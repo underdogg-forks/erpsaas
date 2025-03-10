@@ -164,12 +164,14 @@ class BillResource extends Resource
                                     ->required()
                                     ->numeric()
                                     ->live()
+                                    ->maxValue(9999999999.99)
                                     ->default(1),
                                 Forms\Components\TextInput::make('unit_price')
                                     ->label('Price')
                                     ->hiddenLabel()
                                     ->numeric()
                                     ->live()
+                                    ->maxValue(9999999999.99)
                                     ->default(0),
                                 Forms\Components\Select::make('purchaseTaxes')
                                     ->label('Taxes')

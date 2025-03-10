@@ -153,11 +153,13 @@ class RecurringInvoiceResource extends Resource
                                     ->required()
                                     ->numeric()
                                     ->live()
+                                    ->maxValue(9999999999.99)
                                     ->default(1),
                                 Forms\Components\TextInput::make('unit_price')
                                     ->hiddenLabel()
                                     ->numeric()
                                     ->live()
+                                    ->maxValue(9999999999.99)
                                     ->default(0),
                                 Forms\Components\Select::make('salesTaxes')
                                     ->relationship('salesTaxes', 'name')
