@@ -32,11 +32,11 @@ return new class extends Migration
             $table->string('currency_code')->nullable();
             $table->string('discount_method')->default('per_line_item');
             $table->string('discount_computation')->default('percentage');
-            $table->integer('discount_rate')->default(0);
-            $table->integer('subtotal')->default(0);
-            $table->integer('tax_total')->default(0);
-            $table->integer('discount_total')->default(0);
-            $table->integer('total')->default(0);
+            $table->bigInteger('discount_rate')->default(0);
+            $table->bigInteger('subtotal')->default(0);
+            $table->bigInteger('tax_total')->default(0);
+            $table->bigInteger('discount_total')->default(0);
+            $table->bigInteger('total')->default(0);
             $table->text('terms')->nullable(); // terms, notes
             $table->text('footer')->nullable();
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();

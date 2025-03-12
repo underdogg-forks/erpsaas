@@ -4,6 +4,7 @@ namespace App\Listeners;
 
 use App\Events\StartTransactionImport;
 use App\Jobs\ProcessTransactionImport;
+use App\Models\Accounting\Account;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 
@@ -37,6 +38,7 @@ class HandleTransactionImport
                 throw new ModelNotFoundException("Account subtype '{$defaultAccountSubtypeName}' not found for company '{$company->name}'");
             }
 
+            /** @var Account $account */
             $account = $company->accounts()->create([
                 'name' => $connectedBankAccount->name,
                 'currency_code' => $connectedBankAccount->currency_code,

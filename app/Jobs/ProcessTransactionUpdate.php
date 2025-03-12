@@ -6,19 +6,13 @@ use App\Models\Banking\ConnectedBankAccount;
 use App\Models\Company;
 use App\Services\PlaidService;
 use App\Services\TransactionService;
-use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
+use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Carbon;
 
 class ProcessTransactionUpdate implements ShouldQueue
 {
-    use Dispatchable;
-    use InteractsWithQueue;
     use Queueable;
-    use SerializesModels;
 
     public function __construct(
         protected Company $company,

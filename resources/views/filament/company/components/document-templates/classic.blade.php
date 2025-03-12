@@ -14,23 +14,23 @@
 <x-company.document-template.container class="classic-template-container" preview>
     <!-- Header Section -->
     <x-company.document-template.header class="default-template-header">
-        <div class="w-2/3 text-left ml-6">
+        <div class="w-2/3 text-left">
             <div class="text-xs">
-                <h2 class="text-base font-semibold">{{ $document->company->name }}</h2>
+                <strong class="text-xs block">{{ $document->company->name }}</strong>
                 @if($formattedAddress = $document->company->getFormattedAddressHtml())
                     {!! $formattedAddress !!}
                 @endif
             </div>
         </div>
 
-        <div class="w-1/3 flex justify-end mr-6">
+        <div class="w-1/3 flex justify-end">
             @if($document->logo && $document->showLogo)
                 <x-company.document-template.logo :src="$document->logo"/>
             @endif
         </div>
     </x-company.document-template.header>
 
-    <x-company.document-template.metadata class="classic-template-metadata">
+    <x-company.document-template.metadata class="classic-template-metadata space-y-2">
         <div class="items-center flex">
             <hr class="grow-[2] py-0.5 border-solid border-y-2" style="border-color: {{ $document->accentColor }};">
             <x-icons.document-header-decoration
@@ -40,13 +40,15 @@
             />
             <hr class="grow-[2] py-0.5 border-solid border-y-2" style="border-color: {{ $document->accentColor }};">
         </div>
-        <div class="mt-2 text-sm text-center text-gray-600 dark:text-gray-400">{{ $document->subheader }}</div>
+        @if ($document->subheader)
+            <p class="text-xs text-center text-gray-600 dark:text-gray-400">{{ $document->subheader }}</p>
+        @endif
 
         <div class="flex justify-between items-end">
             <!-- Billing Details -->
             <div class="text-xs">
-                <h3 class="text-gray-600 dark:text-gray-400 font-medium tracking-tight mb-1">BILL TO</h3>
-                <p class="text-base font-bold">{{ $document->client->name }}</p>
+                <h3 class="text-gray-600 dark:text-gray-400 font-medium mb-1">BILL TO</h3>
+                <p class="text-xs font-bold">{{ $document->client->name }}</p>
                 @if($formattedAddress = $document->client->getFormattedAddressHtml())
                     {!! $formattedAddress !!}
                 @endif
@@ -80,7 +82,7 @@
     <!-- Line Items -->
     <x-company.document-template.line-items class="classic-template-line-items px-6">
         <table class="w-full text-left table-fixed">
-            <thead class="text-sm leading-8">
+            <thead class="text-xs leading-8">
             <tr>
                 <th class="text-left">{{ $document->columnLabel->items }}</th>
                 <th class="text-center">{{ $document->columnLabel->units }}</th>
@@ -101,37 +103,46 @@
         </table>
 
         <!-- Financial Details and Notes -->
-        <div class="flex justify-between text-xs space-x-1">
+        <div class="flex justify-between text-xs space-x-1 pt-2">
             <!-- Notes Section -->
-            <div class="w-1/2 border border-dashed border-gray-300 p-2 mt-4">
-                <h4 class="font-semibold mb-2">Notes</h4>
-                <p>{{ $document->footer }}</p>
+            <div class="w-[60%] py-2">
+                <p class="font-semibold">{{ $document->footer }}</p>
             </div>
 
             <!-- Financial Summary -->
-            <div class="w-1/2 mt-2">
-                <table class="w-full table-fixed">
-                    <tbody class="text-xs leading-loose">
+            <div class="w-[40%]">
+                <table class="w-full table-fixed whitespace-nowrap">
+                    <tbody class="text-xs">
                     <tr>
-                        <td class="text-right font-semibold">Subtotal:</td>
-                        <td class="text-right">{{ $document->subtotal }}</td>
+                        <td class="text-right font-semibold py-2">Subtotal:</td>
+                        <td class="text-right py-2">{{ $document->subtotal }}</td>
                     </tr>
-                    <tr class="text-success-800 dark:text-success-600">
-                        <td class="text-right">Discount (5%):</td>
-                        <td class="text-right">({{ $document->discount }})</td>
-                    </tr>
+                    @if($document->discount)
+                        <tr class="text-success-800 dark:text-success-600">
+                            <td class="text-right py-2">Discount:</td>
+                            <td class="text-right py-2">
+                                ({{ $document->discount }})
+                            </td>
+                        </tr>
+                    @endif
+                    @if($document->tax)
+                        <tr>
+                            <td class="text-right py-2">Tax:</td>
+                            <td class="text-right py-2">{{ $document->tax }}</td>
+                        </tr>
+                    @endif
                     <tr>
-                        <td class="text-right">Sales Tax (10%):</td>
-                        <td class="text-right">{{ $document->tax }}</td>
+                        <td class="text-right font-semibold border-t py-2">Total:</td>
+                        <td class="text-right border-t py-2">{{ $document->total }}</td>
                     </tr>
-                    <tr>
-                        <td class="text-right font-semibold">Total:</td>
-                        <td class="text-right">{{ $document->total }}</td>
-                    </tr>
-                    <tr>
-                        <td class="text-right font-semibold">Amount Due (USD):</td>
-                        <td class="text-right">{{ $document->amountDue }}</td>
-                    </tr>
+                    @if($document->amountDue)
+                        <tr>
+                            <td class="text-right font-semibold border-t-4 border-double py-2">{{ $document->label->amountDue }}
+                                ({{ $document->currencyCode }}):
+                            </td>
+                            <td class="text-right border-t-4 border-double py-2">{{ $document->amountDue }}</td>
+                        </tr>
+                    @endif
                     </tbody>
                 </table>
             </div>
@@ -139,7 +150,7 @@
     </x-company.document-template.line-items>
 
     <!-- Footer -->
-    <x-company.document-template.footer class="classic-template-footer">
+    <x-company.document-template.footer class="classic-template-footer text-xs">
         <h4 class="font-semibold px-6 mb-2">Terms & Conditions</h4>
         <p class="px-6 break-words line-clamp-4">{{ $document->terms }}</p>
     </x-company.document-template.footer>

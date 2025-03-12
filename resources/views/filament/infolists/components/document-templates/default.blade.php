@@ -1,41 +1,42 @@
 <x-company.document-template.container class="default-template-container">
 
-    <x-company.document-template.header class="default-template-header border-b-2 p-6 pb-4">
-        <div class="w-2/3">
+    <x-company.document-template.header class="default-template-header border-b">
+        <div class="w-1/3">
             @if($document->logo && $document->showLogo)
                 <x-company.document-template.logo :src="$document->logo"/>
             @endif
         </div>
 
-        <div class="w-1/3 text-right">
-            <div class="text-sm tracking-tight">
-                <h2 class="text-lg font-semibold">{{ $document->company->name }}</h2>
-                @if($formattedAddress = $document->company->getFormattedAddressHtml())
-                    {!! $formattedAddress !!}
-                @endif
+        <div class="w-2/3 text-right">
+            <div class="space-y-4">
+                <div>
+                    <h1 class="text-3xl font-light uppercase">{{ $document->header }}</h1>
+                    @if ($document->subheader)
+                        <p class="text-sm text-gray-600 dark:text-gray-400">{{ $document->subheader }}</p>
+                    @endif
+                </div>
+                <div class="text-sm">
+                    <strong class="text-sm block">{{ $document->company->name }}</strong>
+                    @if($formattedAddress = $document->company->getFormattedAddressHtml())
+                        {!! $formattedAddress !!}
+                    @endif
+                </div>
             </div>
         </div>
     </x-company.document-template.header>
 
-    <x-company.document-template.metadata class="default-template-metadata space-y-8">
-        <div>
-            <h1 class="text-4xl font-light uppercase">{{ $document->header }}</h1>
-            @if ($document->subheader)
-                <h2 class="text-base text-gray-600 dark:text-gray-400">{{ $document->subheader }}</h2>
-            @endif
-        </div>
-
+    <x-company.document-template.metadata class="default-template-metadata space-y-4">
         <div class="flex justify-between items-end">
             <!-- Billing Details -->
-            <div class="text-sm tracking-tight">
-                <h3 class="text-gray-600 dark:text-gray-400 font-medium tracking-tight mb-1">BILL TO</h3>
-                <p class="text-base font-bold">{{ $document->client->name }}</p>
+            <div class="text-sm">
+                <h3 class="text-gray-600 dark:text-gray-400 font-medium mb-1">BILL TO</h3>
+                <p class="text-sm font-bold">{{ $document->client->name }}</p>
                 @if($formattedAddress = $document->client->getFormattedAddressHtml())
                     {!! $formattedAddress !!}
                 @endif
             </div>
 
-            <div class="text-sm tracking-tight">
+            <div class="text-sm">
                 <table class="min-w-full">
                     <tbody>
                     <tr>
@@ -73,7 +74,7 @@
                 <th class="text-right pr-6 w-[20%] py-2">{{ $document->columnLabel->amount }}</th>
             </tr>
             </thead>
-            <tbody class="text-sm tracking-tight border-b-2 border-gray-300">
+            <tbody class="text-sm border-b-2 border-gray-300">
             @foreach($document->lineItems as $item)
                 <tr>
                     <td class="text-left pl-6 font-semibold py-3">
@@ -88,7 +89,7 @@
                 </tr>
             @endforeach
             </tbody>
-            <tfoot class="text-sm tracking-tight summary-section">
+            <tfoot class="text-sm summary-section">
             <tr>
                 <td class="pl-6 py-2" colspan="2"></td>
                 <td class="text-right font-semibold py-2">Subtotal:</td>
@@ -129,10 +130,16 @@
     </x-company.document-template.line-items>
 
     <!-- Footer Notes -->
-    <x-company.document-template.footer class="default-template-footer tracking-tight">
-        <p class="px-6 text-sm">{{ $document->footer }}</p>
-        <span class="border-t-2 my-2 border-gray-300 block w-full"></span>
-        <h4 class="font-semibold px-6 mb-2 text-sm">Terms & Conditions</h4>
-        <p class="px-6 break-words line-clamp-4 text-sm">{{ $document->terms }}</p>
+    <x-company.document-template.footer class="classic-template-footer min-h-48 flex flex-col text-sm p-6">
+        <div>
+            <h4 class="font-semibold mb-2">Terms & Conditions</h4>
+            <p class="break-words line-clamp-4">{{ $document->terms }}</p>
+        </div>
+
+        @if($document->footer)
+            <div class="mt-auto text-center py-4">
+                <p class="font-semibold">{{ $document->footer }}</p>
+            </div>
+        @endif
     </x-company.document-template.footer>
 </x-company.document-template.container>
