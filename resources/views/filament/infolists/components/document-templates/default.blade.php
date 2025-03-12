@@ -1,13 +1,13 @@
 <x-company.document-template.container class="default-template-container">
 
     <x-company.document-template.header class="default-template-header border-b">
-        <div class="w-2/3">
+        <div class="w-1/3">
             @if($document->logo && $document->showLogo)
                 <x-company.document-template.logo :src="$document->logo"/>
             @endif
         </div>
 
-        <div class="w-1/3 text-right">
+        <div class="w-2/3 text-right">
             <div class="space-y-4">
                 <div>
                     <h1 class="text-3xl font-light uppercase">{{ $document->header }}</h1>
