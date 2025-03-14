@@ -30,6 +30,11 @@ class EditInvoice extends EditRecord
         return MaxWidth::Full;
     }
 
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('view', ['record' => $this->record]);
+    }
+
     protected function handleRecordUpdate(Model $record, array $data): Model
     {
         /** @var Invoice $record */
