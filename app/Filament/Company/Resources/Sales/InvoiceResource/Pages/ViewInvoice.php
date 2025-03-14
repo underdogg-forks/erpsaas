@@ -73,7 +73,7 @@ class ViewInvoice extends ViewRecord
                                     ->label('Client')
                                     ->color('primary')
                                     ->weight(FontWeight::SemiBold)
-                                    ->url(static fn (Invoice $record) => ClientResource::getUrl('edit', ['record' => $record->client_id])),
+                                    ->url(static fn (Invoice $record) => ClientResource::getUrl('view', ['record' => $record->client_id])),
                                 TextEntry::make('amount_due')
                                     ->label('Amount due')
                                     ->currency(static fn (Invoice $record) => $record->currency_code),

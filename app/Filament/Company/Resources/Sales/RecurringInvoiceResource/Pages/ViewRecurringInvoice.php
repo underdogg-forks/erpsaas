@@ -90,7 +90,7 @@ class ViewRecurringInvoice extends ViewRecord
                                     ->label('Client')
                                     ->color('primary')
                                     ->weight(FontWeight::SemiBold)
-                                    ->url(static fn (RecurringInvoice $record) => ClientResource::getUrl('edit', ['record' => $record->client_id])),
+                                    ->url(static fn (RecurringInvoice $record) => ClientResource::getUrl('view', ['record' => $record->client_id])),
                                 TextEntry::make('last_date')
                                     ->label('Last invoice')
                                     ->date()
