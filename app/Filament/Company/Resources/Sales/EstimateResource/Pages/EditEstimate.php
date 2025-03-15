@@ -3,6 +3,7 @@
 namespace App\Filament\Company\Resources\Sales\EstimateResource\Pages;
 
 use App\Concerns\ManagesLineItems;
+use App\Concerns\RedirectToViewPage;
 use App\Filament\Company\Resources\Sales\EstimateResource;
 use App\Models\Accounting\Estimate;
 use Filament\Actions;
@@ -13,6 +14,7 @@ use Illuminate\Database\Eloquent\Model;
 class EditEstimate extends EditRecord
 {
     use ManagesLineItems;
+    use RedirectToViewPage;
 
     protected static string $resource = EstimateResource::class;
 
@@ -26,11 +28,6 @@ class EditEstimate extends EditRecord
     public function getMaxContentWidth(): MaxWidth | string | null
     {
         return MaxWidth::Full;
-    }
-
-    protected function getRedirectUrl(): string
-    {
-        return $this->getResource()::getUrl('view', ['record' => $this->record]);
     }
 
     protected function handleRecordUpdate(Model $record, array $data): Model
