@@ -50,7 +50,7 @@
         </button>
     </div>
     <div x-show="open"
-         class="flex flex-col transition duration-200 ease-in-out grow shrink mt-4 absolute z-10 w-screen max-w-[360px] end-8 rounded-lg bg-white shadow-lg ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10 overflow-hidden">
+         class="flex flex-col transition duration-200 ease-in-out grow shrink mt-4 fixed z-10 w-screen max-w-[360px] end-4 sm:end-8 rounded-lg bg-white shadow-lg ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10 overflow-hidden">
         @foreach($panels as $panelId => $panel)
             <x-panel-shift-dropdown.panel :panel-id="$panelId">
                 @if($panelId !== 'main' && isset($panel['label']))

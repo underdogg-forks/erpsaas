@@ -76,7 +76,7 @@ class ViewEstimate extends ViewRecord
                                     ->label('Client')
                                     ->color('primary')
                                     ->weight(FontWeight::SemiBold)
-                                    ->url(static fn (Estimate $record) => ClientResource::getUrl('edit', ['record' => $record->client_id])),
+                                    ->url(static fn (Estimate $record) => ClientResource::getUrl('view', ['record' => $record->client_id])),
                                 TextEntry::make('expiration_date')
                                     ->label('Expiration date')
                                     ->asRelativeDay(),
