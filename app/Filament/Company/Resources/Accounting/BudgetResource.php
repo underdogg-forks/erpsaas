@@ -67,6 +67,19 @@ class BudgetResource extends Resource
                                     ->columnSpan(1)
                                     ->required(),
 
+                                Forms\Components\TextInput::make('total_amount')
+                                    ->label('Total Amount')
+                                    ->numeric()
+                                    ->required()
+                                    ->columnSpan(1)
+                                    ->suffixAction(
+                                        Forms\Components\Actions\Action::make('disperse')
+                                            ->label('Disperse')
+                                            ->icon('heroicon-m-bars-arrow-down')
+                                            ->color('primary')
+                                            ->action(fn (Forms\Set $set, Forms\Get $get, $state) => self::disperseTotalAmount($set, $get, $state))
+                                    ),
+
                                 CustomSection::make('Budget Allocations')
                                     ->contained(false)
                                     ->columns(4)
@@ -96,6 +109,66 @@ class BudgetResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    /**
+     * Disperses the total amount across the budget items based on the selected interval.
+     */
+    private static function disperseTotalAmount(Forms\Set $set, Forms\Get $get, float $totalAmount): void
+    {
+        $startDate = $get('../../start_date');
+        $endDate = $get('../../end_date');
+        $intervalType = $get('../../interval_type');
+
+        if (! $startDate || ! $endDate || ! $intervalType || $totalAmount <= 0) {
+            return;
+        }
+
+        // Generate labels based on interval type (must match `getAllocationFields()`)
+        $labels = self::generateFormattedLabels($startDate, $endDate, $intervalType);
+        $numPeriods = count($labels);
+
+        if ($numPeriods === 0) {
+            return;
+        }
+
+        // Calculate base allocation and handle rounding
+        $baseAmount = floor($totalAmount / $numPeriods);
+        $remainder = $totalAmount - ($baseAmount * $numPeriods);
+
+        // Assign amounts to the correct fields using labels
+        foreach ($labels as $index => $label) {
+            $amount = $baseAmount + ($index === 0 ? $remainder : 0);
+            $set("amounts.{$label}", $amount); // Now correctly assigns to the right field
+        }
+    }
+
+    /**
+     * Generates formatted labels for the budget allocation fields based on the selected interval type.
+     */
+    private static function generateFormattedLabels(string $startDate, string $endDate, string $intervalType): array
+    {
+        $start = Carbon::parse($startDate);
+        $end = Carbon::parse($endDate);
+        $labels = [];
+
+        while ($start->lte($end)) {
+            $labels[] = match ($intervalType) {
+                'month' => $start->format('M'), // Example: Jan, Feb, Mar
+                'quarter' => 'Q' . $start->quarter, // Example: Q1, Q2, Q3
+                'year' => (string) $start->year, // Example: 2024, 2025
+                default => '',
+            };
+
+            match ($intervalType) {
+                'month' => $start->addMonth(),
+                'quarter' => $start->addQuarter(),
+                'year' => $start->addYear(),
+                default => null,
+            };
+        }
+
+        return $labels;
     }
 
     private static function getAllocationFields(?string $startDate, ?string $endDate, ?string $intervalType): array
