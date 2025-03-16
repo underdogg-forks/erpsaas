@@ -119,7 +119,6 @@ class BudgetResource extends Resource
             $fields[] = Forms\Components\TextInput::make("amounts.{$label}")
                 ->label($label)
                 ->numeric()
-                ->suffix('USD')
                 ->required();
 
             // Move to the next period
