@@ -5,6 +5,7 @@ namespace App\Models\Accounting;
 use App\Concerns\Blamable;
 use App\Concerns\CompanyOwned;
 use App\Enums\Accounting\BudgetStatus;
+use App\Filament\Company\Resources\Accounting\BudgetResource;
 use Filament\Actions\Action;
 use Filament\Actions\MountableAction;
 use Filament\Actions\ReplicateAction;
@@ -13,6 +14,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Support\Carbon;
 
 class Budget extends Model
@@ -46,6 +48,11 @@ class Budget extends Model
     public function budgetItems(): HasMany
     {
         return $this->hasMany(BudgetItem::class);
+    }
+
+    public function allocations(): HasManyThrough
+    {
+        return $this->hasManyThrough(BudgetAllocation::class, BudgetItem::class);
     }
 
     public function isDraft(): bool
@@ -86,6 +93,11 @@ class Budget extends Model
     public function hasItems(): bool
     {
         return $this->budgetItems()->exists();
+    }
+
+    public function hasAllocations(): bool
+    {
+        return $this->allocations()->exists();
     }
 
     public function scopeDraft(Builder $query): Builder
@@ -245,13 +257,10 @@ class Budget extends Model
             ->beforeReplicaSaved(function (self $original, self $replica) {
                 $replica->status = BudgetStatus::Draft;
                 $replica->name = $replica->name . ' (Copy)';
-                // Optionally adjust dates for the new budget period
-                // $replica->start_date = now()->startOfMonth();
-                // $replica->end_date = now()->endOfYear();
             })
             ->databaseTransaction()
             ->after(function (self $original, self $replica) {
-                // Clone budget items
+                // Clone budget items and their allocations
                 $original->budgetItems->each(function (BudgetItem $item) use ($replica) {
                     $newItem = $item->replicate([
                         'budget_id',
@@ -263,6 +272,18 @@ class Budget extends Model
 
                     $newItem->budget_id = $replica->id;
                     $newItem->save();
+
+                    // Clone the allocations for this budget item
+                    $item->allocations->each(function (BudgetAllocation $allocation) use ($newItem) {
+                        $newAllocation = $allocation->replicate([
+                            'budget_item_id',
+                            'created_at',
+                            'updated_at',
+                        ]);
+
+                        $newAllocation->budget_item_id = $newItem->id;
+                        $newAllocation->save();
+                    });
                 });
             })
             ->successRedirectUrl(static function (self $replica) {
