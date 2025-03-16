@@ -2,8 +2,10 @@
 
 namespace App\Filament\Company\Resources\Accounting\BudgetResource\Pages;
 
+use App\Enums\Accounting\BudgetIntervalType;
 use App\Filament\Company\Resources\Accounting\BudgetResource;
 use App\Models\Accounting\Budget;
+use App\Models\Accounting\BudgetAllocation;
 use App\Models\Accounting\BudgetItem;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
@@ -27,12 +29,12 @@ class EditBudget extends EditRecord
         /** @var Budget $budget */
         $budget = $this->record;
 
-        $data['budgetItems'] = $budget->budgetItems->map(function ($budgetItem) {
+        $data['budgetItems'] = $budget->budgetItems->map(function (BudgetItem $budgetItem) {
             return [
                 'id' => $budgetItem->id,
                 'account_id' => $budgetItem->account_id,
                 'total_amount' => $budgetItem->allocations->sum('amount'), // Calculate total dynamically
-                'amounts' => $budgetItem->allocations->mapWithKeys(function ($allocation) {
+                'amounts' => $budgetItem->allocations->mapWithKeys(static function (BudgetAllocation $allocation) {
                     return [$allocation->period => $allocation->amount]; // Use the correct period label
                 })->toArray(),
             ];
@@ -70,7 +72,7 @@ class EditBudget extends EditRecord
             $allocationStart = Carbon::parse($data['start_date']);
 
             foreach ($itemData['amounts'] as $periodLabel => $amount) {
-                $allocationEnd = self::calculateEndDate($allocationStart, $data['interval_type']);
+                $allocationEnd = self::calculateEndDate($allocationStart, BudgetIntervalType::parse($data['interval_type']));
 
                 // Recreate allocations
                 $budgetItem->allocations()->create([
@@ -90,12 +92,13 @@ class EditBudget extends EditRecord
         return $budget;
     }
 
-    private static function calculateEndDate(Carbon $startDate, string $intervalType): Carbon
+    private static function calculateEndDate(Carbon $startDate, BudgetIntervalType $intervalType): Carbon
     {
         return match ($intervalType) {
-            'quarter' => $startDate->copy()->addMonths(2)->endOfMonth(),
-            'year' => $startDate->copy()->endOfYear(),
-            default => $startDate->copy()->endOfMonth(),
+            BudgetIntervalType::Week => $startDate->copy()->endOfWeek(),
+            BudgetIntervalType::Month => $startDate->copy()->endOfMonth(),
+            BudgetIntervalType::Quarter => $startDate->copy()->endOfQuarter(),
+            BudgetIntervalType::Year => $startDate->copy()->endOfYear(),
         };
     }
 }

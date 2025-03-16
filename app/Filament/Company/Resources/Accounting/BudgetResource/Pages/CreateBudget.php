@@ -2,6 +2,7 @@
 
 namespace App\Filament\Company\Resources\Accounting\BudgetResource\Pages;
 
+use App\Enums\Accounting\BudgetIntervalType;
 use App\Filament\Company\Resources\Accounting\BudgetResource;
 use App\Models\Accounting\Budget;
 use App\Models\Accounting\BudgetItem;
@@ -33,7 +34,7 @@ class CreateBudget extends CreateRecord
             $allocationStart = Carbon::parse($data['start_date']);
 
             foreach ($itemData['amounts'] as $periodLabel => $amount) {
-                $allocationEnd = self::calculateEndDate($allocationStart, $data['interval_type']);
+                $allocationEnd = self::calculateEndDate($allocationStart, BudgetIntervalType::parse($data['interval_type']));
 
                 $budgetItem->allocations()->create([
                     'period' => $periodLabel,
@@ -50,12 +51,13 @@ class CreateBudget extends CreateRecord
         return $budget;
     }
 
-    private static function calculateEndDate(Carbon $startDate, string $intervalType): Carbon
+    private static function calculateEndDate(Carbon $startDate, BudgetIntervalType $intervalType): Carbon
     {
         return match ($intervalType) {
-            'quarter' => $startDate->copy()->addMonths(2)->endOfMonth(),
-            'year' => $startDate->copy()->endOfYear(),
-            default => $startDate->copy()->endOfMonth(),
+            BudgetIntervalType::Week => $startDate->copy()->endOfWeek(),
+            BudgetIntervalType::Month => $startDate->copy()->endOfMonth(),
+            BudgetIntervalType::Quarter => $startDate->copy()->endOfQuarter(),
+            BudgetIntervalType::Year => $startDate->copy()->endOfYear(),
         };
     }
 }

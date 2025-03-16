@@ -2,6 +2,7 @@
 
 namespace App\Filament\Company\Resources\Accounting;
 
+use App\Enums\Accounting\BudgetIntervalType;
 use App\Filament\Company\Resources\Accounting\BudgetResource\Pages;
 use App\Filament\Forms\Components\CustomSection;
 use App\Models\Accounting\Account;
@@ -31,14 +32,8 @@ class BudgetResource extends Resource
                             ->maxLength(255),
                         Forms\Components\Select::make('interval_type')
                             ->label('Budget Interval')
-                            ->options([
-                                'day' => 'Daily',
-                                'week' => 'Weekly',
-                                'month' => 'Monthly',
-                                'quarter' => 'Quarterly',
-                                'year' => 'Yearly',
-                            ])
-                            ->default('month')
+                            ->options(BudgetIntervalType::class)
+                            ->default(BudgetIntervalType::Month->value)
                             ->required()
                             ->live(),
                         Forms\Components\DatePicker::make('start_date')
@@ -75,7 +70,7 @@ class BudgetResource extends Resource
                                             ->label('Disperse')
                                             ->icon('heroicon-m-bars-arrow-down')
                                             ->color('primary')
-                                            ->action(fn (Forms\Set $set, Forms\Get $get, $state) => self::disperseTotalAmount($set, $get, $state))
+                                            ->action(static fn (Forms\Set $set, Forms\Get $get, $state) => self::disperseTotalAmount($set, $get, $state))
                                     ),
 
                                 CustomSection::make('Budget Allocations')
@@ -100,8 +95,7 @@ class BudgetResource extends Resource
                 Tables\Columns\TextColumn::make('interval_type')
                     ->label('Interval')
                     ->sortable()
-                    ->badge()
-                    ->formatStateUsing(fn (string $state) => ucfirst($state)),
+                    ->badge(),
 
                 Tables\Columns\TextColumn::make('start_date')
                     ->label('Start Date')
@@ -118,7 +112,7 @@ class BudgetResource extends Resource
                     ->money()
                     ->sortable()
                     ->alignEnd()
-                    ->formatStateUsing(fn (Budget $record) => $record->budgetItems->sum(fn ($item) => $item->allocations->sum('amount'))),
+                    ->getStateUsing(fn (Budget $record) => $record->budgetItems->sum(fn ($item) => $item->allocations->sum('amount'))),
             ])
             ->filters([
                 //
@@ -175,20 +169,23 @@ class BudgetResource extends Resource
     {
         $start = Carbon::parse($startDate);
         $end = Carbon::parse($endDate);
+        $intervalTypeEnum = BudgetIntervalType::parse($intervalType);
         $labels = [];
 
         while ($start->lte($end)) {
-            $labels[] = match ($intervalType) {
-                'month' => $start->format('M'), // Example: Jan, Feb, Mar
-                'quarter' => 'Q' . $start->quarter, // Example: Q1, Q2, Q3
-                'year' => (string) $start->year, // Example: 2024, 2025
+            $labels[] = match ($intervalTypeEnum) {
+                BudgetIntervalType::Week => 'W' . $start->weekOfYear . ' ' . $start->year, // Example: W10 2024
+                BudgetIntervalType::Month => $start->format('M'), // Example: Jan, Feb, Mar
+                BudgetIntervalType::Quarter => 'Q' . $start->quarter, // Example: Q1, Q2, Q3
+                BudgetIntervalType::Year => (string) $start->year, // Example: 2024, 2025
                 default => '',
             };
 
-            match ($intervalType) {
-                'month' => $start->addMonth(),
-                'quarter' => $start->addQuarter(),
-                'year' => $start->addYear(),
+            match ($intervalTypeEnum) {
+                BudgetIntervalType::Week => $start->addWeek(),
+                BudgetIntervalType::Month => $start->addMonth(),
+                BudgetIntervalType::Quarter => $start->addQuarter(),
+                BudgetIntervalType::Year => $start->addYear(),
                 default => null,
             };
         }
@@ -204,13 +201,15 @@ class BudgetResource extends Resource
 
         $start = Carbon::parse($startDate);
         $end = Carbon::parse($endDate);
+        $intervalTypeEnum = BudgetIntervalType::parse($intervalType);
         $fields = [];
 
         while ($start->lte($end)) {
-            $label = match ($intervalType) {
-                'month' => $start->format('M'), // Example: Jan, Feb, Mar
-                'quarter' => 'Q' . $start->quarter, // Example: Q1, Q2, Q3
-                'year' => (string) $start->year, // Example: 2024, 2025
+            $label = match ($intervalTypeEnum) {
+                BudgetIntervalType::Week => 'W' . $start->weekOfYear . ' ' . $start->year, // Example: W10 2024
+                BudgetIntervalType::Month => $start->format('M'), // Example: Jan, Feb, Mar
+                BudgetIntervalType::Quarter => 'Q' . $start->quarter, // Example: Q1, Q2, Q3
+                BudgetIntervalType::Year => (string) $start->year, // Example: 2024, 2025
                 default => '',
             };
 
@@ -220,10 +219,11 @@ class BudgetResource extends Resource
                 ->required();
 
             // Move to the next period
-            match ($intervalType) {
-                'month' => $start->addMonth(),
-                'quarter' => $start->addQuarter(),
-                'year' => $start->addYear(),
+            match ($intervalTypeEnum) {
+                BudgetIntervalType::Week => $start->addWeek(),
+                BudgetIntervalType::Month => $start->addMonth(),
+                BudgetIntervalType::Quarter => $start->addQuarter(),
+                BudgetIntervalType::Year => $start->addYear(),
                 default => null,
             };
         }

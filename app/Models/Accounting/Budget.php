@@ -4,6 +4,7 @@ namespace App\Models\Accounting;
 
 use App\Concerns\Blamable;
 use App\Concerns\CompanyOwned;
+use App\Enums\Accounting\BudgetIntervalType;
 use App\Enums\Accounting\BudgetStatus;
 use App\Filament\Company\Resources\Accounting\BudgetResource;
 use Filament\Actions\Action;
@@ -41,6 +42,7 @@ class Budget extends Model
         'start_date' => 'date',
         'end_date' => 'date',
         'status' => BudgetStatus::class,
+        'interval_type' => BudgetIntervalType::class,
         'approved_at' => 'datetime',
         'closed_at' => 'datetime',
     ];
