@@ -197,5 +197,8 @@
     "account": "account",
     "currency": "currency",
     "Estimate": "Estimate",
-    "Column Labels": "Column Labels"
+    "Column Labels": "Column Labels",
+    "Budget Details": "Budget Details",
+    "Budget Items": "Budget Items",
+    "Budget Allocations": "Budget Allocations"
 }

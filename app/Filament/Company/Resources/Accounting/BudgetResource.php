@@ -3,15 +3,16 @@
 namespace App\Filament\Company\Resources\Accounting;
 
 use App\Filament\Company\Resources\Accounting\BudgetResource\Pages;
+use App\Filament\Forms\Components\CustomSection;
 use App\Models\Accounting\Account;
 use App\Models\Accounting\Budget;
-use Awcodes\TableRepeater\Components\TableRepeater;
-use Awcodes\TableRepeater\Header;
+use App\Models\Accounting\BudgetItem;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Carbon;
 
 class BudgetResource extends Resource
 {
@@ -24,16 +25,11 @@ class BudgetResource extends Resource
         return $form
             ->schema([
                 Forms\Components\Section::make('Budget Details')
+                    ->columns()
                     ->schema([
                         Forms\Components\TextInput::make('name')
                             ->required()
                             ->maxLength(255),
-
-                        Forms\Components\Grid::make(2)->schema([
-                            Forms\Components\DatePicker::make('start_date')->required(),
-                            Forms\Components\DatePicker::make('end_date')->required(),
-                        ]),
-
                         Forms\Components\Select::make('interval_type')
                             ->label('Budget Interval')
                             ->options([
@@ -46,33 +42,35 @@ class BudgetResource extends Resource
                             ->default('month')
                             ->required()
                             ->live(),
-
+                        Forms\Components\DatePicker::make('start_date')
+                            ->required()
+                            ->default(now()->startOfYear())
+                            ->live(),
+                        Forms\Components\DatePicker::make('end_date')
+                            ->required()
+                            ->default(now()->endOfYear())
+                            ->live(),
                         Forms\Components\Textarea::make('notes')->columnSpanFull(),
                     ]),
 
                 Forms\Components\Section::make('Budget Items')
                     ->schema([
-                        TableRepeater::make('budgetItems')
+                        Forms\Components\Repeater::make('budgetItems')
                             ->relationship()
-                            ->saveRelationshipsUsing(null)
-                            ->dehydrated(true)
-                            ->headers(fn (Forms\Get $get) => self::getHeaders($get('interval_type')))
+                            ->columns(4)
+                            ->hiddenLabel()
                             ->schema([
                                 Forms\Components\Select::make('account_id')
                                     ->label('Account')
                                     ->options(Account::query()->pluck('name', 'id'))
                                     ->searchable()
+                                    ->columnSpan(1)
                                     ->required(),
 
-                                Forms\Components\Grid::make(2)->schema([
-                                    Forms\Components\DatePicker::make('start_date')->required(),
-                                    Forms\Components\DatePicker::make('end_date')->required(),
-                                ]),
-
-                                Forms\Components\TextInput::make('amount')
-                                    ->numeric()
-                                    ->suffix('USD')
-                                    ->required(),
+                                CustomSection::make('Budget Allocations')
+                                    ->contained(false)
+                                    ->columns(4)
+                                    ->schema(static fn (Forms\Get $get) => self::getAllocationFields($get('../../start_date'), $get('../../end_date'), $get('../../interval_type'))),
                             ])
                             ->defaultItems(1)
                             ->addActionLabel('Add Budget Item'),
@@ -100,39 +98,87 @@ class BudgetResource extends Resource
             ]);
     }
 
-    private static function getHeaders(?string $intervalType): array
+    private static function getAllocationFields(?string $startDate, ?string $endDate, ?string $intervalType): array
     {
-        $headers = [
-            Header::make('Account')->width('20%'),
-            Header::make('Start Date')->width('15%'),
-            Header::make('End Date')->width('15%'),
-        ];
-
-        // Adjust the number of columns dynamically based on interval type
-        switch ($intervalType) {
-            case 'day':
-                $headers[] = Header::make('Daily Budget')->width('20%')->align('right');
-
-                break;
-            case 'week':
-                $headers[] = Header::make('Weekly Budget')->width('20%')->align('right');
-
-                break;
-            case 'month':
-                $headers[] = Header::make('Monthly Budget')->width('20%')->align('right');
-
-                break;
-            case 'quarter':
-                $headers[] = Header::make('Quarterly Budget')->width('20%')->align('right');
-
-                break;
-            case 'year':
-                $headers[] = Header::make('Yearly Budget')->width('20%')->align('right');
-
-                break;
+        if (! $startDate || ! $endDate || ! $intervalType) {
+            return [];
         }
 
-        return $headers;
+        $start = Carbon::parse($startDate);
+        $end = Carbon::parse($endDate);
+        $fields = [];
+
+        while ($start->lte($end)) {
+            $label = match ($intervalType) {
+                'month' => $start->format('M'), // Example: Jan, Feb, Mar
+                'quarter' => 'Q' . $start->quarter, // Example: Q1, Q2, Q3
+                'year' => (string) $start->year, // Example: 2024, 2025
+                default => '',
+            };
+
+            $fields[] = Forms\Components\TextInput::make("amounts.{$label}")
+                ->label($label)
+                ->numeric()
+                ->suffix('USD')
+                ->required();
+
+            // Move to the next period
+            match ($intervalType) {
+                'month' => $start->addMonth(),
+                'quarter' => $start->addQuarter(),
+                'year' => $start->addYear(),
+                default => null,
+            };
+        }
+
+        return $fields;
+    }
+
+    /**
+     * Generates an array of interval labels (e.g., Jan 2024, Q1 2024, etc.).
+     */
+    private static function generateIntervals(string $startDate, string $endDate, string $intervalType): array
+    {
+        $start = Carbon::parse($startDate);
+        $end = Carbon::parse($endDate);
+        $intervals = [];
+
+        while ($start->lte($end)) {
+            if ($intervalType === 'month') {
+                $intervals[] = $start->format('M Y'); // Example: Jan 2024
+                $start->addMonth();
+            } elseif ($intervalType === 'quarter') {
+                $intervals[] = 'Q' . $start->quarter . ' ' . $start->year; // Example: Q1 2024
+                $start->addQuarter();
+            } elseif ($intervalType === 'year') {
+                $intervals[] = $start->year; // Example: 2024
+                $start->addYear();
+            }
+        }
+
+        return $intervals;
+    }
+
+    /**
+     * Saves budget allocations correctly in `budget_allocations` table.
+     */
+    public static function saveBudgetAllocations(BudgetItem $record, array $data): void
+    {
+        $record->update($data);
+
+        $intervals = self::generateIntervals($data['start_date'], $data['end_date'], $data['interval_type']);
+
+        foreach ($intervals as $interval) {
+            $record->allocations()->updateOrCreate(
+                ['period' => $interval],
+                [
+                    'interval_type' => $data['interval_type'],
+                    'start_date' => Carbon::parse($interval)->startOfMonth(),
+                    'end_date' => Carbon::parse($interval)->endOfMonth(),
+                    'amount' => $data['allocations'][$interval] ?? 0,
+                ]
+            );
+        }
     }
 
     public static function getRelations(): array
