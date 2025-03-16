@@ -43,11 +43,30 @@ class BudgetResource extends Resource
                         Forms\Components\DatePicker::make('end_date')
                             ->required()
                             ->default(now()->endOfYear())
-                            ->live(),
-                        Forms\Components\Textarea::make('notes')->columnSpanFull(),
+                            ->live()
+                            ->disabled(static fn (Forms\Get $get) => blank($get('start_date')))
+                            ->minDate(fn (Forms\Get $get) => match (BudgetIntervalType::parse($get('interval_type'))) {
+                                BudgetIntervalType::Week => Carbon::parse($get('start_date'))->addWeek(),
+                                BudgetIntervalType::Month => Carbon::parse($get('start_date'))->addMonth(),
+                                BudgetIntervalType::Quarter => Carbon::parse($get('start_date'))->addQuarter(),
+                                BudgetIntervalType::Year => Carbon::parse($get('start_date'))->addYear(),
+                                default => Carbon::parse($get('start_date'))->addDay(),
+                            })
+                            ->maxDate(fn (Forms\Get $get) => Carbon::parse($get('start_date'))->endOfYear()),
+                        Forms\Components\Textarea::make('notes')
+                            ->columnSpanFull(),
                     ]),
 
                 Forms\Components\Section::make('Budget Items')
+                    ->headerActions([
+                        Forms\Components\Actions\Action::make('addAllAccounts')
+                            ->label('Add All Accounts')
+                            ->icon('heroicon-m-plus')
+                            ->outlined()
+                            ->color('primary')
+                            ->action(static fn (Forms\Set $set, Forms\Get $get) => self::addAllAccounts($set, $get))
+                            ->hidden(static fn (Forms\Get $get) => filled($get('budgetItems'))),
+                    ])
                     ->schema([
                         Forms\Components\Repeater::make('budgetItems')
                             ->columns(4)
@@ -57,13 +76,13 @@ class BudgetResource extends Resource
                                     ->label('Account')
                                     ->options(Account::query()->pluck('name', 'id'))
                                     ->searchable()
+                                    ->disableOptionsWhenSelectedInSiblingRepeaterItems()
                                     ->columnSpan(1)
                                     ->required(),
 
                                 Forms\Components\TextInput::make('total_amount')
                                     ->label('Total Amount')
                                     ->numeric()
-                                    ->required()
                                     ->columnSpan(1)
                                     ->suffixAction(
                                         Forms\Components\Actions\Action::make('disperse')
@@ -78,7 +97,7 @@ class BudgetResource extends Resource
                                     ->columns(4)
                                     ->schema(static fn (Forms\Get $get) => self::getAllocationFields($get('../../start_date'), $get('../../end_date'), $get('../../interval_type'))),
                             ])
-                            ->defaultItems(1)
+                            ->defaultItems(0)
                             ->addActionLabel('Add Budget Item'),
                     ]),
             ]);
@@ -130,9 +149,31 @@ class BudgetResource extends Resource
             ]);
     }
 
-    /**
-     * Disperses the total amount across the budget items based on the selected interval.
-     */
+    private static function addAllAccounts(Forms\Set $set, Forms\Get $get): void
+    {
+        $accounts = Account::query()
+            ->pluck('id');
+
+        $budgetItems = $accounts->map(static fn ($accountId) => [
+            'account_id' => $accountId,
+            'total_amount' => 0, // Default to 0 until the user inputs amounts
+            'amounts' => self::generateDefaultAllocations($get('start_date'), $get('end_date'), $get('interval_type')),
+        ])->toArray();
+
+        $set('budgetItems', $budgetItems);
+    }
+
+    private static function generateDefaultAllocations(?string $startDate, ?string $endDate, ?string $intervalType): array
+    {
+        if (! $startDate || ! $endDate || ! $intervalType) {
+            return [];
+        }
+
+        $labels = self::generateFormattedLabels($startDate, $endDate, $intervalType);
+
+        return collect($labels)->mapWithKeys(static fn ($label) => [$label => 0])->toArray();
+    }
+
     private static function disperseTotalAmount(Forms\Set $set, Forms\Get $get, float $totalAmount): void
     {
         $startDate = $get('../../start_date');
@@ -143,7 +184,6 @@ class BudgetResource extends Resource
             return;
         }
 
-        // Generate labels based on interval type (must match `getAllocationFields()`)
         $labels = self::generateFormattedLabels($startDate, $endDate, $intervalType);
         $numPeriods = count($labels);
 
@@ -151,20 +191,15 @@ class BudgetResource extends Resource
             return;
         }
 
-        // Calculate base allocation and handle rounding
         $baseAmount = floor($totalAmount / $numPeriods);
         $remainder = $totalAmount - ($baseAmount * $numPeriods);
 
-        // Assign amounts to the correct fields using labels
         foreach ($labels as $index => $label) {
             $amount = $baseAmount + ($index === 0 ? $remainder : 0);
-            $set("amounts.{$label}", $amount); // Now correctly assigns to the right field
+            $set("amounts.{$label}", $amount);
         }
     }
 
-    /**
-     * Generates formatted labels for the budget allocation fields based on the selected interval type.
-     */
     private static function generateFormattedLabels(string $startDate, string $endDate, string $intervalType): array
     {
         $start = Carbon::parse($startDate);
@@ -218,7 +253,6 @@ class BudgetResource extends Resource
                 ->numeric()
                 ->required();
 
-            // Move to the next period
             match ($intervalTypeEnum) {
                 BudgetIntervalType::Week => $start->addWeek(),
                 BudgetIntervalType::Month => $start->addMonth(),
