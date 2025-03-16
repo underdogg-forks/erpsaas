@@ -59,13 +59,106 @@ class BudgetResource extends Resource
 
                 Forms\Components\Section::make('Budget Items')
                     ->headerActions([
+                        Forms\Components\Actions\Action::make('addAccounts')
+                            ->label('Add Accounts')
+                            ->icon('heroicon-m-plus')
+                            ->outlined()
+                            ->color('primary')
+                            ->form(fn (Forms\Get $get) => [
+                                Forms\Components\Select::make('selected_accounts')
+                                    ->label('Choose Accounts to Add')
+                                    ->options(function () use ($get) {
+                                        $existingAccounts = collect($get('budgetItems'))->pluck('account_id')->toArray();
+
+                                        return Account::query()
+                                            ->budgetable()
+                                            ->whereNotIn('id', $existingAccounts) // Prevent duplicate selections
+                                            ->pluck('name', 'id');
+                                    })
+                                    ->searchable()
+                                    ->multiple()
+                                    ->hint('Select the accounts you want to add to this budget'),
+                            ])
+                            ->action(static fn (Forms\Set $set, Forms\Get $get, array $data) => self::addSelectedAccounts($set, $get, $data)),
+
                         Forms\Components\Actions\Action::make('addAllAccounts')
                             ->label('Add All Accounts')
-                            ->icon('heroicon-m-plus')
+                            ->icon('heroicon-m-folder-plus')
                             ->outlined()
                             ->color('primary')
                             ->action(static fn (Forms\Set $set, Forms\Get $get) => self::addAllAccounts($set, $get))
                             ->hidden(static fn (Forms\Get $get) => filled($get('budgetItems'))),
+
+                        Forms\Components\Actions\Action::make('increaseAllocations')
+                            ->label('Increase Allocations')
+                            ->icon('heroicon-m-arrow-up')
+                            ->outlined()
+                            ->color('success')
+                            ->form(fn (Forms\Get $get) => [
+                                Forms\Components\Select::make('increase_type')
+                                    ->label('Increase Type')
+                                    ->options([
+                                        'percentage' => 'Percentage (%)',
+                                        'fixed' => 'Fixed Amount',
+                                    ])
+                                    ->default('percentage')
+                                    ->live()
+                                    ->required(),
+
+                                Forms\Components\TextInput::make('percentage')
+                                    ->label('Increase by %')
+                                    ->numeric()
+                                    ->suffix('%')
+                                    ->required()
+                                    ->hidden(fn (Forms\Get $get) => $get('increase_type') !== 'percentage'),
+
+                                Forms\Components\TextInput::make('fixed_amount')
+                                    ->label('Increase by Fixed Amount')
+                                    ->numeric()
+                                    ->suffix('USD')
+                                    ->required()
+                                    ->hidden(fn (Forms\Get $get) => $get('increase_type') !== 'fixed'),
+
+                                Forms\Components\Select::make('apply_to_accounts')
+                                    ->label('Apply to Accounts')
+                                    ->options(function () use ($get) {
+                                        $budgetItems = $get('budgetItems') ?? [];
+                                        $accountIds = collect($budgetItems)
+                                            ->pluck('account_id')
+                                            ->filter()
+                                            ->unique()
+                                            ->toArray();
+
+                                        return Account::query()
+                                            ->whereIn('id', $accountIds)
+                                            ->pluck('name', 'id')
+                                            ->toArray();
+                                    })
+                                    ->searchable()
+                                    ->multiple()
+                                    ->hint('Leave blank to apply to all accounts'),
+
+                                Forms\Components\Select::make('apply_to_periods')
+                                    ->label('Apply to Periods')
+                                    ->options(static function () use ($get) {
+                                        $startDate = $get('start_date');
+                                        $endDate = $get('end_date');
+                                        $intervalType = $get('interval_type');
+
+                                        if (blank($startDate) || blank($endDate) || blank($intervalType)) {
+                                            return [];
+                                        }
+
+                                        $labels = self::generateFormattedLabels($startDate, $endDate, $intervalType);
+
+                                        return array_combine($labels, $labels);
+                                    })
+                                    ->searchable()
+                                    ->multiple()
+                                    ->hint('Leave blank to apply to all periods'),
+                            ])
+                            ->action(static fn (Forms\Set $set, Forms\Get $get, array $data) => self::increaseAllocations($set, $get, $data))
+                            ->visible(static fn (Forms\Get $get) => filled($get('budgetItems'))),
                     ])
                     ->schema([
                         Forms\Components\Repeater::make('budgetItems')
@@ -74,7 +167,9 @@ class BudgetResource extends Resource
                             ->schema([
                                 Forms\Components\Select::make('account_id')
                                     ->label('Account')
-                                    ->options(Account::query()->pluck('name', 'id'))
+                                    ->options(Account::query()
+                                        ->budgetable()
+                                        ->pluck('name', 'id'))
                                     ->searchable()
                                     ->disableOptionsWhenSelectedInSiblingRepeaterItems()
                                     ->columnSpan(1)
@@ -152,6 +247,7 @@ class BudgetResource extends Resource
     private static function addAllAccounts(Forms\Set $set, Forms\Get $get): void
     {
         $accounts = Account::query()
+            ->budgetable()
             ->pluck('id');
 
         $budgetItems = $accounts->map(static fn ($accountId) => [
@@ -163,6 +259,33 @@ class BudgetResource extends Resource
         $set('budgetItems', $budgetItems);
     }
 
+    private static function addSelectedAccounts(Forms\Set $set, Forms\Get $get, array $data): void
+    {
+        $selectedAccountIds = $data['selected_accounts'] ?? [];
+
+        if (empty($selectedAccountIds)) {
+            return; // No accounts selected, do nothing.
+        }
+
+        $existingAccountIds = collect($get('budgetItems'))
+            ->pluck('account_id')
+            ->unique()
+            ->filter()
+            ->toArray();
+
+        // Only add accounts that aren't already in the budget items
+        $newAccounts = array_diff($selectedAccountIds, $existingAccountIds);
+
+        $newBudgetItems = collect($newAccounts)->map(static fn ($accountId) => [
+            'account_id' => $accountId,
+            'total_amount' => 0,
+            'amounts' => self::generateDefaultAllocations($get('start_date'), $get('end_date'), $get('interval_type')),
+        ])->toArray();
+
+        // Merge new budget items with existing ones
+        $set('budgetItems', array_merge($get('budgetItems') ?? [], $newBudgetItems));
+    }
+
     private static function generateDefaultAllocations(?string $startDate, ?string $endDate, ?string $intervalType): array
     {
         if (! $startDate || ! $endDate || ! $intervalType) {
@@ -172,6 +295,47 @@ class BudgetResource extends Resource
         $labels = self::generateFormattedLabels($startDate, $endDate, $intervalType);
 
         return collect($labels)->mapWithKeys(static fn ($label) => [$label => 0])->toArray();
+    }
+
+    private static function increaseAllocations(Forms\Set $set, Forms\Get $get, array $data): void
+    {
+        $increaseType = $data['increase_type']; // 'percentage' or 'fixed'
+        $percentage = $data['percentage'] ?? 0;
+        $fixedAmount = $data['fixed_amount'] ?? 0;
+
+        $selectedAccounts = $data['apply_to_accounts'] ?? []; // Selected account IDs
+        $selectedPeriods = $data['apply_to_periods'] ?? []; // Selected period labels
+
+        $budgetItems = $get('budgetItems') ?? [];
+
+        foreach ($budgetItems as $index => $budgetItem) {
+            // Skip if this account isn't selected (unless all accounts are being updated)
+            if (! empty($selectedAccounts) && ! in_array($budgetItem['account_id'], $selectedAccounts)) {
+                continue;
+            }
+
+            if (empty($budgetItem['amounts'])) {
+                continue; // Skip if no allocations exist
+            }
+
+            $updatedAmounts = $budgetItem['amounts']; // Clone existing amounts
+            foreach ($updatedAmounts as $label => $amount) {
+                // Skip if this period isn't selected (unless all periods are being updated)
+                if (! empty($selectedPeriods) && ! in_array($label, $selectedPeriods)) {
+                    continue;
+                }
+
+                // Apply increase based on selected type
+                $updatedAmounts[$label] = match ($increaseType) {
+                    'percentage' => round($amount * (1 + $percentage / 100), 2),
+                    'fixed' => round($amount + $fixedAmount, 2),
+                    default => $amount,
+                };
+            }
+
+            $set("budgetItems.{$index}.amounts", $updatedAmounts);
+            $set("budgetItems.{$index}.total_amount", round(array_sum($updatedAmounts), 2));
+        }
     }
 
     private static function disperseTotalAmount(Forms\Set $set, Forms\Get $get, float $totalAmount): void

@@ -10,8 +10,10 @@ use App\Facades\Accounting;
 use App\Models\Banking\BankAccount;
 use App\Models\Setting\Currency;
 use App\Observers\AccountObserver;
+use App\Utilities\Currency\CurrencyAccessor;
 use Database\Factories\Accounting\AccountFactory;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -82,6 +84,32 @@ class Account extends Model
     public function adjustment(): HasOne
     {
         return $this->hasOne(Adjustment::class, 'account_id');
+    }
+
+    public function scopeBudgetable(Builder $query): Builder
+    {
+        return $query->whereNotIn('category', [
+            AccountCategory::Equity,
+            AccountCategory::Liability,
+        ])
+            ->whereNotIn('type', [
+                AccountType::ContraAsset,
+                AccountType::ContraRevenue,
+                AccountType::ContraExpense,
+                AccountType::UncategorizedRevenue,
+                AccountType::UncategorizedExpense,
+            ])
+            ->whereDoesntHave('subtype', function (Builder $query) {
+                $query->whereIn('name', [
+                    'Receivables',
+                    'Input Tax Recoverable',
+                ]);
+            })
+            ->whereNotIn('name', [
+                'Gain on Foreign Exchange',
+                'Loss on Foreign Exchange',
+            ])
+            ->where('currency_code', CurrencyAccessor::getDefaultCurrency());
     }
 
     public function getLastTransactionDate(): ?string
