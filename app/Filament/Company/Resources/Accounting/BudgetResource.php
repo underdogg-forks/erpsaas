@@ -6,7 +6,6 @@ use App\Filament\Company\Resources\Accounting\BudgetResource\Pages;
 use App\Filament\Forms\Components\CustomSection;
 use App\Models\Accounting\Account;
 use App\Models\Accounting\Budget;
-use App\Models\Accounting\BudgetItem;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -56,7 +55,6 @@ class BudgetResource extends Resource
                 Forms\Components\Section::make('Budget Items')
                     ->schema([
                         Forms\Components\Repeater::make('budgetItems')
-                            ->relationship()
                             ->columns(4)
                             ->hiddenLabel()
                             ->schema([
@@ -95,14 +93,41 @@ class BudgetResource extends Resource
     {
         return $table
             ->columns([
-                //
+                Tables\Columns\TextColumn::make('name')
+                    ->sortable()
+                    ->searchable(),
+
+                Tables\Columns\TextColumn::make('interval_type')
+                    ->label('Interval')
+                    ->sortable()
+                    ->badge()
+                    ->formatStateUsing(fn (string $state) => ucfirst($state)),
+
+                Tables\Columns\TextColumn::make('start_date')
+                    ->label('Start Date')
+                    ->date()
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('end_date')
+                    ->label('End Date')
+                    ->date()
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('total_budgeted_amount')
+                    ->label('Total Budgeted')
+                    ->money()
+                    ->sortable()
+                    ->alignEnd()
+                    ->formatStateUsing(fn (Budget $record) => $record->budgetItems->sum(fn ($item) => $item->allocations->sum('amount'))),
             ])
             ->filters([
                 //
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make(),
+                    Tables\Actions\EditAction::make(),
+                ]),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -204,53 +229,6 @@ class BudgetResource extends Resource
         }
 
         return $fields;
-    }
-
-    /**
-     * Generates an array of interval labels (e.g., Jan 2024, Q1 2024, etc.).
-     */
-    private static function generateIntervals(string $startDate, string $endDate, string $intervalType): array
-    {
-        $start = Carbon::parse($startDate);
-        $end = Carbon::parse($endDate);
-        $intervals = [];
-
-        while ($start->lte($end)) {
-            if ($intervalType === 'month') {
-                $intervals[] = $start->format('M Y'); // Example: Jan 2024
-                $start->addMonth();
-            } elseif ($intervalType === 'quarter') {
-                $intervals[] = 'Q' . $start->quarter . ' ' . $start->year; // Example: Q1 2024
-                $start->addQuarter();
-            } elseif ($intervalType === 'year') {
-                $intervals[] = $start->year; // Example: 2024
-                $start->addYear();
-            }
-        }
-
-        return $intervals;
-    }
-
-    /**
-     * Saves budget allocations correctly in `budget_allocations` table.
-     */
-    public static function saveBudgetAllocations(BudgetItem $record, array $data): void
-    {
-        $record->update($data);
-
-        $intervals = self::generateIntervals($data['start_date'], $data['end_date'], $data['interval_type']);
-
-        foreach ($intervals as $interval) {
-            $record->allocations()->updateOrCreate(
-                ['period' => $interval],
-                [
-                    'interval_type' => $data['interval_type'],
-                    'start_date' => Carbon::parse($interval)->startOfMonth(),
-                    'end_date' => Carbon::parse($interval)->endOfMonth(),
-                    'amount' => $data['allocations'][$interval] ?? 0,
-                ]
-            );
-        }
     }
 
     public static function getRelations(): array

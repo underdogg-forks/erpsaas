@@ -2,7 +2,7 @@
 
 namespace App\Models\Accounting;
 
-use App\Casts\MoneyCast;
+use App\Casts\DocumentMoneyCast;
 use App\Concerns\CompanyOwned;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -26,7 +26,7 @@ class BudgetAllocation extends Model
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
-        'amount' => MoneyCast::class,
+        'amount' => DocumentMoneyCast::class,
     ];
 
     public function budgetItem(): BelongsTo
