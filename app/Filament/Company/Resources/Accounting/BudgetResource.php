@@ -46,7 +46,6 @@ class BudgetResource extends Resource
                             ->live()
                             ->disabled(static fn (Forms\Get $get) => blank($get('start_date')))
                             ->minDate(fn (Forms\Get $get) => match (BudgetIntervalType::parse($get('interval_type'))) {
-                                BudgetIntervalType::Week => Carbon::parse($get('start_date'))->addWeek(),
                                 BudgetIntervalType::Month => Carbon::parse($get('start_date'))->addMonth(),
                                 BudgetIntervalType::Quarter => Carbon::parse($get('start_date'))->addQuarter(),
                                 BudgetIntervalType::Year => Carbon::parse($get('start_date'))->addYear(),
@@ -57,144 +56,144 @@ class BudgetResource extends Resource
                             ->columnSpanFull(),
                     ]),
 
-                Forms\Components\Section::make('Budget Items')
-                    ->headerActions([
-                        Forms\Components\Actions\Action::make('addAccounts')
-                            ->label('Add Accounts')
-                            ->icon('heroicon-m-plus')
-                            ->outlined()
-                            ->color('primary')
-                            ->form(fn (Forms\Get $get) => [
-                                Forms\Components\Select::make('selected_accounts')
-                                    ->label('Choose Accounts to Add')
-                                    ->options(function () use ($get) {
-                                        $existingAccounts = collect($get('budgetItems'))->pluck('account_id')->toArray();
-
-                                        return Account::query()
-                                            ->budgetable()
-                                            ->whereNotIn('id', $existingAccounts) // Prevent duplicate selections
-                                            ->pluck('name', 'id');
-                                    })
-                                    ->searchable()
-                                    ->multiple()
-                                    ->hint('Select the accounts you want to add to this budget'),
-                            ])
-                            ->action(static fn (Forms\Set $set, Forms\Get $get, array $data) => self::addSelectedAccounts($set, $get, $data)),
-
-                        Forms\Components\Actions\Action::make('addAllAccounts')
-                            ->label('Add All Accounts')
-                            ->icon('heroicon-m-folder-plus')
-                            ->outlined()
-                            ->color('primary')
-                            ->action(static fn (Forms\Set $set, Forms\Get $get) => self::addAllAccounts($set, $get))
-                            ->hidden(static fn (Forms\Get $get) => filled($get('budgetItems'))),
-
-                        Forms\Components\Actions\Action::make('increaseAllocations')
-                            ->label('Increase Allocations')
-                            ->icon('heroicon-m-arrow-up')
-                            ->outlined()
-                            ->color('success')
-                            ->form(fn (Forms\Get $get) => [
-                                Forms\Components\Select::make('increase_type')
-                                    ->label('Increase Type')
-                                    ->options([
-                                        'percentage' => 'Percentage (%)',
-                                        'fixed' => 'Fixed Amount',
-                                    ])
-                                    ->default('percentage')
-                                    ->live()
-                                    ->required(),
-
-                                Forms\Components\TextInput::make('percentage')
-                                    ->label('Increase by %')
-                                    ->numeric()
-                                    ->suffix('%')
-                                    ->required()
-                                    ->hidden(fn (Forms\Get $get) => $get('increase_type') !== 'percentage'),
-
-                                Forms\Components\TextInput::make('fixed_amount')
-                                    ->label('Increase by Fixed Amount')
-                                    ->numeric()
-                                    ->suffix('USD')
-                                    ->required()
-                                    ->hidden(fn (Forms\Get $get) => $get('increase_type') !== 'fixed'),
-
-                                Forms\Components\Select::make('apply_to_accounts')
-                                    ->label('Apply to Accounts')
-                                    ->options(function () use ($get) {
-                                        $budgetItems = $get('budgetItems') ?? [];
-                                        $accountIds = collect($budgetItems)
-                                            ->pluck('account_id')
-                                            ->filter()
-                                            ->unique()
-                                            ->toArray();
-
-                                        return Account::query()
-                                            ->whereIn('id', $accountIds)
-                                            ->pluck('name', 'id')
-                                            ->toArray();
-                                    })
-                                    ->searchable()
-                                    ->multiple()
-                                    ->hint('Leave blank to apply to all accounts'),
-
-                                Forms\Components\Select::make('apply_to_periods')
-                                    ->label('Apply to Periods')
-                                    ->options(static function () use ($get) {
-                                        $startDate = $get('start_date');
-                                        $endDate = $get('end_date');
-                                        $intervalType = $get('interval_type');
-
-                                        if (blank($startDate) || blank($endDate) || blank($intervalType)) {
-                                            return [];
-                                        }
-
-                                        $labels = self::generateFormattedLabels($startDate, $endDate, $intervalType);
-
-                                        return array_combine($labels, $labels);
-                                    })
-                                    ->searchable()
-                                    ->multiple()
-                                    ->hint('Leave blank to apply to all periods'),
-                            ])
-                            ->action(static fn (Forms\Set $set, Forms\Get $get, array $data) => self::increaseAllocations($set, $get, $data))
-                            ->visible(static fn (Forms\Get $get) => filled($get('budgetItems'))),
-                    ])
-                    ->schema([
-                        Forms\Components\Repeater::make('budgetItems')
-                            ->columns(4)
-                            ->hiddenLabel()
-                            ->schema([
-                                Forms\Components\Select::make('account_id')
-                                    ->label('Account')
-                                    ->options(Account::query()
-                                        ->budgetable()
-                                        ->pluck('name', 'id'))
-                                    ->searchable()
-                                    ->disableOptionsWhenSelectedInSiblingRepeaterItems()
-                                    ->columnSpan(1)
-                                    ->required(),
-
-                                Forms\Components\TextInput::make('total_amount')
-                                    ->label('Total Amount')
-                                    ->numeric()
-                                    ->columnSpan(1)
-                                    ->suffixAction(
-                                        Forms\Components\Actions\Action::make('disperse')
-                                            ->label('Disperse')
-                                            ->icon('heroicon-m-bars-arrow-down')
-                                            ->color('primary')
-                                            ->action(static fn (Forms\Set $set, Forms\Get $get, $state) => self::disperseTotalAmount($set, $get, $state))
-                                    ),
-
-                                CustomSection::make('Budget Allocations')
-                                    ->contained(false)
-                                    ->columns(4)
-                                    ->schema(static fn (Forms\Get $get) => self::getAllocationFields($get('../../start_date'), $get('../../end_date'), $get('../../interval_type'))),
-                            ])
-                            ->defaultItems(0)
-                            ->addActionLabel('Add Budget Item'),
-                    ]),
+                //                Forms\Components\Section::make('Budget Items')
+                //                    ->headerActions([
+                //                        Forms\Components\Actions\Action::make('addAccounts')
+                //                            ->label('Add Accounts')
+                //                            ->icon('heroicon-m-plus')
+                //                            ->outlined()
+                //                            ->color('primary')
+                //                            ->form(fn (Forms\Get $get) => [
+                //                                Forms\Components\Select::make('selected_accounts')
+                //                                    ->label('Choose Accounts to Add')
+                //                                    ->options(function () use ($get) {
+                //                                        $existingAccounts = collect($get('budgetItems'))->pluck('account_id')->toArray();
+                //
+                //                                        return Account::query()
+                //                                            ->budgetable()
+                //                                            ->whereNotIn('id', $existingAccounts) // Prevent duplicate selections
+                //                                            ->pluck('name', 'id');
+                //                                    })
+                //                                    ->searchable()
+                //                                    ->multiple()
+                //                                    ->hint('Select the accounts you want to add to this budget'),
+                //                            ])
+                //                            ->action(static fn (Forms\Set $set, Forms\Get $get, array $data) => self::addSelectedAccounts($set, $get, $data)),
+                //
+                //                        Forms\Components\Actions\Action::make('addAllAccounts')
+                //                            ->label('Add All Accounts')
+                //                            ->icon('heroicon-m-folder-plus')
+                //                            ->outlined()
+                //                            ->color('primary')
+                //                            ->action(static fn (Forms\Set $set, Forms\Get $get) => self::addAllAccounts($set, $get))
+                //                            ->hidden(static fn (Forms\Get $get) => filled($get('budgetItems'))),
+                //
+                //                        Forms\Components\Actions\Action::make('increaseAllocations')
+                //                            ->label('Increase Allocations')
+                //                            ->icon('heroicon-m-arrow-up')
+                //                            ->outlined()
+                //                            ->color('success')
+                //                            ->form(fn (Forms\Get $get) => [
+                //                                Forms\Components\Select::make('increase_type')
+                //                                    ->label('Increase Type')
+                //                                    ->options([
+                //                                        'percentage' => 'Percentage (%)',
+                //                                        'fixed' => 'Fixed Amount',
+                //                                    ])
+                //                                    ->default('percentage')
+                //                                    ->live()
+                //                                    ->required(),
+                //
+                //                                Forms\Components\TextInput::make('percentage')
+                //                                    ->label('Increase by %')
+                //                                    ->numeric()
+                //                                    ->suffix('%')
+                //                                    ->required()
+                //                                    ->hidden(fn (Forms\Get $get) => $get('increase_type') !== 'percentage'),
+                //
+                //                                Forms\Components\TextInput::make('fixed_amount')
+                //                                    ->label('Increase by Fixed Amount')
+                //                                    ->numeric()
+                //                                    ->suffix('USD')
+                //                                    ->required()
+                //                                    ->hidden(fn (Forms\Get $get) => $get('increase_type') !== 'fixed'),
+                //
+                //                                Forms\Components\Select::make('apply_to_accounts')
+                //                                    ->label('Apply to Accounts')
+                //                                    ->options(function () use ($get) {
+                //                                        $budgetItems = $get('budgetItems') ?? [];
+                //                                        $accountIds = collect($budgetItems)
+                //                                            ->pluck('account_id')
+                //                                            ->filter()
+                //                                            ->unique()
+                //                                            ->toArray();
+                //
+                //                                        return Account::query()
+                //                                            ->whereIn('id', $accountIds)
+                //                                            ->pluck('name', 'id')
+                //                                            ->toArray();
+                //                                    })
+                //                                    ->searchable()
+                //                                    ->multiple()
+                //                                    ->hint('Leave blank to apply to all accounts'),
+                //
+                //                                Forms\Components\Select::make('apply_to_periods')
+                //                                    ->label('Apply to Periods')
+                //                                    ->options(static function () use ($get) {
+                //                                        $startDate = $get('start_date');
+                //                                        $endDate = $get('end_date');
+                //                                        $intervalType = $get('interval_type');
+                //
+                //                                        if (blank($startDate) || blank($endDate) || blank($intervalType)) {
+                //                                            return [];
+                //                                        }
+                //
+                //                                        $labels = self::generateFormattedLabels($startDate, $endDate, $intervalType);
+                //
+                //                                        return array_combine($labels, $labels);
+                //                                    })
+                //                                    ->searchable()
+                //                                    ->multiple()
+                //                                    ->hint('Leave blank to apply to all periods'),
+                //                            ])
+                //                            ->action(static fn (Forms\Set $set, Forms\Get $get, array $data) => self::increaseAllocations($set, $get, $data))
+                //                            ->visible(static fn (Forms\Get $get) => filled($get('budgetItems'))),
+                //                    ])
+                //                    ->schema([
+                //                        Forms\Components\Repeater::make('budgetItems')
+                //                            ->columns(4)
+                //                            ->hiddenLabel()
+                //                            ->schema([
+                //                                Forms\Components\Select::make('account_id')
+                //                                    ->label('Account')
+                //                                    ->options(Account::query()
+                //                                        ->budgetable()
+                //                                        ->pluck('name', 'id'))
+                //                                    ->searchable()
+                //                                    ->disableOptionsWhenSelectedInSiblingRepeaterItems()
+                //                                    ->columnSpan(1)
+                //                                    ->required(),
+                //
+                //                                Forms\Components\TextInput::make('total_amount')
+                //                                    ->label('Total Amount')
+                //                                    ->numeric()
+                //                                    ->columnSpan(1)
+                //                                    ->suffixAction(
+                //                                        Forms\Components\Actions\Action::make('disperse')
+                //                                            ->label('Disperse')
+                //                                            ->icon('heroicon-m-bars-arrow-down')
+                //                                            ->color('primary')
+                //                                            ->action(static fn (Forms\Set $set, Forms\Get $get, $state) => self::disperseTotalAmount($set, $get, $state))
+                //                                    ),
+                //
+                //                                CustomSection::make('Budget Allocations')
+                //                                    ->contained(false)
+                //                                    ->columns(4)
+                //                                    ->schema(static fn (Forms\Get $get) => self::getAllocationFields($get('../../start_date'), $get('../../end_date'), $get('../../interval_type'))),
+                //                            ])
+                //                            ->defaultItems(0)
+                //                            ->addActionLabel('Add Budget Item'),
+                //                    ]),
             ]);
     }
 
@@ -205,6 +204,11 @@ class BudgetResource extends Resource
                 Tables\Columns\TextColumn::make('name')
                     ->sortable()
                     ->searchable(),
+
+                Tables\Columns\TextColumn::make('status')
+                    ->label('Status')
+                    ->sortable()
+                    ->badge(),
 
                 Tables\Columns\TextColumn::make('interval_type')
                     ->label('Interval')
@@ -373,7 +377,6 @@ class BudgetResource extends Resource
 
         while ($start->lte($end)) {
             $labels[] = match ($intervalTypeEnum) {
-                BudgetIntervalType::Week => 'W' . $start->weekOfYear . ' ' . $start->year, // Example: W10 2024
                 BudgetIntervalType::Month => $start->format('M'), // Example: Jan, Feb, Mar
                 BudgetIntervalType::Quarter => 'Q' . $start->quarter, // Example: Q1, Q2, Q3
                 BudgetIntervalType::Year => (string) $start->year, // Example: 2024, 2025
@@ -381,7 +384,6 @@ class BudgetResource extends Resource
             };
 
             match ($intervalTypeEnum) {
-                BudgetIntervalType::Week => $start->addWeek(),
                 BudgetIntervalType::Month => $start->addMonth(),
                 BudgetIntervalType::Quarter => $start->addQuarter(),
                 BudgetIntervalType::Year => $start->addYear(),
@@ -398,32 +400,15 @@ class BudgetResource extends Resource
             return [];
         }
 
-        $start = Carbon::parse($startDate);
-        $end = Carbon::parse($endDate);
-        $intervalTypeEnum = BudgetIntervalType::parse($intervalType);
         $fields = [];
 
-        while ($start->lte($end)) {
-            $label = match ($intervalTypeEnum) {
-                BudgetIntervalType::Week => 'W' . $start->weekOfYear . ' ' . $start->year, // Example: W10 2024
-                BudgetIntervalType::Month => $start->format('M'), // Example: Jan, Feb, Mar
-                BudgetIntervalType::Quarter => 'Q' . $start->quarter, // Example: Q1, Q2, Q3
-                BudgetIntervalType::Year => (string) $start->year, // Example: 2024, 2025
-                default => '',
-            };
+        $labels = self::generateFormattedLabels($startDate, $endDate, $intervalType);
 
+        foreach ($labels as $label) {
             $fields[] = Forms\Components\TextInput::make("amounts.{$label}")
                 ->label($label)
                 ->numeric()
                 ->required();
-
-            match ($intervalTypeEnum) {
-                BudgetIntervalType::Week => $start->addWeek(),
-                BudgetIntervalType::Month => $start->addMonth(),
-                BudgetIntervalType::Quarter => $start->addQuarter(),
-                BudgetIntervalType::Year => $start->addYear(),
-                default => null,
-            };
         }
 
         return $fields;

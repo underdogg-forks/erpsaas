@@ -9,7 +9,6 @@ enum BudgetIntervalType: string implements HasLabel
 {
     use ParsesEnum;
 
-    case Week = 'week';
     case Month = 'month';
     case Quarter = 'quarter';
     case Year = 'year';
@@ -17,16 +16,10 @@ enum BudgetIntervalType: string implements HasLabel
     public function getLabel(): ?string
     {
         return match ($this) {
-            self::Week => 'Weekly',
             self::Month => 'Monthly',
             self::Quarter => 'Quarterly',
             self::Year => 'Yearly',
         };
-    }
-
-    public function isWeek(): bool
-    {
-        return $this === self::Week;
     }
 
     public function isMonth(): bool

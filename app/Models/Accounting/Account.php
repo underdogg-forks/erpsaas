@@ -88,12 +88,11 @@ class Account extends Model
 
     public function scopeBudgetable(Builder $query): Builder
     {
-        return $query->whereNotIn('category', [
-            AccountCategory::Equity,
-            AccountCategory::Liability,
+        return $query->whereIn('category', [
+            AccountCategory::Revenue,
+            AccountCategory::Expense,
         ])
             ->whereNotIn('type', [
-                AccountType::ContraAsset,
                 AccountType::ContraRevenue,
                 AccountType::ContraExpense,
                 AccountType::UncategorizedRevenue,

@@ -95,7 +95,6 @@ class EditBudget extends EditRecord
     private static function calculateEndDate(Carbon $startDate, BudgetIntervalType $intervalType): Carbon
     {
         return match ($intervalType) {
-            BudgetIntervalType::Week => $startDate->copy()->endOfWeek(),
             BudgetIntervalType::Month => $startDate->copy()->endOfMonth(),
             BudgetIntervalType::Quarter => $startDate->copy()->endOfQuarter(),
             BudgetIntervalType::Year => $startDate->copy()->endOfYear(),

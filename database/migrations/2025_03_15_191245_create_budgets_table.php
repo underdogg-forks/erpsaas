@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('name');
             $table->date('start_date');
             $table->date('end_date');
-            $table->string('status')->default('active'); // draft, active, closed
+            $table->string('status')->default('draft'); // draft, active, closed
             $table->string('interval_type')->default('month'); // day, week, month, quarter, year
             $table->text('notes')->nullable();
             $table->timestamp('approved_at')->nullable();
