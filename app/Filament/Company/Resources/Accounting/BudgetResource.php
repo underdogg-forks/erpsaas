@@ -224,13 +224,6 @@ class BudgetResource extends Resource
                     ->label('End Date')
                     ->date()
                     ->sortable(),
-
-                Tables\Columns\TextColumn::make('total_budgeted_amount')
-                    ->label('Total Budgeted')
-                    ->money()
-                    ->sortable()
-                    ->alignEnd()
-                    ->getStateUsing(fn (Budget $record) => $record->budgetItems->sum(fn ($item) => $item->allocations->sum('amount'))),
             ])
             ->filters([
                 //

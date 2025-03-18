@@ -4,6 +4,7 @@ namespace App\Models\Accounting;
 
 use App\Casts\DocumentMoneyCast;
 use App\Concerns\CompanyOwned;
+use App\Enums\Accounting\BudgetIntervalType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -26,11 +27,17 @@ class BudgetAllocation extends Model
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
+        'interval_type' => BudgetIntervalType::class,
         'amount' => DocumentMoneyCast::class,
     ];
 
     public function budgetItem(): BelongsTo
     {
         return $this->belongsTo(BudgetItem::class);
+    }
+
+    public function isCurrentPeriod(): bool
+    {
+        return now()->between($this->start_date, $this->end_date);
     }
 }

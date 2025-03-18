@@ -5,13 +5,17 @@ namespace App\Filament\Company\Resources\Accounting\BudgetResource\Pages;
 use App\Enums\Accounting\BudgetIntervalType;
 use App\Facades\Accounting;
 use App\Filament\Company\Resources\Accounting\BudgetResource;
+use App\Filament\Forms\Components\LinearWizard;
 use App\Models\Accounting\Account;
 use App\Models\Accounting\Budget;
 use App\Models\Accounting\BudgetAllocation;
 use App\Models\Accounting\BudgetItem;
+use App\Utilities\Currency\CurrencyConverter;
+use Filament\Actions\ActionGroup;
 use Filament\Forms;
 use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Components\Wizard\Step;
+use Filament\Forms\Form;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -19,14 +23,44 @@ use Illuminate\Support\Carbon;
 
 class CreateBudget extends CreateRecord
 {
-    use CreateRecord\Concerns\HasWizard;
-
     protected static string $resource = BudgetResource::class;
+
+    public function getStartStep(): int
+    {
+        return 1;
+    }
+
+    public function form(Form $form): Form
+    {
+        return parent::form($form)
+            ->schema([
+                LinearWizard::make($this->getSteps())
+                    ->startOnStep($this->getStartStep())
+                    ->cancelAction($this->getCancelFormAction())
+                    ->submitAction($this->getSubmitFormAction()->label('Next'))
+                    ->skippable($this->hasSkippableSteps()),
+            ])
+            ->columns(null);
+    }
+
+    /**
+     * @return array<\Filament\Actions\Action | ActionGroup>
+     */
+    public function getFormActions(): array
+    {
+        return [];
+    }
+
+    protected function hasSkippableSteps(): bool
+    {
+        return false;
+    }
 
     public function getSteps(): array
     {
         return [
             Step::make('General Information')
+                ->icon('heroicon-o-document-text')
                 ->columns(2)
                 ->schema([
                     Forms\Components\TextInput::make('name')
@@ -57,6 +91,7 @@ class CreateBudget extends CreateRecord
                 ]),
 
             Step::make('Budget Setup & Settings')
+                ->icon('heroicon-o-cog-6-tooth')
                 ->schema([
                     // Prefill configuration
                     Forms\Components\Toggle::make('prefill_data')
@@ -112,6 +147,7 @@ class CreateBudget extends CreateRecord
                 ]),
 
             Step::make('Modify Budget Structure')
+                ->icon('heroicon-o-adjustments-horizontal')
                 ->schema([
                     Forms\Components\CheckboxList::make('selected_accounts')
                         ->label('Select Accounts to Exclude')
@@ -205,7 +241,7 @@ class CreateBudget extends CreateRecord
                     'interval_type' => $data['interval_type'],
                     'start_date' => $allocationStart->toDateString(),
                     'end_date' => $allocationEnd->toDateString(),
-                    'amount' => $amount,
+                    'amount' => CurrencyConverter::convertCentsToFloat($amount),
                 ]);
 
                 $allocationStart = $allocationEnd->addDay();
@@ -226,7 +262,7 @@ class CreateBudget extends CreateRecord
         return $this->distributeAmountAcrossPeriods($netMovement->getAmount(), $fiscalYearStart, $fiscalYearEnd, $intervalType);
     }
 
-    private function distributeAmountAcrossPeriods(float $totalAmount, Carbon $startDate, Carbon $endDate, BudgetIntervalType $intervalType): array
+    private function distributeAmountAcrossPeriods(int $totalAmountInCents, Carbon $startDate, Carbon $endDate, BudgetIntervalType $intervalType): array
     {
         $amounts = [];
         $periods = [];
@@ -240,10 +276,16 @@ class CreateBudget extends CreateRecord
 
         // Evenly distribute total amount across periods
         $periodCount = count($periods);
-        $amountPerPeriod = $periodCount > 0 ? round($totalAmount / $periodCount, 2) : 0;
 
-        foreach ($periods as $periodLabel) {
-            $amounts[$periodLabel] = $amountPerPeriod;
+        if ($periodCount === 0) {
+            return $amounts;
+        }
+
+        $baseAmount = intdiv($totalAmountInCents, $periodCount); // Floor division to get the base amount in cents
+        $remainder = $totalAmountInCents % $periodCount; // Remaining cents to distribute
+
+        foreach ($periods as $index => $period) {
+            $amounts[$period] = $baseAmount + ($index < $remainder ? 1 : 0); // Distribute remainder cents evenly
         }
 
         return $amounts;
@@ -258,7 +300,7 @@ class CreateBudget extends CreateRecord
             ->get();
 
         foreach ($previousAllocations as $allocation) {
-            $amounts[$allocation->period] = $allocation->amount;
+            $amounts[$allocation->period] = $allocation->getRawOriginal('amount');
         }
 
         return $amounts;
@@ -271,7 +313,7 @@ class CreateBudget extends CreateRecord
         $currentPeriod = Carbon::parse($startDate);
         while ($currentPeriod->lte(Carbon::parse($endDate))) {
             $period = $this->determinePeriod($currentPeriod, $intervalType);
-            $amounts[$period] = 0.00;
+            $amounts[$period] = 0;
             $currentPeriod->addUnit($intervalType->value);
         }
 

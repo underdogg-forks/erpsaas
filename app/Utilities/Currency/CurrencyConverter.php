@@ -32,7 +32,7 @@ class CurrencyConverter
 
     public static function prepareForAccessor(string $amount, string $currency): int
     {
-        return money($amount, $currency, true)->getAmount();
+        return self::convertToCents($amount, $currency);
     }
 
     public static function convertCentsToFormatSimple(int $amount, ?string $currency = null): string
