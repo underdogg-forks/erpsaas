@@ -5,55 +5,97 @@ namespace App\Filament\Company\Resources\Accounting\BudgetResource\Pages;
 use App\Enums\Accounting\BudgetIntervalType;
 use App\Facades\Accounting;
 use App\Filament\Company\Resources\Accounting\BudgetResource;
-use App\Filament\Forms\Components\LinearWizard;
+use App\Filament\Forms\Components\CustomSection;
 use App\Models\Accounting\Account;
 use App\Models\Accounting\Budget;
 use App\Models\Accounting\BudgetAllocation;
 use App\Models\Accounting\BudgetItem;
 use App\Utilities\Currency\CurrencyConverter;
-use Filament\Actions\ActionGroup;
 use Filament\Forms;
 use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Components\Wizard\Step;
-use Filament\Forms\Form;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 
 class CreateBudget extends CreateRecord
 {
+    use CreateRecord\Concerns\HasWizard;
+
     protected static string $resource = BudgetResource::class;
 
-    public function getStartStep(): int
+    // Add computed properties
+    public function getBudgetableAccounts(): Collection
     {
-        return 1;
+        return $this->getAccountsCache('budgetable', function () {
+            return Account::query()->budgetable()->get();
+        });
     }
 
-    public function form(Form $form): Form
+    public function getAccountsWithActuals(): Collection
     {
-        return parent::form($form)
-            ->schema([
-                LinearWizard::make($this->getSteps())
-                    ->startOnStep($this->getStartStep())
-                    ->cancelAction($this->getCancelFormAction())
-                    ->submitAction($this->getSubmitFormAction()->label('Next'))
-                    ->skippable($this->hasSkippableSteps()),
-            ])
-            ->columns(null);
+        $fiscalYear = $this->data['actuals_fiscal_year'] ?? null;
+
+        if (blank($fiscalYear)) {
+            return collect();
+        }
+
+        return $this->getAccountsCache("actuals_{$fiscalYear}", function () use ($fiscalYear) {
+            return Account::query()
+                ->budgetable()
+                ->whereHas('journalEntries.transaction', function (Builder $query) use ($fiscalYear) {
+                    $query->whereYear('posted_at', $fiscalYear);
+                })
+                ->get();
+        });
     }
 
-    /**
-     * @return array<\Filament\Actions\Action | ActionGroup>
-     */
-    public function getFormActions(): array
+    public function getAccountsWithoutActuals(): Collection
     {
-        return [];
+        $fiscalYear = $this->data['actuals_fiscal_year'] ?? null;
+
+        if (blank($fiscalYear)) {
+            return collect();
+        }
+
+        $budgetableAccounts = $this->getBudgetableAccounts();
+        $accountsWithActuals = $this->getAccountsWithActuals();
+
+        return $budgetableAccounts->whereNotIn('id', $accountsWithActuals->pluck('id'));
     }
 
-    protected function hasSkippableSteps(): bool
+    public function getAccountBalances(): Collection
     {
-        return false;
+        $fiscalYear = $this->data['actuals_fiscal_year'] ?? null;
+
+        if (blank($fiscalYear)) {
+            return collect();
+        }
+
+        return $this->getAccountsCache("balances_{$fiscalYear}", function () use ($fiscalYear) {
+            $fiscalYearStart = Carbon::create($fiscalYear, 1, 1)->startOfYear();
+            $fiscalYearEnd = $fiscalYearStart->copy()->endOfYear();
+
+            return Accounting::getAccountBalances(
+                $fiscalYearStart->toDateString(),
+                $fiscalYearEnd->toDateString(),
+                $this->getBudgetableAccounts()->pluck('id')->toArray()
+            )->get();
+        });
+    }
+
+    // Cache helper to avoid duplicate queries
+    private array $accountsCache = [];
+
+    private function getAccountsCache(string $key, callable $callback): Collection
+    {
+        if (! isset($this->accountsCache[$key])) {
+            $this->accountsCache[$key] = $callback();
+        }
+
+        return $this->accountsCache[$key];
     }
 
     public function getSteps(): array
@@ -138,65 +180,125 @@ class CreateBudget extends CreateRecord
                                 })
                                 ->required()
                                 ->live()
+                                ->afterStateUpdated(function (Forms\Set $set) {
+                                    // Clear the cache when the fiscal year changes
+                                    $this->accountsCache = [];
+
+                                    // Get all accounts without actuals
+                                    $accountIdsWithoutActuals = $this->getAccountsWithoutActuals()->pluck('id')->toArray();
+
+                                    // Set exclude_accounts_without_actuals to true by default
+                                    $set('exclude_accounts_without_actuals', true);
+
+                                    // Update the selected_accounts field to exclude accounts without actuals
+                                    $set('selected_accounts', $accountIdsWithoutActuals);
+                                })
                                 ->visible(fn (Forms\Get $get) => $get('prefill_method') === 'actuals'),
                         ])->visible(fn (Forms\Get $get) => $get('prefill_data') === true),
+
+                    CustomSection::make('Account Selection')
+                        ->contained(false)
+                        ->schema([
+                            Forms\Components\Checkbox::make('exclude_accounts_without_actuals')
+                                ->label('Exclude all accounts without actuals')
+                                ->helperText(function () {
+                                    $count = $this->getAccountsWithoutActuals()->count();
+
+                                    return "Will exclude {$count} accounts without transaction data in the selected fiscal year";
+                                })
+                                ->default(true)
+                                ->live()
+                                ->afterStateUpdated(function (Forms\Set $set, $state) {
+                                    if ($state) {
+                                        // When checked, select all accounts without actuals
+                                        $accountsWithoutActuals = $this->getAccountsWithoutActuals()->pluck('id')->toArray();
+                                        $set('selected_accounts', $accountsWithoutActuals);
+                                    } else {
+                                        // When unchecked, clear the selection
+                                        $set('selected_accounts', []);
+                                    }
+                                }),
+
+                            Forms\Components\CheckboxList::make('selected_accounts')
+                                ->label('Select Accounts to Exclude')
+                                ->options(function () {
+                                    // Get all budgetable accounts
+                                    return $this->getBudgetableAccounts()->pluck('name', 'id')->toArray();
+                                })
+                                ->descriptions(function (Forms\Components\CheckboxList $component) {
+                                    $fiscalYear = $this->data['actuals_fiscal_year'] ?? null;
+
+                                    if (blank($fiscalYear)) {
+                                        return [];
+                                    }
+
+                                    $accountIds = array_keys($component->getOptions());
+                                    $descriptions = [];
+
+                                    if (empty($accountIds)) {
+                                        return [];
+                                    }
+
+                                    // Get account balances
+                                    $accountBalances = $this->getAccountBalances()->keyBy('id');
+
+                                    // Get accounts with actuals
+                                    $accountsWithActuals = $this->getAccountsWithActuals()->pluck('id')->toArray();
+
+                                    // Process all accounts
+                                    foreach ($accountIds as $accountId) {
+                                        $balance = $accountBalances[$accountId] ?? null;
+                                        $hasActuals = in_array($accountId, $accountsWithActuals);
+
+                                        if ($balance && $hasActuals) {
+                                            // Calculate net movement
+                                            $netMovement = Accounting::calculateNetMovementByCategory(
+                                                $balance->category,
+                                                $balance->total_debit ?? 0,
+                                                $balance->total_credit ?? 0
+                                            );
+
+                                            // Format the amount for display
+                                            $formattedAmount = CurrencyConverter::formatCentsToMoney($netMovement);
+                                            $descriptions[$accountId] = "{$formattedAmount} in {$fiscalYear}";
+                                        } else {
+                                            $descriptions[$accountId] = "No transactions in {$fiscalYear}";
+                                        }
+                                    }
+
+                                    return $descriptions;
+                                })
+                                ->columns(2) // Display in two columns
+                                ->searchable() // Allow searching for accounts
+                                ->bulkToggleable() // Enable "Select All" / "Deselect All"
+                                ->selectAllAction(fn (Action $action) => $action->label('Exclude all accounts'))
+                                ->deselectAllAction(fn (Action $action) => $action->label('Include all accounts'))
+                                ->afterStateUpdated(function (Forms\Set $set, $state) {
+                                    // Get all accounts without actuals
+                                    $accountsWithoutActuals = $this->getAccountsWithoutActuals()->pluck('id')->toArray();
+
+                                    // Check if all accounts without actuals are in the selected accounts
+                                    $allAccountsWithoutActualsSelected = empty(array_diff($accountsWithoutActuals, $state));
+
+                                    // Update the exclude_accounts_without_actuals checkbox state
+                                    $set('exclude_accounts_without_actuals', $allAccountsWithoutActualsSelected);
+                                }),
+                        ])
+                        ->visible(function () {
+                            // Only show when using actuals with valid fiscal year AND accounts without transactions exist
+                            $prefillMethod = $this->data['prefill_method'] ?? null;
+
+                            if ($prefillMethod !== 'actuals' || blank($this->data['actuals_fiscal_year'] ?? null)) {
+                                return false;
+                            }
+
+                            return $this->getAccountsWithoutActuals()->isNotEmpty();
+                        }),
 
                     Forms\Components\Textarea::make('notes')
                         ->label('Notes')
                         ->columnSpanFull(),
                 ]),
-
-            Step::make('Modify Budget Structure')
-                ->icon('heroicon-o-adjustments-horizontal')
-                ->schema([
-                    Forms\Components\CheckboxList::make('selected_accounts')
-                        ->label('Select Accounts to Exclude')
-                        ->options(function (Forms\Get $get) {
-                            $fiscalYear = $get('actuals_fiscal_year');
-
-                            // Get all budgetable accounts
-                            $allAccounts = Account::query()->budgetable()->pluck('name', 'id')->toArray();
-
-                            // Get accounts that have actuals for the selected fiscal year
-                            $accountsWithActuals = Account::query()
-                                ->budgetable()
-                                ->whereHas('journalEntries.transaction', function (Builder $query) use ($fiscalYear) {
-                                    $query->whereYear('posted_at', $fiscalYear);
-                                })
-                                ->pluck('name', 'id')
-                                ->toArray();
-
-                            return $allAccounts + $accountsWithActuals; // Merge both sets
-                        })
-                        ->columns(2) // Display in two columns
-                        ->searchable() // Allow searching for accounts
-                        ->bulkToggleable() // Enable "Select All" / "Deselect All"
-                        ->selectAllAction(
-                            fn (Action $action, Forms\Get $get) => $action
-                                ->label('Remove all items without past actuals (' .
-                                    Account::query()->budgetable()->whereDoesntHave('journalEntries.transaction', function (Builder $query) use ($get) {
-                                        $query->whereYear('posted_at', $get('actuals_fiscal_year'));
-                                    })->count() . ' lines)')
-                        )
-                        ->disableOptionWhen(fn (string $value, Forms\Get $get) => in_array(
-                            $value,
-                            Account::query()->budgetable()->whereHas('journalEntries.transaction', function (Builder $query) use ($get) {
-                                $query->whereYear('posted_at', Carbon::parse($get('actuals_fiscal_year'))->year);
-                            })->pluck('id')->toArray()
-                        ))
-                        ->visible(fn (Forms\Get $get) => $get('prefill_method') === 'actuals'),
-                ])
-                ->visible(function (Forms\Get $get) {
-                    $prefillMethod = $get('prefill_method');
-
-                    if ($prefillMethod !== 'actuals' || blank($get('actuals_fiscal_year'))) {
-                        return false;
-                    }
-
-                    return Account::query()->budgetable()->whereDoesntHave('journalEntries.transaction', function (Builder $query) use ($get) {
-                        $query->whereYear('posted_at', $get('actuals_fiscal_year'));
-                    })->exists();
-                }),
         ];
     }
 
