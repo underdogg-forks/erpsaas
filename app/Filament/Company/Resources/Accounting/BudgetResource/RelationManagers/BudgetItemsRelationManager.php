@@ -2,11 +2,10 @@
 
 namespace App\Filament\Company\Resources\Accounting\BudgetResource\RelationManagers;
 
-use App\Models\Accounting\BudgetAllocation;
-use Filament\Forms\Components\Grid;
-use Filament\Forms\Components\TextInput;
+use App\Models\Accounting\BudgetItem;
 use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\TextInputColumn;
 use Filament\Tables\Table;
 
 class BudgetItemsRelationManager extends RelationManager
@@ -17,72 +16,42 @@ class BudgetItemsRelationManager extends RelationManager
 
     public function table(Table $table): Table
     {
+        $budget = $this->getOwnerRecord();
+
+        // Get distinct periods for this budget
+        $periods = \App\Models\Accounting\BudgetAllocation::query()
+            ->join('budget_items', 'budget_allocations.budget_item_id', '=', 'budget_items.id')
+            ->where('budget_items.budget_id', $budget->id)
+            ->orderBy('start_date')
+            ->pluck('period')
+            ->unique()
+            ->values()
+            ->toArray();
+
         return $table
             ->recordTitleAttribute('account_id')
-            ->columns([
-                Tables\Columns\TextColumn::make('account.name')
-                    ->label('Account')
+            ->paginated(false)
+            ->modifyQueryUsing(
+                fn ($query) => $query->with(['account', 'allocations'])
+            )
+            ->columns(array_merge([
+                TextColumn::make('account.name')
+                    ->label('Accounts')
                     ->sortable()
                     ->searchable(),
+            ], collect($periods)->map(
+                fn ($period) => TextInputColumn::make("allocations_by_period.{$period}")
+                    ->label($period)
+                    ->getStateUsing(
+                        fn ($record) => $record->allocations->firstWhere('period', $period)?->amount
+                    )
+                    ->updateStateUsing(function (BudgetItem $record, $state) use ($period) {
+                        $allocation = $record->allocations->firstWhere('period', $period);
 
-                Tables\Columns\TextColumn::make('allocations_sum_amount')
-                    ->label('Total Allocations')
-                    ->sortable()
-                    ->alignEnd()
-                    ->sum('allocations', 'amount')
-                    ->money(divideBy: 100),
-            ])
-            ->filters([
-                //
-            ])
-            ->headerActions([
-                // Tables\Actions\CreateAction::make(),
-            ])
-            ->actions([
-                Tables\Actions\Action::make('editAllocations')
-                    ->label('Edit Allocations')
-                    ->icon('heroicon-o-pencil')
-                    ->modalHeading(fn ($record) => "Edit Allocations for {$record->account->name}")
-                    ->modalWidth('xl')
-                    ->form(function ($record) {
-                        $fields = [];
-
-                        // Get allocations ordered by date
-                        $allocations = $record->allocations()->orderBy('start_date')->get();
-
-                        foreach ($allocations as $allocation) {
-                            $fields[] = TextInput::make("allocations.{$allocation->id}")
-                                ->label($allocation->period)
-                                ->numeric()
-                                ->default(function () use ($allocation) {
-                                    return $allocation->amount;
-                                })
-                                ->prefix('$')
-                                ->live(debounce: 500)
-                                ->afterStateUpdated(function (TextInput $component, $state) {
-                                    // Format the value as needed
-                                    $component->state(number_format($state, 2, '.', ''));
-                                });
+                        if ($allocation) {
+                            $allocation->update(['amount' => $state]);
                         }
-
-                        return [
-                            Grid::make()
-                                ->schema($fields)
-                                ->columns(3),
-                        ];
                     })
-                    ->action(function (array $data, $record) {
-                        foreach ($data['allocations'] as $allocationId => $amount) {
-                            BudgetAllocation::find($allocationId)->update([
-                                'amount' => $amount,
-                            ]);
-                        }
-                    }),
-            ])
-            ->bulkActions([
-                //                Tables\Actions\BulkActionGroup::make([
-                //                    Tables\Actions\DeleteBulkAction::make(),
-                //                ]),
-            ]);
+            )->all()));
     }
 }

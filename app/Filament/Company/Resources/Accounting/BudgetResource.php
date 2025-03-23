@@ -9,6 +9,7 @@ use App\Filament\Forms\Components\CustomTableRepeater;
 use App\Models\Accounting\Account;
 use App\Models\Accounting\Budget;
 use App\Models\Accounting\BudgetItem;
+use App\Utilities\Currency\CurrencyConverter;
 use Awcodes\TableRepeater\Header;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -263,6 +264,11 @@ class BudgetResource extends Resource
                                     ->align(Alignment::Right);
                             }
 
+                            $headers[] = Header::make('total')
+                                ->label('Total')
+                                ->width('120px')
+                                ->align(Alignment::Right);
+
                             return [
                                 CustomTableRepeater::make('budgetItems')
                                     ->relationship()
@@ -279,7 +285,6 @@ class BudgetResource extends Resource
                                                 ->mask(RawJs::make('$money($input)'))
                                                 ->stripCharacters(',')
                                                 ->numeric()
-                                                ->extraInputAttributes(['class' => 'text-right'])
                                                 ->afterStateHydrated(function ($component, $state, BudgetItem $record) use ($period) {
                                                     // Find the allocation for this period
                                                     $allocation = $record->allocations->firstWhere('period', $period);
@@ -287,6 +292,20 @@ class BudgetResource extends Resource
                                                 })
                                                 ->dehydrated(false); // We'll handle saving manually
                                         })->toArray(),
+
+                                        Forms\Components\Placeholder::make('total')
+                                            ->hiddenLabel()
+                                            ->content(function (BudgetItem $record) use ($periods) {
+                                                $total = 0;
+
+                                                // Calculate the total for this budget item across all periods
+                                                foreach ($periods as $period) {
+                                                    $allocation = $record->allocations->firstWhere('period', $period);
+                                                    $total += $allocation ? $allocation->amount : 0;
+                                                }
+
+                                                return CurrencyConverter::formatToMoney($total);
+                                            }),
                                     ])
                                     ->spreadsheet()
                                     ->itemLabel(fn (BudgetItem $record) => $record->account->name ?? 'Budget Item')
@@ -485,6 +504,7 @@ class BudgetResource extends Resource
             'create' => Pages\CreateBudget::route('/create'),
             'view' => Pages\ViewBudget::route('/{record}'),
             'edit' => Pages\EditBudget::route('/{record}/edit'),
+            'allocations' => Pages\ManageAllocations::route('/{record}/allocations'),
         ];
     }
 }

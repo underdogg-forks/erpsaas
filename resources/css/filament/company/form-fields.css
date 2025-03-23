@@ -53,7 +53,7 @@
     cursor: pointer;
 }
 
-/* Base horizontal scrolling for all TableRepeater components */
+/* Base horizontal scrolling */
 .table-repeater-container {
     overflow-x: auto;
     max-width: 100%;
@@ -70,100 +70,101 @@
 }
 
 /* Excel/Spreadsheet styling */
-.is-spreadsheet .table-repeater-container {
-    border-radius: 0 !important;
-    border: 1px solid #e5e7eb !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    @apply ring-0 !important;
+.is-spreadsheet {
+    /* Container styles */
+
+    .table-repeater-container {
+        border: 1px solid #e5e7eb !important;
+        border-radius: 0 !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        @apply ring-0 !important;
+    }
+
+    /* Header styles */
+
+    .table-repeater-header {
+        background-color: #f8f9fa !important;
+        border-radius: 0 !important;
+    }
+
+    .table-repeater-header-column {
+        border: 1px solid #e5e7eb !important;
+        background-color: #f8f9fa !important;
+        border-radius: 0 !important;
+        font-weight: 600 !important;
+        padding: 8px 12px !important;
+    }
+
+    /* Cell styles */
+
+    .table-repeater-column {
+        border: 1px solid #e5e7eb !important;
+        padding: 8px 12px !important;
+    }
+
+    /* Input styles */
+
+    .table-repeater-column input {
+        text-align: right !important;
+        width: 100% !important;
+    }
+
+    /* Flatten inputs */
+
+    .fi-input-wrapper,
+    .fi-input {
+        padding: 0 !important;
+        width: 100% !important;
+    }
+
+    .fi-input-wrp,
+    .fi-fo-file-upload .filepond--root {
+        @apply ring-0 bg-transparent shadow-none !important;
+    }
+
+    .fi-input-wrp input {
+        @apply bg-transparent border-0 shadow-none !important;
+    }
+
+    /* Focus states */
+
+    .table-repeater-column:focus-within {
+        outline: 2px solid #2563eb !important;
+        outline-offset: -2px !important;
+        z-index: 1 !important;
+    }
+
+    .fi-input-wrp:focus-within {
+        @apply ring-0 shadow-none !important;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+        @apply ring-0 shadow-none !important;
+        outline: none !important;
+    }
+
+    /* Row styling */
+
+    .table-repeater-row:nth-child(even) {
+        background-color: #f9fafb;
+    }
+
+    /* Form control spacing */
+
+    .fi-fo-field-wrp:has(.fi-fo-checkbox-list),
+    .fi-fo-field-wrp:has(.fi-checkbox-input),
+    .fi-fo-field-wrp:has(.fi-fo-radio) {
+        @apply py-2 px-3 !important;
+    }
+
+    .fi-fo-field-wrp:has(.fi-fo-toggle) {
+        @apply inline-block mt-1 !important;
+    }
 }
 
-.is-spreadsheet .table-repeater-header {
-    background-color: #f8f9fa !important;
-    border-radius: 0 !important;
-}
-
-/* Fix for input alignment with headers */
-.is-spreadsheet .table-repeater-header-column,
-.is-spreadsheet .table-repeater-column {
-    padding: 6px 8px !important;
-}
-
-/* Right-align all inputs */
-.is-spreadsheet .table-repeater-column input {
-    text-align: right !important;
-    width: 100% !important;
-}
-
-/* Remove any additional padding from input containers */
-.is-spreadsheet .fi-input-wrapper,
-.is-spreadsheet .fi-input {
-    padding: 0 !important;
-    width: 100% !important;
-}
-
-.is-spreadsheet .table-repeater-header-column {
-    border-radius: 0 !important;
-    border: 1px solid #e5e7eb !important;
-    background-color: #f8f9fa !important;
-    font-weight: 600 !important;
-    padding: 6px 8px !important;
-}
-
-.is-spreadsheet .table-repeater-column {
-    border: 1px solid #e5e7eb !important;
-    padding: 4px 8px !important;
-    position: relative !important;
-}
-
-/* Incorporate flat input styling from streamlined */
-.is-spreadsheet .fi-input-wrp,
-.is-spreadsheet .fi-fo-file-upload .filepond--root {
-    @apply ring-0 bg-transparent shadow-none !important;
-}
-
-.is-spreadsheet .fi-input-wrp input {
-    @apply bg-transparent border-0 shadow-none !important;
-}
-
-.is-spreadsheet .fi-select-trigger {
-    @apply ring-0 bg-transparent shadow-none !important;
-}
-
-/* Excel-like row styles */
-.is-spreadsheet .table-repeater-row:nth-child(even) {
-    background-color: #f9fafb;
-}
-
-/* Excel-like focus/selection styles */
-.is-spreadsheet .table-repeater-column:focus-within {
-    outline: 2px solid #2563eb !important;
-    outline-offset: -2px !important;
-    z-index: 1 !important;
-}
-
-.is-spreadsheet .fi-input-wrp:focus-within {
-    @apply ring-0 shadow-none !important;
-}
-
-.is-spreadsheet input:focus,
-.is-spreadsheet select:focus,
-.is-spreadsheet textarea:focus {
-    @apply ring-0 shadow-none !important;
-    outline: none !important;
-}
-
-/* Spacing for form controls */
-.is-spreadsheet .fi-fo-field-wrp:has(.fi-fo-checkbox-list),
-.is-spreadsheet .fi-fo-field-wrp:has(.fi-checkbox-input),
-.is-spreadsheet .fi-fo-field-wrp:has(.fi-fo-radio) {
-    @apply py-2 px-3 !important;
-}
-
-.is-spreadsheet .fi-fo-field-wrp:has(.fi-fo-toggle) {
-    @apply inline-block mt-1 !important;
-}
-
-/* Preserve responsive behavior */
+/* Responsive behavior */
 @media (max-width: theme('screens.sm')) {
     .table-repeater-component.break-point-sm .table-repeater-container {
         overflow-x: visible;

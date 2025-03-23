@@ -616,7 +616,7 @@ class CreateBudget extends CreateRecord
     private function determinePeriod(Carbon $date, BudgetIntervalType $intervalType): string
     {
         return match ($intervalType) {
-            BudgetIntervalType::Month => $date->format('F Y'),
+            BudgetIntervalType::Month => $date->format('M Y'),
             BudgetIntervalType::Quarter => 'Q' . $date->quarter . ' ' . $date->year,
             BudgetIntervalType::Year => (string) $date->year,
             default => $date->format('Y-m-d'),

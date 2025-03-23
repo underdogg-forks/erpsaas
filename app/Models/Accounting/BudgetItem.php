@@ -23,6 +23,13 @@ class BudgetItem extends Model
         'updated_by',
     ];
 
+    protected $appends = ['allocations_by_period'];
+
+    public function getAllocationsByPeriodAttribute(): array
+    {
+        return $this->allocations->pluck('amount', 'period')->toArray();
+    }
+
     public function budget(): BelongsTo
     {
         return $this->belongsTo(Budget::class);
