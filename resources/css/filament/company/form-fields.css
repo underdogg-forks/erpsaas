@@ -53,40 +53,144 @@
     cursor: pointer;
 }
 
-/* Table Repeater Styles */
+/* Base horizontal scrolling for all TableRepeater components */
 .table-repeater-container {
-    @apply rounded-none ring-0;
+    overflow-x: auto;
+    max-width: 100%;
+    -webkit-overflow-scrolling: touch;
 }
 
-.table-repeater-component {
-    @apply space-y-10;
+.table-repeater-container:has(.choices.is-open) {
+    overflow: visible;
 }
 
-.table-repeater-component ul {
-    @apply justify-start;
+.table-repeater-container table {
+    min-width: 100%;
+    width: max-content;
 }
 
-.table-repeater-row {
-    @apply divide-x-0 !important;
+/* Excel/Spreadsheet styling */
+.is-spreadsheet .table-repeater-container {
+    border-radius: 0 !important;
+    border: 1px solid #e5e7eb !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    @apply ring-0 !important;
 }
 
-.table-repeater-column {
-    @apply py-2 !important;
+.is-spreadsheet .table-repeater-header {
+    background-color: #f8f9fa !important;
+    border-radius: 0 !important;
 }
 
-.table-repeater-header {
-    @apply rounded-t-none !important;
+/* Fix for input alignment with headers */
+.is-spreadsheet .table-repeater-header-column,
+.is-spreadsheet .table-repeater-column {
+    padding: 6px 8px !important;
 }
 
-.table-repeater-rows-wrapper {
-    @apply divide-gray-300 last:border-b last:border-gray-300 dark:divide-white/20 dark:last:border-white/20;
+/* Right-align all inputs */
+.is-spreadsheet .table-repeater-column input {
+    text-align: right !important;
+    width: 100% !important;
 }
 
-.table-repeater-header tr {
-    @apply divide-x-0 text-base sm:text-sm sm:leading-6 !important;
+/* Remove any additional padding from input containers */
+.is-spreadsheet .fi-input-wrapper,
+.is-spreadsheet .fi-input {
+    padding: 0 !important;
+    width: 100% !important;
 }
 
-.table-repeater-header-column {
-    @apply ps-3 pe-3 font-semibold bg-gray-200 dark:bg-gray-800 rounded-none !important;
+.is-spreadsheet .table-repeater-header-column {
+    border-radius: 0 !important;
+    border: 1px solid #e5e7eb !important;
+    background-color: #f8f9fa !important;
+    font-weight: 600 !important;
+    padding: 6px 8px !important;
+}
+
+.is-spreadsheet .table-repeater-column {
+    border: 1px solid #e5e7eb !important;
+    padding: 4px 8px !important;
+    position: relative !important;
+}
+
+/* Incorporate flat input styling from streamlined */
+.is-spreadsheet .fi-input-wrp,
+.is-spreadsheet .fi-fo-file-upload .filepond--root {
+    @apply ring-0 bg-transparent shadow-none !important;
+}
+
+.is-spreadsheet .fi-input-wrp input {
+    @apply bg-transparent border-0 shadow-none !important;
+}
+
+.is-spreadsheet .fi-select-trigger {
+    @apply ring-0 bg-transparent shadow-none !important;
+}
+
+/* Excel-like row styles */
+.is-spreadsheet .table-repeater-row:nth-child(even) {
+    background-color: #f9fafb;
+}
+
+/* Excel-like focus/selection styles */
+.is-spreadsheet .table-repeater-column:focus-within {
+    outline: 2px solid #2563eb !important;
+    outline-offset: -2px !important;
+    z-index: 1 !important;
+}
+
+.is-spreadsheet .fi-input-wrp:focus-within {
+    @apply ring-0 shadow-none !important;
+}
+
+.is-spreadsheet input:focus,
+.is-spreadsheet select:focus,
+.is-spreadsheet textarea:focus {
+    @apply ring-0 shadow-none !important;
+    outline: none !important;
+}
+
+/* Spacing for form controls */
+.is-spreadsheet .fi-fo-field-wrp:has(.fi-fo-checkbox-list),
+.is-spreadsheet .fi-fo-field-wrp:has(.fi-checkbox-input),
+.is-spreadsheet .fi-fo-field-wrp:has(.fi-fo-radio) {
+    @apply py-2 px-3 !important;
+}
+
+.is-spreadsheet .fi-fo-field-wrp:has(.fi-fo-toggle) {
+    @apply inline-block mt-1 !important;
+}
+
+/* Preserve responsive behavior */
+@media (max-width: theme('screens.sm')) {
+    .table-repeater-component.break-point-sm .table-repeater-container {
+        overflow-x: visible;
+    }
+}
+
+@media (max-width: theme('screens.md')) {
+    .table-repeater-component.break-point-md .table-repeater-container {
+        overflow-x: visible;
+    }
+}
+
+@media (max-width: theme('screens.lg')) {
+    .table-repeater-component.break-point-lg .table-repeater-container {
+        overflow-x: visible;
+    }
+}
+
+@media (max-width: theme('screens.xl')) {
+    .table-repeater-component.break-point-xl .table-repeater-container {
+        overflow-x: visible;
+    }
+}
+
+@media (max-width: theme('screens.2xl')) {
+    .table-repeater-component.break-point-2xl .table-repeater-container {
+        overflow-x: visible;
+    }
 }
 

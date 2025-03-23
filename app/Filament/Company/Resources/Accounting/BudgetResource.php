@@ -5,11 +5,17 @@ namespace App\Filament\Company\Resources\Accounting;
 use App\Enums\Accounting\BudgetIntervalType;
 use App\Filament\Company\Resources\Accounting\BudgetResource\Pages;
 use App\Filament\Forms\Components\CustomSection;
+use App\Filament\Forms\Components\CustomTableRepeater;
 use App\Models\Accounting\Account;
 use App\Models\Accounting\Budget;
+use App\Models\Accounting\BudgetItem;
+use Awcodes\TableRepeater\Header;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
+use Filament\Support\Enums\Alignment;
+use Filament\Support\Enums\MaxWidth;
+use Filament\Support\RawJs;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Carbon;
@@ -232,6 +238,64 @@ class BudgetResource extends Resource
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\ViewAction::make(),
                     Tables\Actions\EditAction::make(),
+                    Tables\Actions\EditAction::make('editAllocations')
+                        ->name('editAllocations')
+                        ->url(null)
+                        ->label('Edit Allocations')
+                        ->icon('heroicon-o-table-cells')
+                        ->modalWidth(MaxWidth::Screen)
+                        ->modalHeading('Edit Budget Allocations')
+                        ->modalDescription('Update the allocations for this budget')
+                        ->slideOver()
+                        ->form(function (Budget $record) {
+                            $periods = $record->getPeriods();
+
+                            $headers = [
+                                Header::make('Account')
+                                    ->label('Account')
+                                    ->width('200px'),
+                            ];
+
+                            foreach ($periods as $period) {
+                                $headers[] = Header::make($period)
+                                    ->label($period)
+                                    ->width('120px')
+                                    ->align(Alignment::Right);
+                            }
+
+                            return [
+                                CustomTableRepeater::make('budgetItems')
+                                    ->relationship()
+                                    ->hiddenLabel()
+                                    ->headers($headers)
+                                    ->schema([
+                                        Forms\Components\Placeholder::make('account')
+                                            ->hiddenLabel()
+                                            ->content(fn (BudgetItem $record) => $record->account->name ?? ''),
+
+                                        // Create a field for each period
+                                        ...collect($periods)->map(function ($period) {
+                                            return Forms\Components\TextInput::make("allocations.{$period}")
+                                                ->mask(RawJs::make('$money($input)'))
+                                                ->stripCharacters(',')
+                                                ->numeric()
+                                                ->extraInputAttributes(['class' => 'text-right'])
+                                                ->afterStateHydrated(function ($component, $state, BudgetItem $record) use ($period) {
+                                                    // Find the allocation for this period
+                                                    $allocation = $record->allocations->firstWhere('period', $period);
+                                                    $component->state($allocation ? $allocation->amount : 0);
+                                                })
+                                                ->dehydrated(false); // We'll handle saving manually
+                                        })->toArray(),
+                                    ])
+                                    ->spreadsheet()
+                                    ->itemLabel(fn (BudgetItem $record) => $record->account->name ?? 'Budget Item')
+                                    ->deletable(false)
+                                    ->reorderable(false)
+                                    ->addable(false) // Don't allow adding new budget items
+                                    ->columnSpanFull(),
+                            ];
+                        }),
                 ]),
             ])
             ->bulkActions([

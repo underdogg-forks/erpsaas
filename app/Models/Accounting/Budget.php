@@ -57,6 +57,25 @@ class Budget extends Model
         return $this->hasManyThrough(BudgetAllocation::class, BudgetItem::class);
     }
 
+    /**
+     * Get all periods for this budget in chronological order.
+     *
+     * @return array
+     */
+    public function getPeriods(): array
+    {
+        return $this->budgetItems()
+            ->with('allocations')
+            ->get()
+            ->flatMap(fn ($item) => $item->allocations)
+            ->sortBy('start_date')
+            ->pluck('period')
+            ->unique()
+            ->values()
+            ->toArray();
+    }
+
+
     public function isDraft(): bool
     {
         return $this->status === BudgetStatus::Draft;

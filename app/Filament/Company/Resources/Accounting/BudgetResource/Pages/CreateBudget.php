@@ -327,6 +327,7 @@ class CreateBudget extends CreateRecord
             ]);
 
             $allocationStart = Carbon::parse($data['start_date']);
+            $budgetEndDate = Carbon::parse($data['end_date']);
 
             // Determine amounts based on the prefill method
             $amounts = match ($data['prefill_method'] ?? null) {
@@ -335,8 +336,24 @@ class CreateBudget extends CreateRecord
                 default => $this->generateZeroAmounts($data['start_date'], $data['end_date'], BudgetIntervalType::parse($data['interval_type'])),
             };
 
+            if (empty($amounts)) {
+                $amounts = $this->generateZeroAmounts(
+                    $data['start_date'],
+                    $data['end_date'],
+                    BudgetIntervalType::parse($data['interval_type'])
+                );
+            }
+
             foreach ($amounts as $periodLabel => $amount) {
+                if ($allocationStart->gt($budgetEndDate)) {
+                    break;
+                }
+
                 $allocationEnd = self::calculateEndDate($allocationStart, BudgetIntervalType::parse($data['interval_type']));
+
+                if ($allocationEnd->gt($budgetEndDate)) {
+                    $allocationEnd = $budgetEndDate->copy();
+                }
 
                 $budgetItem->allocations()->create([
                     'period' => $periodLabel,
@@ -355,13 +372,78 @@ class CreateBudget extends CreateRecord
 
     private function getAmountsFromActuals(Account $account, int $fiscalYear, BudgetIntervalType $intervalType): array
     {
-        // Determine the fiscal year start and end dates
-        $fiscalYearStart = Carbon::create($fiscalYear, 1, 1)->startOfYear();
-        $fiscalYearEnd = $fiscalYearStart->copy()->endOfYear();
+        $amounts = [];
 
-        $netMovement = Accounting::getNetMovement($account, $fiscalYearStart->toDateString(), $fiscalYearEnd->toDateString());
+        // Get the start and end date of the budget being created
+        $budgetStartDate = Carbon::parse($this->data['start_date']);
+        $budgetEndDate = Carbon::parse($this->data['end_date']);
 
-        return $this->distributeAmountAcrossPeriods($netMovement->getAmount(), $fiscalYearStart, $fiscalYearEnd, $intervalType);
+        // Map to equivalent dates in the reference fiscal year
+        $referenceStartDate = Carbon::create($fiscalYear, $budgetStartDate->month, $budgetStartDate->day);
+        $referenceEndDate = Carbon::create($fiscalYear, $budgetEndDate->month, $budgetEndDate->day);
+
+        // Handle year boundary case (if budget crosses year boundary)
+        if ($budgetStartDate->month > $budgetEndDate->month ||
+            ($budgetStartDate->month === $budgetEndDate->month && $budgetStartDate->day > $budgetEndDate->day)) {
+            $referenceEndDate->year++;
+        }
+
+        if ($intervalType->isMonth()) {
+            // Process month by month within the reference period
+            $currentDate = $referenceStartDate->copy()->startOfMonth();
+            $lastMonth = $referenceEndDate->copy()->startOfMonth();
+
+            while ($currentDate->lte($lastMonth)) {
+                $periodStart = $currentDate->copy()->startOfMonth();
+                $periodEnd = $currentDate->copy()->endOfMonth();
+                $periodLabel = $this->determinePeriod($periodStart, $intervalType);
+
+                $netMovement = Accounting::getNetMovement(
+                    $account,
+                    $periodStart->toDateString(),
+                    $periodEnd->toDateString()
+                );
+
+                $amounts[$periodLabel] = $netMovement->getAmount();
+
+                $currentDate->addMonth();
+            }
+        } elseif ($intervalType->isQuarter()) {
+            // Process quarter by quarter within the reference period
+            $currentDate = $referenceStartDate->copy()->startOfQuarter();
+            $lastQuarter = $referenceEndDate->copy()->startOfQuarter();
+
+            while ($currentDate->lte($lastQuarter)) {
+                $periodStart = $currentDate->copy()->startOfQuarter();
+                $periodEnd = $currentDate->copy()->endOfQuarter();
+                $periodLabel = $this->determinePeriod($periodStart, $intervalType);
+
+                $netMovement = Accounting::getNetMovement(
+                    $account,
+                    $periodStart->toDateString(),
+                    $periodEnd->toDateString()
+                );
+
+                $amounts[$periodLabel] = $netMovement->getAmount();
+
+                $currentDate->addQuarter();
+            }
+        } else {
+            // For yearly intervals
+            $periodStart = $referenceStartDate->copy()->startOfYear();
+            $periodEnd = $referenceEndDate->copy()->endOfYear();
+            $periodLabel = $this->determinePeriod($periodStart, $intervalType);
+
+            $netMovement = Accounting::getNetMovement(
+                $account,
+                $periodStart->toDateString(),
+                $periodEnd->toDateString()
+            );
+
+            $amounts[$periodLabel] = $netMovement->getAmount();
+        }
+
+        return $amounts;
     }
 
     private function distributeAmountAcrossPeriods(int $totalAmountInCents, Carbon $startDate, Carbon $endDate, BudgetIntervalType $intervalType): array
@@ -397,12 +479,121 @@ class CreateBudget extends CreateRecord
     {
         $amounts = [];
 
+        // Get the budget being created start and end dates
+        $newBudgetStartDate = Carbon::parse($this->data['start_date']);
+        $newBudgetEndDate = Carbon::parse($this->data['end_date']);
+
+        // Get source budget's date information
+        $sourceBudget = Budget::findOrFail($sourceBudgetId);
+        $sourceBudgetType = $sourceBudget->interval_type;
+
+        // Retrieve all previous allocations for this account
         $previousAllocations = BudgetAllocation::query()
-            ->whereHas('budgetItem', fn ($query) => $query->where('account_id', $account->id)->where('budget_id', $sourceBudgetId))
+            ->whereHas(
+                'budgetItem',
+                fn ($query) => $query->where('account_id', $account->id)
+                    ->where('budget_id', $sourceBudgetId)
+            )
+            ->orderBy('start_date')
             ->get();
 
-        foreach ($previousAllocations as $allocation) {
-            $amounts[$allocation->period] = $allocation->getRawOriginal('amount');
+        if ($previousAllocations->isEmpty()) {
+            return $this->generateZeroAmounts(
+                $this->data['start_date'],
+                $this->data['end_date'],
+                $intervalType
+            );
+        }
+
+        // Map previous budget periods to current budget periods
+        if ($intervalType === $sourceBudgetType) {
+            // Same interval type: direct mapping of equivalent periods
+            foreach ($previousAllocations as $allocation) {
+                $allocationDate = Carbon::parse($allocation->start_date);
+
+                // Create an equivalent date in the new budget's time range
+                $equivalentMonth = $allocationDate->month;
+                $equivalentDay = $allocationDate->day;
+                $equivalentYear = $newBudgetStartDate->year;
+
+                // Adjust year if the budget spans multiple years
+                if ($newBudgetStartDate->month > $newBudgetEndDate->month &&
+                    $equivalentMonth < $newBudgetStartDate->month) {
+                    $equivalentYear++;
+                }
+
+                $equivalentDate = Carbon::create($equivalentYear, $equivalentMonth, $equivalentDay);
+
+                // Only include if the date falls within our new budget period
+                if ($equivalentDate->between($newBudgetStartDate, $newBudgetEndDate)) {
+                    $periodLabel = $this->determinePeriod($equivalentDate, $intervalType);
+                    $amounts[$periodLabel] = $allocation->getRawOriginal('amount');
+                }
+            }
+        } else {
+            // Handle conversion between different interval types
+            $newBudgetPeriods = $this->generateZeroAmounts(
+                $this->data['start_date'],
+                $this->data['end_date'],
+                $intervalType
+            );
+
+            // Fill with zeros initially
+            $amounts = array_fill_keys(array_keys($newBudgetPeriods), 0);
+
+            // Group previous allocations by their date range
+            $allocationsByRange = [];
+            foreach ($previousAllocations as $allocation) {
+                $allocationsByRange[] = [
+                    'start' => Carbon::parse($allocation->start_date),
+                    'end' => Carbon::parse($allocation->end_date),
+                    'amount' => $allocation->getRawOriginal('amount'),
+                ];
+            }
+
+            // Create new allocations based on interval type
+            $currentDate = Carbon::parse($this->data['start_date']);
+            $endDate = Carbon::parse($this->data['end_date']);
+
+            while ($currentDate->lte($endDate)) {
+                $periodStart = $currentDate->copy();
+                $periodEnd = self::calculateEndDate($currentDate, $intervalType);
+
+                if ($periodEnd->gt($endDate)) {
+                    $periodEnd = $endDate->copy();
+                }
+
+                $periodLabel = $this->determinePeriod($periodStart, $intervalType);
+
+                // Calculate the proportional amount from the source budget
+                $weightedAmount = 0;
+
+                foreach ($allocationsByRange as $allocation) {
+                    // Find overlapping days between new period and source allocation
+                    $overlapStart = max($periodStart, $allocation['start']);
+                    $overlapEnd = min($periodEnd, $allocation['end']);
+
+                    if ($overlapStart <= $overlapEnd) {
+                        // Calculate overlapping days
+                        $overlapDays = $overlapStart->diffInDays($overlapEnd) + 1;
+                        $allocationTotalDays = $allocation['start']->diffInDays($allocation['end']) + 1;
+
+                        // Calculate proportional amount based on days
+                        $proportion = $overlapDays / $allocationTotalDays;
+                        $proportionalAmount = (int) ($allocation['amount'] * $proportion);
+
+                        $weightedAmount += $proportionalAmount;
+                    }
+                }
+
+                // Assign the calculated amount to the period
+                if (array_key_exists($periodLabel, $amounts)) {
+                    $amounts[$periodLabel] = $weightedAmount;
+                }
+
+                // Move to the next period
+                $currentDate = $periodEnd->copy()->addDay();
+            }
         }
 
         return $amounts;
