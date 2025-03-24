@@ -76,7 +76,6 @@
     .table-repeater-container {
         border: 1px solid #e5e7eb !important;
         border-radius: 0 !important;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         @apply ring-0 !important;
     }
 
@@ -84,13 +83,11 @@
 
     .table-repeater-header {
         background-color: #f8f9fa !important;
-        border-radius: 0 !important;
     }
 
     .table-repeater-header-column {
         border: 1px solid #e5e7eb !important;
         background-color: #f8f9fa !important;
-        border-radius: 0 !important;
         font-weight: 600 !important;
         padding: 8px 12px !important;
     }
@@ -106,7 +103,6 @@
 
     .table-repeater-column input {
         text-align: right !important;
-        width: 100% !important;
     }
 
     /* Flatten inputs */
@@ -114,16 +110,15 @@
     .fi-input-wrapper,
     .fi-input {
         padding: 0 !important;
-        width: 100% !important;
     }
 
     .fi-input-wrp,
     .fi-fo-file-upload .filepond--root {
-        @apply ring-0 bg-transparent shadow-none !important;
+        @apply ring-0 bg-transparent shadow-none rounded-none !important;
     }
 
     .fi-input-wrp input {
-        @apply bg-transparent border-0 shadow-none !important;
+        @apply bg-transparent !important;
     }
 
     /* Focus states */
@@ -132,10 +127,6 @@
         outline: 2px solid #2563eb !important;
         outline-offset: -2px !important;
         z-index: 1 !important;
-    }
-
-    .fi-input-wrp:focus-within {
-        @apply ring-0 shadow-none !important;
     }
 
     input:focus,
@@ -193,5 +184,9 @@
     .table-repeater-component.break-point-2xl .table-repeater-container {
         overflow-x: visible;
     }
+}
+
+.is-spreadsheet .table-repeater-column .fi-input-wrp-suffix {
+    padding-right: 0 !important;
 }
 

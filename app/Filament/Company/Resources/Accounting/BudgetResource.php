@@ -255,6 +255,14 @@ class BudgetResource extends Resource
                                 Header::make('Account')
                                     ->label('Account')
                                     ->width('200px'),
+                                Header::make('total')
+                                    ->label('Total')
+                                    ->width('120px')
+                                    ->align(Alignment::Right),
+                                Header::make('action')
+                                    ->label('')
+                                    ->width('40px')
+                                    ->align(Alignment::Center),
                             ];
 
                             foreach ($periods as $period) {
@@ -263,11 +271,6 @@ class BudgetResource extends Resource
                                     ->width('120px')
                                     ->align(Alignment::Right);
                             }
-
-                            $headers[] = Header::make('total')
-                                ->label('Total')
-                                ->width('120px')
-                                ->align(Alignment::Right);
 
                             return [
                                 CustomTableRepeater::make('budgetItems')
@@ -278,6 +281,48 @@ class BudgetResource extends Resource
                                         Forms\Components\Placeholder::make('account')
                                             ->hiddenLabel()
                                             ->content(fn (BudgetItem $record) => $record->account->name ?? ''),
+
+                                        Forms\Components\TextInput::make('total')
+                                            ->hiddenLabel()
+                                            ->mask(RawJs::make('$money($input)'))
+                                            ->stripCharacters(',')
+                                            ->numeric()
+                                            ->afterStateHydrated(function ($component, $state, BudgetItem $record) use ($periods) {
+                                                $total = 0;
+                                                // Calculate the total for this budget item across all periods
+                                                foreach ($periods as $period) {
+                                                    $allocation = $record->allocations->firstWhere('period', $period);
+                                                    $total += $allocation ? $allocation->amount : 0;
+                                                }
+                                                $component->state($total);
+                                            })
+                                            ->dehydrated(false),
+
+                                        Forms\Components\Actions::make([
+                                            Forms\Components\Actions\Action::make('disperse')
+                                                ->label('Disperse')
+                                                ->icon('heroicon-m-chevron-double-right')
+                                                ->color('primary')
+                                                ->iconButton()
+                                                ->action(function (Forms\Set $set, Forms\Get $get, BudgetItem $record, $livewire) use ($periods) {
+                                                    $total = CurrencyConverter::convertToCents($get('total'));
+                                                    ray($total);
+                                                    $numPeriods = count($periods);
+
+                                                    if ($numPeriods === 0) {
+                                                        return;
+                                                    }
+
+                                                    $baseAmount = floor($total / $numPeriods);
+                                                    $remainder = $total - ($baseAmount * $numPeriods);
+
+                                                    foreach ($periods as $index => $period) {
+                                                        $amount = $baseAmount + ($index === 0 ? $remainder : 0);
+                                                        $formattedAmount = CurrencyConverter::convertCentsToFormatSimple($amount);
+                                                        $set("allocations.{$period}", $formattedAmount);
+                                                    }
+                                                }),
+                                        ]),
 
                                         // Create a field for each period
                                         ...collect($periods)->map(function ($period) {
@@ -292,20 +337,6 @@ class BudgetResource extends Resource
                                                 })
                                                 ->dehydrated(false); // We'll handle saving manually
                                         })->toArray(),
-
-                                        Forms\Components\Placeholder::make('total')
-                                            ->hiddenLabel()
-                                            ->content(function (BudgetItem $record) use ($periods) {
-                                                $total = 0;
-
-                                                // Calculate the total for this budget item across all periods
-                                                foreach ($periods as $period) {
-                                                    $allocation = $record->allocations->firstWhere('period', $period);
-                                                    $total += $allocation ? $allocation->amount : 0;
-                                                }
-
-                                                return CurrencyConverter::formatToMoney($total);
-                                            }),
                                     ])
                                     ->spreadsheet()
                                     ->itemLabel(fn (BudgetItem $record) => $record->account->name ?? 'Budget Item')

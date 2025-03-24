@@ -14,6 +14,10 @@ return new class extends Migration
         Schema::create('budgets', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('source_budget_id')->nullable()->constrained('budgets')->nullOnDelete();
+            // Source fiscal year
+            $table->year('source_fiscal_year')->nullable();
+            $table->string('source_type')->nullable(); // budget, actuals
             $table->string('name');
             $table->date('start_date');
             $table->date('end_date');
@@ -21,6 +25,7 @@ return new class extends Migration
             $table->string('interval_type')->default('month'); // day, week, month, quarter, year
             $table->text('notes')->nullable();
             $table->timestamp('approved_at')->nullable();
+            $table->foreignId('approved_by_id')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('closed_at')->nullable();
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();

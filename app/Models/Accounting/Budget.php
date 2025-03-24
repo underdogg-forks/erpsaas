@@ -5,8 +5,10 @@ namespace App\Models\Accounting;
 use App\Concerns\Blamable;
 use App\Concerns\CompanyOwned;
 use App\Enums\Accounting\BudgetIntervalType;
+use App\Enums\Accounting\BudgetSourceType;
 use App\Enums\Accounting\BudgetStatus;
 use App\Filament\Company\Resources\Accounting\BudgetResource;
+use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\MountableAction;
 use Filament\Actions\ReplicateAction;
@@ -14,6 +16,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Support\Carbon;
@@ -26,6 +29,9 @@ class Budget extends Model
 
     protected $fillable = [
         'company_id',
+        'source_budget_id',
+        'source_fiscal_year',
+        'source_type',
         'name',
         'start_date',
         'end_date',
@@ -33,12 +39,15 @@ class Budget extends Model
         'interval_type', // day, week, month, quarter, year
         'notes',
         'approved_at',
+        'approved_by_id',
         'closed_at',
         'created_by',
         'updated_by',
     ];
 
     protected $casts = [
+        'source_fiscal_year' => 'integer',
+        'source_type' => BudgetSourceType::class,
         'start_date' => 'date',
         'end_date' => 'date',
         'status' => BudgetStatus::class,
@@ -46,6 +55,21 @@ class Budget extends Model
         'approved_at' => 'datetime',
         'closed_at' => 'datetime',
     ];
+
+    public function sourceBudget(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'source_budget_id');
+    }
+
+    public function derivedBudgets(): HasMany
+    {
+        return $this->hasMany(self::class, 'source_budget_id');
+    }
+
+    public function approvedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by_id');
+    }
 
     public function budgetItems(): HasMany
     {
@@ -59,8 +83,6 @@ class Budget extends Model
 
     /**
      * Get all periods for this budget in chronological order.
-     *
-     * @return array
      */
     public function getPeriods(): array
     {
@@ -74,7 +96,6 @@ class Budget extends Model
             ->values()
             ->toArray();
     }
-
 
     public function isDraft(): bool
     {
