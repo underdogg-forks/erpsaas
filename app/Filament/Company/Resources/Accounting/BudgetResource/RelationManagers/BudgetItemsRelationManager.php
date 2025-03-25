@@ -272,7 +272,6 @@ class BudgetItemsRelationManager extends RelationManager
                     ->mask(RawJs::make('$money($input)'))
                     ->summarize(
                         Summarizer::make()
-                            ->label($period)
                             ->using(function (\Illuminate\Database\Query\Builder $query) use ($period) {
                                 $budgetItemIds = $query->pluck('id')->toArray();
                                 $total = $this->calculatePeriodSum($budgetItemIds, $period);
