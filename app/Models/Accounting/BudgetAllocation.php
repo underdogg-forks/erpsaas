@@ -2,7 +2,7 @@
 
 namespace App\Models\Accounting;
 
-use App\Casts\DocumentMoneyCast;
+use App\Casts\MoneyCast;
 use App\Concerns\CompanyOwned;
 use App\Enums\Accounting\BudgetIntervalType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -28,7 +28,7 @@ class BudgetAllocation extends Model
         'start_date' => 'date',
         'end_date' => 'date',
         'interval_type' => BudgetIntervalType::class,
-        'amount' => DocumentMoneyCast::class,
+        'amount' => MoneyCast::class,
     ];
 
     public function budgetItem(): BelongsTo

@@ -292,9 +292,9 @@ class BudgetResource extends Resource
                                                 // Calculate the total for this budget item across all periods
                                                 foreach ($periods as $period) {
                                                     $allocation = $record->allocations->firstWhere('period', $period);
-                                                    $total += $allocation ? $allocation->amount : 0;
+                                                    $total += $allocation ? $allocation->getRawOriginal('amount') : 0;
                                                 }
-                                                $component->state($total);
+                                                $component->state(CurrencyConverter::convertCentsToFormatSimple($total));
                                             })
                                             ->dehydrated(false),
 

@@ -28,11 +28,7 @@
 
 /* End Alignment sortable column enhancement */
 .fi-ta-header-cell:has(button.justify-end > svg.fi-ta-header-cell-sort-icon) {
-    padding-right: 0.25rem;
-}
-
-.fi-ta-cell:has(.fi-ta-col-wrp > .justify-end) {
-    padding-right: 1rem;
+    padding-right: 0;
 }
 
 :not(.dark) .fi-body {

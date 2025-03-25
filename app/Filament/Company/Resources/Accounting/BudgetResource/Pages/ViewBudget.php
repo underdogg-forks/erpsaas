@@ -7,10 +7,16 @@ use Filament\Actions;
 use Filament\Forms\Form;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Pages\ViewRecord;
+use Filament\Support\Enums\MaxWidth;
 
 class ViewBudget extends ViewRecord
 {
     protected static string $resource = BudgetResource::class;
+
+    public function getMaxContentWidth(): MaxWidth | string | null
+    {
+        return '8xl';
+    }
 
     protected function getHeaderActions(): array
     {
