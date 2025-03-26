@@ -3,7 +3,6 @@
 namespace App\Filament\Company\Resources\Accounting\BudgetResource\Pages;
 
 use App\Filament\Company\Resources\Accounting\BudgetResource;
-use Filament\Actions;
 use Filament\Forms\Form;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Pages\ViewRecord;
@@ -21,7 +20,7 @@ class ViewBudget extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\EditAction::make(),
+            //
         ];
     }
 

@@ -106,12 +106,10 @@
                     $getExtraInputAttributeBag()
                         ->merge([
                             'x-on:change' . ($type === 'number' ? '.debounce.1s' : null) => $batchMode ? '
-                                $wire.dispatch(\'batch-column-changed\', {
-                                    data: {
-                                        name: name,
-                                        recordKey: recordKey,
-                                        value: $event.target.value
-                                    }
+                                $wire.handleBatchColumnChanged({
+                                    name: name,
+                                    recordKey: recordKey,
+                                    value: $event.target.value
                                 })
                             ' : '
                                 isLoading = true
@@ -130,7 +128,7 @@
 
                                 isLoading = false
                             ',
-                            'x-on:keydown.enter' => $batchMode ? '$wire.dispatch(\'save-batch-changes\')' : '',
+                            'x-on:keydown.enter' => $batchMode ? '$wire.saveBatchChanges()' : null,
                             'x-mask' . ($mask instanceof \Filament\Support\RawJs ? ':dynamic' : '') => filled($mask) ? $mask : null,
                         ])
                         ->class([

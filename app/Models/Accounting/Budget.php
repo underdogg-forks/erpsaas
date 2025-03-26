@@ -81,19 +81,13 @@ class Budget extends Model
         return $this->hasManyThrough(BudgetAllocation::class, BudgetItem::class);
     }
 
-    /**
-     * Get all periods for this budget in chronological order.
-     */
     public function getPeriods(): array
     {
-        return $this->budgetItems()
-            ->with('allocations')
-            ->get()
-            ->flatMap(fn ($item) => $item->allocations)
-            ->sortBy('start_date')
+        return $this->allocations()
+            ->select('period')
+            ->distinct()
+            ->orderBy('period')
             ->pluck('period')
-            ->unique()
-            ->values()
             ->toArray();
     }
 

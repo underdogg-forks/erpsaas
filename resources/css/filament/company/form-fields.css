@@ -69,17 +69,62 @@
     width: max-content;
 }
 
+.fi-ta-table:has(.budget-items-relation-manager) {
+    .fi-ta-row {
+        @apply divide-x divide-gray-200 dark:divide-gray-700;
+    }
+
+    .fi-ta-summary-row-heading {
+        @apply px-3 py-3 !important;
+    }
+
+    .fi-ta-text-summary {
+        @apply px-3 py-3 !important;
+
+        > span {
+            @apply font-medium text-gray-950 dark:text-white;
+        }
+    }
+
+    .fi-ta-text {
+        @apply px-3 py-0 !important;
+    }
+
+    .fi-ta-text-input {
+        @apply px-0 py-0 !important;
+    }
+
+    .fi-ta-icon {
+        @apply px-3 py-0 !important;
+    }
+
+    .fi-ta-text-input {
+        .fi-input-wrp,
+        .fi-input {
+            @apply ring-0 bg-transparent shadow-none rounded-none !important;
+        }
+    }
+
+    .fi-ta-cell:focus-within {
+        outline: 2px solid #2563eb;
+        outline-offset: -2px;
+        z-index: 1;
+    }
+
+    .fi-ta-col-wrp button:focus {
+        outline: none !important;
+        box-shadow: none !important;
+    }
+}
+
+
 /* Excel/Spreadsheet styling */
 .is-spreadsheet {
-    /* Container styles */
-
     .table-repeater-container {
         border: 1px solid #e5e7eb !important;
         border-radius: 0 !important;
         @apply ring-0 !important;
     }
-
-    /* Header styles */
 
     .table-repeater-header {
         background-color: #f8f9fa !important;
@@ -92,20 +137,14 @@
         padding: 8px 12px !important;
     }
 
-    /* Cell styles */
-
     .table-repeater-column {
         border: 1px solid #e5e7eb !important;
         padding: 8px 12px !important;
     }
 
-    /* Input styles */
-
     .table-repeater-column input {
         text-align: right !important;
     }
-
-    /* Flatten inputs */
 
     .fi-input-wrapper,
     .fi-input {
@@ -121,8 +160,6 @@
         @apply bg-transparent !important;
     }
 
-    /* Focus states */
-
     .table-repeater-column:focus-within {
         outline: 2px solid #2563eb !important;
         outline-offset: -2px !important;
@@ -136,13 +173,9 @@
         outline: none !important;
     }
 
-    /* Row styling */
-
     .table-repeater-row:nth-child(even) {
         background-color: #f9fafb;
     }
-
-    /* Form control spacing */
 
     .fi-fo-field-wrp:has(.fi-fo-checkbox-list),
     .fi-fo-field-wrp:has(.fi-checkbox-input),

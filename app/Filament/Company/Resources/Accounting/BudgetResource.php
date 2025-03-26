@@ -27,6 +27,10 @@ class BudgetResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
+    protected static ?string $recordTitleAttribute = 'name';
+
+    protected static bool $isGloballySearchable = false;
+
     public static function form(Form $form): Form
     {
         return $form
@@ -238,7 +242,6 @@ class BudgetResource extends Resource
             ->actions([
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\ViewAction::make(),
-                    Tables\Actions\EditAction::make(),
                     Tables\Actions\EditAction::make('editAllocations')
                         ->name('editAllocations')
                         ->url(null)
@@ -534,8 +537,6 @@ class BudgetResource extends Resource
             'index' => Pages\ListBudgets::route('/'),
             'create' => Pages\CreateBudget::route('/create'),
             'view' => Pages\ViewBudget::route('/{record}'),
-            'edit' => Pages\EditBudget::route('/{record}/edit'),
-            'allocations' => Pages\ManageAllocations::route('/{record}/allocations'),
         ];
     }
 }

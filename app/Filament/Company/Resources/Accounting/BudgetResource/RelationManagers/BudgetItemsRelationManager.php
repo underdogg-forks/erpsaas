@@ -3,6 +3,7 @@
 namespace App\Filament\Company\Resources\Accounting\BudgetResource\RelationManagers;
 
 use App\Filament\Tables\Columns\DeferredTextInputColumn;
+use App\Models\Accounting\Budget;
 use App\Models\Accounting\BudgetAllocation;
 use App\Models\Accounting\BudgetItem;
 use App\Utilities\Currency\CurrencyConverter;
@@ -18,7 +19,6 @@ use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
-use Livewire\Attributes\On;
 
 class BudgetItemsRelationManager extends RelationManager
 {
@@ -26,39 +26,31 @@ class BudgetItemsRelationManager extends RelationManager
 
     protected static bool $isLazy = false;
 
-    // Store changes that are pending
     public array $batchChanges = [];
 
-    #[On('batch-column-changed')]
     public function handleBatchColumnChanged($data): void
     {
-        // Store the changed value
         $key = "{$data['recordKey']}.{$data['name']}";
         $this->batchChanges[$key] = $data['value'];
     }
 
-    #[On('save-batch-changes')]
     public function saveBatchChanges(): void
     {
         foreach ($this->batchChanges as $key => $value) {
-            // Parse the composite key
             [$recordKey, $column] = explode('.', $key, 2);
 
-            // Extract period from the column name (e.g., "allocations_by_period.2023-Q1")
-            preg_match('/allocations_by_period\.(.+)/', $column, $matches);
-            $period = $matches[1] ?? null;
+            preg_match('/amount_(.+)/', $column, $matches);
+            $period = str_replace('_', ' ', $matches[1] ?? '');
 
             if (! $period) {
                 continue;
             }
 
-            // Find the record
             $record = BudgetItem::find($recordKey);
             if (! $record) {
                 continue;
             }
 
-            // Update the allocation
             $allocation = $record->allocations->firstWhere('period', $period);
             if ($allocation) {
                 $allocation->update(['amount' => $value]);
@@ -66,15 +58,12 @@ class BudgetItemsRelationManager extends RelationManager
                 $record->allocations()->create([
                     'period' => $period,
                     'amount' => $value,
-                    // Add other required fields
                 ]);
             }
         }
 
-        // Clear the batch changes
         $this->batchChanges = [];
 
-        // Notify the user
         Notification::make()
             ->title('Budget allocations updated')
             ->success()
@@ -83,7 +72,6 @@ class BudgetItemsRelationManager extends RelationManager
 
     protected function calculateTotalSum(array $budgetItemIds): int
     {
-        // Get all applicable periods
         $periods = BudgetAllocation::whereIn('budget_item_id', $budgetItemIds)
             ->pluck('period')
             ->unique()
@@ -91,8 +79,6 @@ class BudgetItemsRelationManager extends RelationManager
             ->toArray();
 
         $total = 0;
-
-        // Sum up each period
         foreach ($periods as $period) {
             $total += $this->calculatePeriodSum($budgetItemIds, $period);
         }
@@ -102,26 +88,20 @@ class BudgetItemsRelationManager extends RelationManager
 
     protected function calculatePeriodSum(array $budgetItemIds, string $period): int
     {
-        // First get database values
         $dbTotal = BudgetAllocation::whereIn('budget_item_id', $budgetItemIds)
             ->where('period', $period)
             ->sum('amount');
 
-        // Now add any batch changes
         $batchTotal = 0;
         foreach ($budgetItemIds as $itemId) {
-            $key = "{$itemId}.allocations_by_period.{$period}";
+            $key = "{$itemId}.amount_" . str_replace(['-', '.', ' '], '_', $period);
             if (isset($this->batchChanges[$key])) {
-                // Get the current value from batch changes
                 $batchValue = CurrencyConverter::convertToCents($this->batchChanges[$key]);
-
-                // Find if there's a current allocation in DB
                 $existingAmount = BudgetAllocation::where('budget_item_id', $itemId)
                     ->where('period', $period)
                     ->first()
-                    ->getRawOriginal('amount');
+                    ?->getRawOriginal('amount') ?? 0;
 
-                // Add the difference to our running total
                 $batchTotal += ($batchValue - $existingAmount);
             }
         }
@@ -131,59 +111,44 @@ class BudgetItemsRelationManager extends RelationManager
 
     public function table(Table $table): Table
     {
+        /** @var Budget $budget */
         $budget = $this->getOwnerRecord();
-
-        // Get distinct periods for this budget
-        $periods = BudgetAllocation::query()
-            ->join('budget_items', 'budget_allocations.budget_item_id', '=', 'budget_items.id')
-            ->where('budget_items.budget_id', $budget->id)
-            ->orderBy('start_date')
-            ->pluck('period')
-            ->unique()
-            ->values()
-            ->toArray();
+        $periods = $budget->getPeriods();
 
         return $table
             ->recordTitleAttribute('account_id')
             ->paginated(false)
-            ->modifyQueryUsing(
-                fn (Builder $query) => $query->with(['account', 'allocations'])
-            )
-            ->headerActions([
-                Action::make('saveBatchChanges')
-                    ->label('Save All Changes')
-                    ->action('saveBatchChanges')
-                    ->color('primary')
-                    ->icon('heroicon-o-check-circle'),
-            ])
+            ->heading(null)
+            ->modifyQueryUsing(function (Builder $query) use ($periods) {
+                $query->select('budget_items.*')
+                    ->leftJoin('budget_allocations', 'budget_allocations.budget_item_id', '=', 'budget_items.id');
+
+                foreach ($periods as $period) {
+                    $alias = 'amount_' . str_replace(['-', '.', ' '], '_', $period);
+                    $query->selectRaw(
+                        "SUM(CASE WHEN budget_allocations.period = ? THEN budget_allocations.amount ELSE 0 END) as {$alias}",
+                        [$period]
+                    );
+                }
+
+                return $query->groupBy('budget_items.id');
+            })
             ->groups([
                 Group::make('account.category')
                     ->titlePrefixedWithLabel(false)
                     ->collapsible(),
             ])
+            ->recordClasses(['budget-items-relation-manager'])
             ->defaultGroup('account.category')
-            ->bulkActions([
-                BulkAction::make('clearAllocations')
-                    ->label('Clear Allocations')
-                    ->icon('heroicon-o-trash')
-                    ->color('danger')
-                    ->requiresConfirmation()
-                    ->deselectRecordsAfterCompletion()
-                    ->action(function (Collection $records) use ($periods) {
-                        foreach ($records as $record) {
-                            foreach ($periods as $period) {
-                                $periodKey = "{$record->getKey()}.allocations_by_period.{$period}";
-                                $this->batchChanges[$periodKey] = CurrencyConverter::convertCentsToFormatSimple(0);
-                            }
-
-                            $totalKey = "{$record->getKey()}.total";
-                            $this->batchChanges[$totalKey] = CurrencyConverter::convertCentsToFormatSimple(0);
-                        }
-                    }),
+            ->headerActions([
+                Action::make('saveBatchChanges')
+                    ->label('Save all changes')
+                    ->action('saveBatchChanges')
+                    ->color('primary'),
             ])
-            ->columns(array_merge([
+            ->columns([
                 TextColumn::make('account.name')
-                    ->label('Accounts')
+                    ->label('Account')
                     ->limit(30)
                     ->searchable(),
                 DeferredTextInputColumn::make('total')
@@ -195,9 +160,9 @@ class BudgetItemsRelationManager extends RelationManager
                             return $this->batchChanges["{$record->getKey()}.{$column->getName()}"];
                         }
 
-                        $total = $record->allocations->sum(function (BudgetAllocation $budgetAllocation) {
-                            return $budgetAllocation->getRawOriginal('amount');
-                        });
+                        $total = $record->allocations->sum(
+                            fn (BudgetAllocation $allocation) => $allocation->getRawOriginal('amount')
+                        );
 
                         return CurrencyConverter::convertCentsToFormatSimple($total);
                     })
@@ -219,9 +184,6 @@ class BudgetItemsRelationManager extends RelationManager
                     ->action(
                         Action::make('disperse')
                             ->label('Disperse')
-                            ->icon('heroicon-m-chevron-double-right')
-                            ->color('primary')
-                            ->iconButton()
                             ->action(function (BudgetItem $record) use ($periods) {
                                 if (empty($periods)) {
                                     return;
@@ -246,7 +208,7 @@ class BudgetItemsRelationManager extends RelationManager
 
                                 if ($totalCents <= 0) {
                                     foreach ($periods as $period) {
-                                        $periodKey = "{$record->getKey()}.allocations_by_period.{$period}";
+                                        $periodKey = "{$record->getKey()}.amount_" . str_replace(['-', '.', ' '], '_', $period);
                                         $this->batchChanges[$periodKey] = CurrencyConverter::convertCentsToFormatSimple(0);
                                     }
 
@@ -260,36 +222,50 @@ class BudgetItemsRelationManager extends RelationManager
                                     $amount = $baseAmount + ($index === 0 ? $remainder : 0);
                                     $formattedAmount = CurrencyConverter::convertCentsToFormatSimple($amount);
 
-                                    $periodKey = "{$record->getKey()}.allocations_by_period.{$period}";
+                                    $periodKey = "{$record->getKey()}." . 'amount_' . str_replace(['-', '.', ' '], '_', $period);
                                     $this->batchChanges[$periodKey] = $formattedAmount;
                                 }
                             }),
                     ),
-            ], collect($periods)->map(
-                fn ($period) => DeferredTextInputColumn::make("allocations_by_period.{$period}")
-                    ->label($period)
-                    ->alignRight()
-                    ->mask(RawJs::make('$money($input)'))
-                    ->summarize(
-                        Summarizer::make()
-                            ->using(function (\Illuminate\Database\Query\Builder $query) use ($period) {
-                                $budgetItemIds = $query->pluck('id')->toArray();
-                                $total = $this->calculatePeriodSum($budgetItemIds, $period);
+                ...array_map(function (string $period) {
+                    $alias = 'amount_' . str_replace(['-', '.', ' '], '_', $period); // Also replace space
 
-                                return CurrencyConverter::convertCentsToFormatSimple($total);
-                            })
-                    )
-                    ->getStateUsing(function ($record, DeferredTextInputColumn $column) use ($period) {
-                        $key = "{$record->getKey()}.{$column->getName()}";
+                    return DeferredTextInputColumn::make($alias)
+                        ->label($period)
+                        ->alignRight()
+                        ->batchMode()
+                        ->mask(RawJs::make('$money($input)'))
+                        ->getStateUsing(function ($record) use ($alias) {
+                            $key = "{$record->getKey()}.{$alias}";
 
-                        // Check if batch change exists
-                        if (isset($this->batchChanges[$key])) {
-                            return $this->batchChanges[$key];
+                            return $this->batchChanges[$key] ?? CurrencyConverter::convertCentsToFormatSimple($record->{$alias} ?? 0);
+                        })
+                        ->summarize(
+                            Summarizer::make()
+                                ->using(function (\Illuminate\Database\Query\Builder $query) use ($period) {
+                                    $budgetItemIds = $query->pluck('id')->toArray();
+                                    $total = $this->calculatePeriodSum($budgetItemIds, $period);
+
+                                    return CurrencyConverter::convertCentsToFormatSimple($total);
+                                })
+                        );
+                }, $periods),
+            ])
+            ->bulkActions([
+                BulkAction::make('clearAllocations')
+                    ->label('Clear Allocations')
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->deselectRecordsAfterCompletion()
+                    ->action(function (Collection $records) use ($periods) {
+                        foreach ($records as $record) {
+                            foreach ($periods as $period) {
+                                $periodKey = "{$record->getKey()}.amount_" . str_replace(['-', '.', ' '], '_', $period);
+                                $this->batchChanges[$periodKey] = CurrencyConverter::convertCentsToFormatSimple(0);
+                            }
                         }
-
-                        return $record->allocations->firstWhere('period', $period)?->amount;
-                    })
-                    ->batchMode(),
-            )->all()));
+                    }),
+            ]);
     }
 }
