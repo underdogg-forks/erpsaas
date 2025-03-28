@@ -9,6 +9,7 @@ use App\Filament\Company\Resources\Accounting\BudgetResource;
 use App\Filament\Forms\Components\CustomSection;
 use App\Models\Accounting\Account;
 use App\Models\Accounting\Budget;
+use App\Models\Accounting\BudgetAllocation;
 use App\Models\Accounting\BudgetItem;
 use App\Utilities\Currency\CurrencyConverter;
 use Filament\Forms;

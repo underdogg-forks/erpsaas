@@ -309,7 +309,6 @@ class BudgetResource extends Resource
                                                 ->iconButton()
                                                 ->action(function (Forms\Set $set, Forms\Get $get, BudgetItem $record, $livewire) use ($periods) {
                                                     $total = CurrencyConverter::convertToCents($get('total'));
-                                                    ray($total);
                                                     $numPeriods = count($periods);
 
                                                     if ($numPeriods === 0) {

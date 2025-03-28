@@ -181,6 +181,7 @@ class BudgetItemsRelationManager extends RelationManager
                     ->color('primary')
                     ->label('')
                     ->default('')
+                    ->tooltip('Disperse total across periods')
                     ->action(
                         Action::make('disperse')
                             ->label('Disperse')
