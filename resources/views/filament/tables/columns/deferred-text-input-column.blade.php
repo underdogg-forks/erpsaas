@@ -128,7 +128,17 @@
 
                                 isLoading = false
                             ',
-                            'x-on:keydown.enter' => $batchMode ? '$wire.saveBatchChanges()' : null,
+                            'x-on:keydown.enter' => $batchMode ? '
+                                $wire.handleBatchColumnChanged({
+                                    name: name,
+                                    recordKey: recordKey,
+                                    value: state
+                                });
+
+                                $nextTick(() => {
+                                    $wire.saveBatchChanges();
+                                });
+                            ' : null,
                             'x-mask' . ($mask instanceof \Filament\Support\RawJs ? ':dynamic' : '') => filled($mask) ? $mask : null,
                         ])
                         ->class([
