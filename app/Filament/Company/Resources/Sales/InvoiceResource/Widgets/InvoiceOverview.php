@@ -21,6 +21,22 @@ class InvoiceOverview extends EnhancedStatsOverviewWidget
 
     protected function getStats(): array
     {
+        $activeTab = $this->activeTab;
+
+        if ($activeTab === 'draft') {
+            return [
+                EnhancedStatsOverviewWidget\EnhancedStat::make('Total Unpaid', '-')
+                    ->suffix('')
+                    ->description(''),
+                EnhancedStatsOverviewWidget\EnhancedStat::make('Due Within 30 Days', '-')
+                    ->suffix(''),
+                EnhancedStatsOverviewWidget\EnhancedStat::make('Average Payment Time', '-')
+                    ->suffix(''),
+                EnhancedStatsOverviewWidget\EnhancedStat::make('Average Invoice Total', '-')
+                    ->suffix(''),
+            ];
+        }
+
         $unpaidInvoices = $this->getPageTableQuery()->unpaid();
 
         $amountUnpaid = $unpaidInvoices->get()->sumMoneyInDefaultCurrency('amount_due');
