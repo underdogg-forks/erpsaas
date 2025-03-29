@@ -84,9 +84,9 @@ class Budget extends Model
     public function getPeriods(): array
     {
         return $this->allocations()
-            ->select('period')
+            ->select(['period', 'start_date'])
             ->distinct()
-            ->orderBy('period')
+            ->orderBy('start_date')
             ->pluck('period')
             ->toArray();
     }
