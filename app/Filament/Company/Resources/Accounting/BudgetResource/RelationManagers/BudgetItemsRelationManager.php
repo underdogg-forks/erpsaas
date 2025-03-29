@@ -19,6 +19,7 @@ use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Str;
 
 class BudgetItemsRelationManager extends RelationManager
 {
@@ -26,7 +27,39 @@ class BudgetItemsRelationManager extends RelationManager
 
     protected static bool $isLazy = false;
 
+    protected const AMOUNT_PREFIX = 'amount_';
+
+    protected const TOTAL_COLUMN = 'total';
+
     public array $batchChanges = [];
+
+    /**
+     * Generate a consistent key for the budget item and period
+     */
+    protected static function generatePeriodKey(int $recordId, string $period): string
+    {
+        return "{$recordId}." . self::AMOUNT_PREFIX . Str::snake($period);
+    }
+
+    /**
+     * Generate a consistent key for the budget item's total
+     */
+    protected static function generateTotalKey(int $recordId): string
+    {
+        return "{$recordId}." . self::TOTAL_COLUMN;
+    }
+
+    /**
+     * Extract the period from a column name
+     */
+    protected static function extractPeriodFromColumn(string $columnName): ?string
+    {
+        if (preg_match('/' . self::AMOUNT_PREFIX . '(.+)/', $columnName, $matches)) {
+            return str_replace('_', ' ', $matches[1] ?? '');
+        }
+
+        return null;
+    }
 
     public function handleBatchColumnChanged($data): void
     {
@@ -39,9 +72,7 @@ class BudgetItemsRelationManager extends RelationManager
         foreach ($this->batchChanges as $key => $value) {
             [$recordKey, $column] = explode('.', $key, 2);
 
-            preg_match('/amount_(.+)/', $column, $matches);
-            $period = str_replace('_', ' ', $matches[1] ?? '');
-
+            $period = self::extractPeriodFromColumn($column);
             if (! $period) {
                 continue;
             }
@@ -94,7 +125,7 @@ class BudgetItemsRelationManager extends RelationManager
 
         $batchTotal = 0;
         foreach ($budgetItemIds as $itemId) {
-            $key = "{$itemId}.amount_" . str_replace(['-', '.', ' '], '_', $period);
+            $key = self::generatePeriodKey($itemId, $period);
             if (isset($this->batchChanges[$key])) {
                 $batchValue = CurrencyConverter::convertToCents($this->batchChanges[$key]);
                 $existingAmount = BudgetAllocation::where('budget_item_id', $itemId)
@@ -124,7 +155,7 @@ class BudgetItemsRelationManager extends RelationManager
                     ->leftJoin('budget_allocations', 'budget_allocations.budget_item_id', '=', 'budget_items.id');
 
                 foreach ($periods as $period) {
-                    $alias = 'amount_' . str_replace(['-', '.', ' '], '_', $period);
+                    $alias = self::AMOUNT_PREFIX . Str::snake($period);
                     $query->selectRaw(
                         "SUM(CASE WHEN budget_allocations.period = ? THEN budget_allocations.amount ELSE 0 END) as {$alias}",
                         [$period]
@@ -151,13 +182,14 @@ class BudgetItemsRelationManager extends RelationManager
                     ->label('Account')
                     ->limit(30)
                     ->searchable(),
-                DeferredTextInputColumn::make('total')
+                DeferredTextInputColumn::make(self::TOTAL_COLUMN)
                     ->label('Total')
                     ->alignRight()
                     ->mask(RawJs::make('$money($input)'))
-                    ->getStateUsing(function (BudgetItem $record, DeferredTextInputColumn $column) {
-                        if (isset($this->batchChanges["{$record->getKey()}.{$column->getName()}"])) {
-                            return $this->batchChanges["{$record->getKey()}.{$column->getName()}"];
+                    ->getStateUsing(function (BudgetItem $record) {
+                        $key = self::generateTotalKey($record->getKey());
+                        if (isset($this->batchChanges[$key])) {
+                            return $this->batchChanges[$key];
                         }
 
                         $total = $record->allocations->sum(
@@ -190,7 +222,7 @@ class BudgetItemsRelationManager extends RelationManager
                                     return;
                                 }
 
-                                $totalKey = "{$record->getKey()}.total";
+                                $totalKey = self::generateTotalKey($record->getKey());
                                 $totalAmount = $this->batchChanges[$totalKey] ?? null;
 
                                 if (isset($totalAmount)) {
@@ -209,7 +241,7 @@ class BudgetItemsRelationManager extends RelationManager
 
                                 if ($totalCents <= 0) {
                                     foreach ($periods as $period) {
-                                        $periodKey = "{$record->getKey()}.amount_" . str_replace(['-', '.', ' '], '_', $period);
+                                        $periodKey = self::generatePeriodKey($record->getKey(), $period);
                                         $this->batchChanges[$periodKey] = CurrencyConverter::convertCentsToFormatSimple(0);
                                     }
 
@@ -223,13 +255,13 @@ class BudgetItemsRelationManager extends RelationManager
                                     $amount = $baseAmount + ($index === 0 ? $remainder : 0);
                                     $formattedAmount = CurrencyConverter::convertCentsToFormatSimple($amount);
 
-                                    $periodKey = "{$record->getKey()}." . 'amount_' . str_replace(['-', '.', ' '], '_', $period);
+                                    $periodKey = self::generatePeriodKey($record->getKey(), $period);
                                     $this->batchChanges[$periodKey] = $formattedAmount;
                                 }
                             }),
                     ),
                 ...array_map(function (string $period) {
-                    $alias = 'amount_' . str_replace(['-', '.', ' '], '_', $period); // Also replace space
+                    $alias = self::AMOUNT_PREFIX . Str::snake($period);
 
                     return DeferredTextInputColumn::make($alias)
                         ->label($period)
@@ -262,7 +294,7 @@ class BudgetItemsRelationManager extends RelationManager
                     ->action(function (Collection $records) use ($periods) {
                         foreach ($records as $record) {
                             foreach ($periods as $period) {
-                                $periodKey = "{$record->getKey()}.amount_" . str_replace(['-', '.', ' '], '_', $period);
+                                $periodKey = self::generatePeriodKey($record->getKey(), $period);
                                 $this->batchChanges[$periodKey] = CurrencyConverter::convertCentsToFormatSimple(0);
                             }
                         }
