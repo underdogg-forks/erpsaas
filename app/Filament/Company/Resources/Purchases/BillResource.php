@@ -148,15 +148,19 @@ class BillResource extends Resource
                                         $offeringId = $state;
                                         $offeringRecord = Offering::with(['purchaseTaxes', 'purchaseDiscounts'])->find($offeringId);
 
-                                        if ($offeringRecord) {
-                                            $set('description', $offeringRecord->description);
-                                            $set('unit_price', $offeringRecord->price);
-                                            $set('purchaseTaxes', $offeringRecord->purchaseTaxes->pluck('id')->toArray());
+                                        if (! $offeringRecord) {
+                                            return;
+                                        }
 
-                                            $discountMethod = DocumentDiscountMethod::parse($get('../../discount_method'));
-                                            if ($discountMethod->isPerLineItem()) {
-                                                $set('purchaseDiscounts', $offeringRecord->purchaseDiscounts->pluck('id')->toArray());
-                                            }
+                                        $unitPrice = CurrencyConverter::convertToFloat($offeringRecord->price, $get('../../currency_code') ?? CurrencyAccessor::getDefaultCurrency());
+
+                                        $set('description', $offeringRecord->description);
+                                        $set('unit_price', $unitPrice);
+                                        $set('purchaseTaxes', $offeringRecord->purchaseTaxes->pluck('id')->toArray());
+
+                                        $discountMethod = DocumentDiscountMethod::parse($get('../../discount_method'));
+                                        if ($discountMethod->isPerLineItem()) {
+                                            $set('purchaseDiscounts', $offeringRecord->purchaseDiscounts->pluck('id')->toArray());
                                         }
                                     }),
                                 Forms\Components\TextInput::make('description'),
