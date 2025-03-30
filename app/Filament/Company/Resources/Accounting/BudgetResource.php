@@ -8,6 +8,7 @@ use App\Filament\Forms\Components\CustomSection;
 use App\Filament\Forms\Components\CustomTableRepeater;
 use App\Models\Accounting\Account;
 use App\Models\Accounting\Budget;
+use App\Models\Accounting\BudgetAllocation;
 use App\Models\Accounting\BudgetItem;
 use App\Utilities\Currency\CurrencyConverter;
 use Awcodes\TableRepeater\Header;
@@ -269,8 +270,8 @@ class BudgetResource extends Resource
                             ];
 
                             foreach ($periods as $period) {
-                                $headers[] = Header::make($period)
-                                    ->label($period)
+                                $headers[] = Header::make($period->period)
+                                    ->label($period->period)
                                     ->width('120px')
                                     ->align(Alignment::Right);
                             }
@@ -294,7 +295,7 @@ class BudgetResource extends Resource
                                                 $total = 0;
                                                 // Calculate the total for this budget item across all periods
                                                 foreach ($periods as $period) {
-                                                    $allocation = $record->allocations->firstWhere('period', $period);
+                                                    $allocation = $record->allocations->firstWhere('period', $period->period);
                                                     $total += $allocation ? $allocation->getRawOriginal('amount') : 0;
                                                 }
                                                 $component->state(CurrencyConverter::convertCentsToFormatSimple($total));
@@ -321,20 +322,20 @@ class BudgetResource extends Resource
                                                     foreach ($periods as $index => $period) {
                                                         $amount = $baseAmount + ($index === 0 ? $remainder : 0);
                                                         $formattedAmount = CurrencyConverter::convertCentsToFormatSimple($amount);
-                                                        $set("allocations.{$period}", $formattedAmount);
+                                                        $set("allocations.{$period->period}", $formattedAmount);
                                                     }
                                                 }),
                                         ]),
 
                                         // Create a field for each period
-                                        ...collect($periods)->map(function ($period) {
-                                            return Forms\Components\TextInput::make("allocations.{$period}")
+                                        ...collect($periods)->map(function (BudgetAllocation $period) {
+                                            return Forms\Components\TextInput::make("allocations.{$period->period}")
                                                 ->mask(RawJs::make('$money($input)'))
                                                 ->stripCharacters(',')
                                                 ->numeric()
                                                 ->afterStateHydrated(function ($component, $state, BudgetItem $record) use ($period) {
                                                     // Find the allocation for this period
-                                                    $allocation = $record->allocations->firstWhere('period', $period);
+                                                    $allocation = $record->allocations->firstWhere('period', $period->period);
                                                     $component->state($allocation ? $allocation->amount : 0);
                                                 })
                                                 ->dehydrated(false); // We'll handle saving manually

@@ -24,7 +24,7 @@ class ViewBudget extends ViewRecord
         ];
     }
 
-    public function getRelationManagers(): array
+    protected function getAllRelationManagers(): array
     {
         return [
             BudgetResource\RelationManagers\BudgetItemsRelationManager::class,

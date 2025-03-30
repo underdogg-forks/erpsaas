@@ -20,7 +20,7 @@ class ViewVendor extends ViewRecord
 {
     protected static string $resource = VendorResource::class;
 
-    public function getRelationManagers(): array
+    protected function getAllRelationManagers(): array
     {
         return [
             RelationManagers\BillsRelationManager::class,
