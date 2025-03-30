@@ -19,15 +19,15 @@ use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Str;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
+use stdClass;
 
 class BudgetItemsRelationManager extends RelationManager
 {
     protected static string $relationship = 'budgetItems';
 
     protected static bool $isLazy = false;
-
-    protected const AMOUNT_PREFIX = 'amount_';
 
     protected const TOTAL_COLUMN = 'total';
 
@@ -36,9 +36,13 @@ class BudgetItemsRelationManager extends RelationManager
     /**
      * Generate a consistent key for the budget item and period
      */
-    protected static function generatePeriodKey(int $recordId, string $period): string
+    protected static function generatePeriodKey(int $recordId, string | Carbon $startDate): string
     {
-        return "{$recordId}." . self::AMOUNT_PREFIX . Str::snake($period);
+        $formattedDate = $startDate instanceof Carbon
+            ? $startDate->format('Y_m_d')
+            : Carbon::parse($startDate)->format('Y_m_d');
+
+        return "{$recordId}.{$formattedDate}";
     }
 
     /**
@@ -47,18 +51,6 @@ class BudgetItemsRelationManager extends RelationManager
     protected static function generateTotalKey(int $recordId): string
     {
         return "{$recordId}." . self::TOTAL_COLUMN;
-    }
-
-    /**
-     * Extract the period from a column name
-     */
-    protected static function extractPeriodFromColumn(string $columnName): ?string
-    {
-        if (preg_match('/' . self::AMOUNT_PREFIX . '(.+)/', $columnName, $matches)) {
-            return str_replace('_', ' ', $matches[1] ?? '');
-        }
-
-        return null;
     }
 
     public function handleBatchColumnChanged($data): void
@@ -72,8 +64,9 @@ class BudgetItemsRelationManager extends RelationManager
         foreach ($this->batchChanges as $key => $value) {
             [$recordKey, $column] = explode('.', $key, 2);
 
-            $period = self::extractPeriodFromColumn($column);
-            if (! $period) {
+            try {
+                $startDate = Carbon::createFromFormat('Y_m_d', $column);
+            } catch (\Exception) {
                 continue;
             }
 
@@ -82,15 +75,11 @@ class BudgetItemsRelationManager extends RelationManager
                 continue;
             }
 
-            $allocation = $record->allocations->firstWhere('period', $period);
-            if ($allocation) {
-                $allocation->update(['amount' => $value]);
-            } else {
-                $record->allocations()->create([
-                    'period' => $period,
-                    'amount' => $value,
-                ]);
-            }
+            $allocation = $record->allocations()
+                ->whereDate('start_date', $startDate)
+                ->first();
+
+            $allocation?->update(['amount' => $value]);
         }
 
         $this->batchChanges = [];
@@ -101,37 +90,23 @@ class BudgetItemsRelationManager extends RelationManager
             ->send();
     }
 
-    protected function calculateTotalSum(array $budgetItemIds): int
+    protected function calculatePeriodSum(array $budgetItemIds, string | Carbon $startDate): int
     {
-        $periods = BudgetAllocation::whereIn('budget_item_id', $budgetItemIds)
-            ->pluck('period')
-            ->unique()
-            ->values()
-            ->toArray();
+        $allocations = DB::table('budget_allocations')
+            ->whereIn('budget_item_id', $budgetItemIds)
+            ->whereDate('start_date', $startDate)
+            ->pluck('amount', 'budget_item_id');
 
-        $total = 0;
-        foreach ($periods as $period) {
-            $total += $this->calculatePeriodSum($budgetItemIds, $period);
-        }
-
-        return $total;
-    }
-
-    protected function calculatePeriodSum(array $budgetItemIds, string $period): int
-    {
-        $dbTotal = BudgetAllocation::whereIn('budget_item_id', $budgetItemIds)
-            ->where('period', $period)
-            ->sum('amount');
+        $dbTotal = $allocations->sum();
 
         $batchTotal = 0;
+
         foreach ($budgetItemIds as $itemId) {
-            $key = self::generatePeriodKey($itemId, $period);
+            $key = self::generatePeriodKey($itemId, $startDate);
+
             if (isset($this->batchChanges[$key])) {
                 $batchValue = CurrencyConverter::convertToCents($this->batchChanges[$key]);
-                $existingAmount = BudgetAllocation::where('budget_item_id', $itemId)
-                    ->where('period', $period)
-                    ->first()
-                    ?->getRawOriginal('amount') ?? 0;
+                $existingAmount = $allocations[$itemId] ?? 0;
 
                 $batchTotal += ($batchValue - $existingAmount);
             }
@@ -144,21 +119,21 @@ class BudgetItemsRelationManager extends RelationManager
     {
         /** @var Budget $budget */
         $budget = $this->getOwnerRecord();
-        $periods = $budget->getPeriods();
+        $allocationPeriods = $budget->getPeriods();
 
         return $table
             ->recordTitleAttribute('account_id')
             ->paginated(false)
             ->heading(null)
-            ->modifyQueryUsing(function (Builder $query) use ($periods) {
+            ->modifyQueryUsing(function (Builder $query) use ($allocationPeriods) {
                 $query->select('budget_items.*')
                     ->leftJoin('budget_allocations', 'budget_allocations.budget_item_id', '=', 'budget_items.id');
 
-                foreach ($periods as $period) {
-                    $alias = self::AMOUNT_PREFIX . Str::snake($period);
+                foreach ($allocationPeriods as $period) {
+                    $alias = $period->start_date->format('Y_m_d');
                     $query->selectRaw(
-                        "SUM(CASE WHEN budget_allocations.period = ? THEN budget_allocations.amount ELSE 0 END) as {$alias}",
-                        [$period]
+                        "SUM(CASE WHEN budget_allocations.start_date = ? THEN budget_allocations.amount ELSE 0 END) as {$alias}",
+                        [$period->start_date->toDateString()]
                     );
                 }
 
@@ -202,8 +177,32 @@ class BudgetItemsRelationManager extends RelationManager
                     ->summarize(
                         Summarizer::make()
                             ->using(function (\Illuminate\Database\Query\Builder $query) {
-                                $budgetItemIds = $query->pluck('id')->toArray();
-                                $total = $this->calculateTotalSum($budgetItemIds);
+                                $allocations = $query
+                                    ->leftJoin('budget_allocations', 'budget_allocations.budget_item_id', '=', 'budget_items.id')
+                                    ->select('budget_allocations.budget_item_id', 'budget_allocations.start_date', 'budget_allocations.amount')
+                                    ->get();
+
+                                $allocationsByDate = $allocations->groupBy('start_date');
+
+                                $total = 0;
+
+                                /** @var \Illuminate\Support\Collection<string, \Illuminate\Support\Collection<int, stdClass>> $allocationsByDate */
+                                foreach ($allocationsByDate as $startDate => $group) {
+                                    $dbTotal = $group->sum('amount');
+                                    $amounts = $group->pluck('amount', 'budget_item_id');
+                                    $batchTotal = 0;
+
+                                    foreach ($amounts as $itemId => $existingAmount) {
+                                        $key = self::generatePeriodKey($itemId, $startDate);
+
+                                        if (isset($this->batchChanges[$key])) {
+                                            $batchValue = CurrencyConverter::convertToCents($this->batchChanges[$key]);
+                                            $batchTotal += ($batchValue - $existingAmount);
+                                        }
+                                    }
+
+                                    $total += $dbTotal + $batchTotal;
+                                }
 
                                 return CurrencyConverter::convertCentsToFormatSimple($total);
                             })
@@ -217,8 +216,8 @@ class BudgetItemsRelationManager extends RelationManager
                     ->action(
                         Action::make('disperse')
                             ->label('Disperse')
-                            ->action(function (BudgetItem $record) use ($periods) {
-                                if (empty($periods)) {
+                            ->action(function (BudgetItem $record) use ($allocationPeriods) {
+                                if (empty($allocationPeriods)) {
                                     return;
                                 }
 
@@ -233,38 +232,34 @@ class BudgetItemsRelationManager extends RelationManager
                                     });
                                 }
 
-                                $numPeriods = count($periods);
-
-                                if ($numPeriods === 0) {
-                                    return;
-                                }
-
                                 if ($totalCents <= 0) {
-                                    foreach ($periods as $period) {
-                                        $periodKey = self::generatePeriodKey($record->getKey(), $period);
+                                    foreach ($allocationPeriods as $period) {
+                                        $periodKey = self::generatePeriodKey($record->getKey(), $period->start_date);
                                         $this->batchChanges[$periodKey] = CurrencyConverter::convertCentsToFormatSimple(0);
                                     }
 
                                     return;
                                 }
 
+                                $numPeriods = count($allocationPeriods);
+
                                 $baseAmount = floor($totalCents / $numPeriods);
                                 $remainder = $totalCents - ($baseAmount * $numPeriods);
 
-                                foreach ($periods as $index => $period) {
+                                foreach ($allocationPeriods as $index => $period) {
                                     $amount = $baseAmount + ($index === 0 ? $remainder : 0);
                                     $formattedAmount = CurrencyConverter::convertCentsToFormatSimple($amount);
 
-                                    $periodKey = self::generatePeriodKey($record->getKey(), $period);
+                                    $periodKey = self::generatePeriodKey($record->getKey(), $period->start_date);
                                     $this->batchChanges[$periodKey] = $formattedAmount;
                                 }
                             }),
                     ),
-                ...array_map(function (string $period) {
-                    $alias = self::AMOUNT_PREFIX . Str::snake($period);
+                ...$allocationPeriods->map(function (BudgetAllocation $period) {
+                    $alias = $period->start_date->format('Y_m_d');
 
                     return DeferredTextInputColumn::make($alias)
-                        ->label($period)
+                        ->label($period->period)
                         ->alignRight()
                         ->batchMode()
                         ->mask(RawJs::make('$money($input)'))
@@ -277,12 +272,12 @@ class BudgetItemsRelationManager extends RelationManager
                             Summarizer::make()
                                 ->using(function (\Illuminate\Database\Query\Builder $query) use ($period) {
                                     $budgetItemIds = $query->pluck('id')->toArray();
-                                    $total = $this->calculatePeriodSum($budgetItemIds, $period);
+                                    $total = $this->calculatePeriodSum($budgetItemIds, $period->start_date);
 
                                     return CurrencyConverter::convertCentsToFormatSimple($total);
                                 })
                         );
-                }, $periods),
+                })->toArray(),
             ])
             ->bulkActions([
                 BulkAction::make('clearAllocations')
@@ -291,10 +286,10 @@ class BudgetItemsRelationManager extends RelationManager
                     ->color('danger')
                     ->requiresConfirmation()
                     ->deselectRecordsAfterCompletion()
-                    ->action(function (Collection $records) use ($periods) {
+                    ->action(function (Collection $records) use ($allocationPeriods) {
                         foreach ($records as $record) {
-                            foreach ($periods as $period) {
-                                $periodKey = self::generatePeriodKey($record->getKey(), $period);
+                            foreach ($allocationPeriods as $period) {
+                                $periodKey = self::generatePeriodKey($record->getKey(), $period->start_date);
                                 $this->batchChanges[$periodKey] = CurrencyConverter::convertCentsToFormatSimple(0);
                             }
                         }

@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 
 class Budget extends Model
 {
@@ -81,14 +82,13 @@ class Budget extends Model
         return $this->hasManyThrough(BudgetAllocation::class, BudgetItem::class);
     }
 
-    public function getPeriods(): array
+    public function getPeriods(): Collection
     {
         return $this->allocations()
             ->select(['period', 'start_date'])
             ->distinct()
             ->orderBy('start_date')
-            ->pluck('period')
-            ->toArray();
+            ->get();
     }
 
     public function isDraft(): bool
