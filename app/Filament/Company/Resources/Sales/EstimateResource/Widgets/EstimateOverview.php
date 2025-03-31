@@ -24,11 +24,20 @@ class EstimateOverview extends EnhancedStatsOverviewWidget
         $activeTab = $this->activeTab;
 
         if ($activeTab === 'draft') {
+            $draftEstimates = $this->getPageTableQuery();
+            $totalDraftCount = $draftEstimates->count();
+            $totalDraftAmount = $draftEstimates->get()->sumMoneyInDefaultCurrency('total');
+
+            $averageDraftTotal = $totalDraftCount > 0
+                ? (int) round($totalDraftAmount / $totalDraftCount)
+                : 0;
+
             return [
                 EnhancedStatsOverviewWidget\EnhancedStat::make('Active Estimates', '-'),
                 EnhancedStatsOverviewWidget\EnhancedStat::make('Accepted Estimates', '-'),
                 EnhancedStatsOverviewWidget\EnhancedStat::make('Converted Estimates', '-'),
-                EnhancedStatsOverviewWidget\EnhancedStat::make('Average Estimate Total', '-'),
+                EnhancedStatsOverviewWidget\EnhancedStat::make('Average Estimate Total', CurrencyConverter::formatCentsToMoney($averageDraftTotal))
+                    ->suffix(CurrencyAccessor::getDefaultCurrency()),
             ];
         }
 
@@ -56,13 +65,22 @@ class EstimateOverview extends EnhancedStatsOverviewWidget
         $totalValidEstimatesCount = $validEstimates->count();
         $totalValidEstimateAmount = $validEstimates->get()->sumMoneyInDefaultCurrency('total');
 
-        $percentConverted = $totalValidEstimatesCount > 0
-            ? Number::percentage(($totalConvertedCount / $totalValidEstimatesCount) * 100, maxPrecision: 1)
-            : Number::percentage(0, maxPrecision: 1);
-
         $averageEstimateTotal = $totalValidEstimatesCount > 0
             ? (int) round($totalValidEstimateAmount / $totalValidEstimatesCount)
             : 0;
+
+        $percentConverted = '-';
+        $percentConvertedSuffix = null;
+        $percentConvertedDescription = null;
+
+        if ($activeTab !== 'active') {
+            $percentConverted = $totalValidEstimatesCount > 0
+                ? Number::percentage(($totalConvertedCount / $totalValidEstimatesCount) * 100, maxPrecision: 1)
+                : Number::percentage(0, maxPrecision: 1);
+
+            $percentConvertedSuffix = 'converted';
+            $percentConvertedDescription = $totalConvertedCount . ' converted';
+        }
 
         return [
             EnhancedStatsOverviewWidget\EnhancedStat::make('Active Estimates', CurrencyConverter::formatCentsToMoney($totalActiveAmount))
@@ -74,11 +92,12 @@ class EstimateOverview extends EnhancedStatsOverviewWidget
                 ->description($totalAcceptedCount . ' accepted'),
 
             EnhancedStatsOverviewWidget\EnhancedStat::make('Converted Estimates', $percentConverted)
-                ->suffix('converted')
-                ->description($totalConvertedCount . ' converted'),
+                ->suffix($percentConvertedSuffix)
+                ->description($percentConvertedDescription),
 
             EnhancedStatsOverviewWidget\EnhancedStat::make('Average Estimate Total', CurrencyConverter::formatCentsToMoney($averageEstimateTotal))
-                ->suffix(CurrencyAccessor::getDefaultCurrency()),
+                ->suffix(CurrencyAccessor::getDefaultCurrency())
+                ->description($activeTab === 'all' ? 'Excludes draft estimates' : null),
         ];
     }
 }

@@ -25,7 +25,6 @@ class InvoiceOverview extends EnhancedStatsOverviewWidget
 
         if ($activeTab === 'draft') {
             $draftInvoices = $this->getPageTableQuery();
-
             $totalDraftCount = $draftInvoices->count();
             $totalDraftAmount = $draftInvoices->get()->sumMoneyInDefaultCurrency('total');
 
@@ -38,8 +37,7 @@ class InvoiceOverview extends EnhancedStatsOverviewWidget
                 EnhancedStatsOverviewWidget\EnhancedStat::make('Due Within 30 Days', '-'),
                 EnhancedStatsOverviewWidget\EnhancedStat::make('Average Payment Time', '-'),
                 EnhancedStatsOverviewWidget\EnhancedStat::make('Average Invoice Total', CurrencyConverter::formatCentsToMoney($averageDraftTotal))
-                    ->suffix(CurrencyAccessor::getDefaultCurrency())
-                    ->description($totalDraftCount . ' draft invoices'),
+                    ->suffix(CurrencyAccessor::getDefaultCurrency()),
             ];
         }
 
@@ -95,7 +93,8 @@ class InvoiceOverview extends EnhancedStatsOverviewWidget
             EnhancedStatsOverviewWidget\EnhancedStat::make('Average Payment Time', $averagePaymentTimeFormatted)
                 ->suffix($averagePaymentTimeSuffix),
             EnhancedStatsOverviewWidget\EnhancedStat::make('Average Invoice Total', CurrencyConverter::formatCentsToMoney($averageInvoiceTotal))
-                ->suffix(CurrencyAccessor::getDefaultCurrency()),
+                ->suffix(CurrencyAccessor::getDefaultCurrency())
+                ->description($activeTab === 'all' ? 'Excludes draft and voided invoices' : null),
         ];
     }
 }
