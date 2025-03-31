@@ -11,7 +11,17 @@ class EstimateObserver
 {
     public function saving(Estimate $estimate): void
     {
-        if ($estimate->approved_at && $estimate->is_currently_expired) {
+        if (! $estimate->wasApproved()) {
+            return;
+        }
+
+        if ($estimate->isDirty('expiration_date') && $estimate->status === EstimateStatus::Expired && ! $estimate->is_currently_expired) {
+            $estimate->status = $estimate->hasBeenSent() ? EstimateStatus::Sent : EstimateStatus::Unsent;
+
+            return;
+        }
+
+        if ($estimate->is_currently_expired && $estimate->canBeExpired()) {
             $estimate->status = EstimateStatus::Expired;
         }
     }

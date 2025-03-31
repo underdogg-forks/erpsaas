@@ -124,7 +124,7 @@ class Estimate extends Document
     protected function isCurrentlyExpired(): Attribute
     {
         return Attribute::get(function () {
-            return $this->expiration_date?->isBefore(today()) && $this->canBeExpired();
+            return $this->expiration_date?->isBefore(today());
         });
     }
 
@@ -170,6 +170,7 @@ class Estimate extends Document
             EstimateStatus::Accepted,
             EstimateStatus::Declined,
             EstimateStatus::Converted,
+            EstimateStatus::Expired,
         ]);
     }
 

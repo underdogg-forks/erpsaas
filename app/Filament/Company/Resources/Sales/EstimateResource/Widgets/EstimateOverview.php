@@ -21,6 +21,24 @@ class EstimateOverview extends EnhancedStatsOverviewWidget
 
     protected function getStats(): array
     {
+        $activeTab = $this->activeTab;
+
+        if ($activeTab === 'draft') {
+            return [
+                EnhancedStatsOverviewWidget\EnhancedStat::make('Active Estimates', '-')
+                    ->suffix('')
+                    ->description(''),
+                EnhancedStatsOverviewWidget\EnhancedStat::make('Accepted Estimates', '-')
+                    ->suffix('')
+                    ->description(''),
+                EnhancedStatsOverviewWidget\EnhancedStat::make('Converted Estimates', '-')
+                    ->suffix('')
+                    ->description(''),
+                EnhancedStatsOverviewWidget\EnhancedStat::make('Average Estimate Total', '-')
+                    ->suffix(''),
+            ];
+        }
+
         $activeEstimates = $this->getPageTableQuery()->active();
 
         $totalActiveCount = $activeEstimates->count();
@@ -36,18 +54,21 @@ class EstimateOverview extends EnhancedStatsOverviewWidget
             ->where('status', EstimateStatus::Converted);
 
         $totalConvertedCount = $convertedEstimates->count();
-        $totalEstimatesCount = $this->getPageTableQuery()->count();
 
-        $percentConverted = $totalEstimatesCount > 0
-            ? Number::percentage(($totalConvertedCount / $totalEstimatesCount) * 100, maxPrecision: 1)
+        $validEstimates = $this->getPageTableQuery()
+            ->whereNotIn('status', [
+                EstimateStatus::Draft,
+            ]);
+
+        $totalValidEstimatesCount = $validEstimates->count();
+        $totalValidEstimateAmount = $validEstimates->get()->sumMoneyInDefaultCurrency('total');
+
+        $percentConverted = $totalValidEstimatesCount > 0
+            ? Number::percentage(($totalConvertedCount / $totalValidEstimatesCount) * 100, maxPrecision: 1)
             : Number::percentage(0, maxPrecision: 1);
 
-        $totalEstimateAmount = $this->getPageTableQuery()
-            ->get()
-            ->sumMoneyInDefaultCurrency('total');
-
-        $averageEstimateTotal = $totalEstimatesCount > 0
-            ? (int) round($totalEstimateAmount / $totalEstimatesCount)
+        $averageEstimateTotal = $totalValidEstimatesCount > 0
+            ? (int) round($totalValidEstimateAmount / $totalValidEstimatesCount)
             : 0;
 
         return [
