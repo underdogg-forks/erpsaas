@@ -24,16 +24,22 @@ class InvoiceOverview extends EnhancedStatsOverviewWidget
         $activeTab = $this->activeTab;
 
         if ($activeTab === 'draft') {
+            $draftInvoices = $this->getPageTableQuery();
+
+            $totalDraftCount = $draftInvoices->count();
+            $totalDraftAmount = $draftInvoices->get()->sumMoneyInDefaultCurrency('total');
+
+            $averageDraftTotal = $totalDraftCount > 0
+                ? (int) round($totalDraftAmount / $totalDraftCount)
+                : 0;
+
             return [
-                EnhancedStatsOverviewWidget\EnhancedStat::make('Total Unpaid', '-')
-                    ->suffix('')
-                    ->description(''),
-                EnhancedStatsOverviewWidget\EnhancedStat::make('Due Within 30 Days', '-')
-                    ->suffix(''),
-                EnhancedStatsOverviewWidget\EnhancedStat::make('Average Payment Time', '-')
-                    ->suffix(''),
-                EnhancedStatsOverviewWidget\EnhancedStat::make('Average Invoice Total', '-')
-                    ->suffix(''),
+                EnhancedStatsOverviewWidget\EnhancedStat::make('Total Unpaid', '-'),
+                EnhancedStatsOverviewWidget\EnhancedStat::make('Due Within 30 Days', '-'),
+                EnhancedStatsOverviewWidget\EnhancedStat::make('Average Payment Time', '-'),
+                EnhancedStatsOverviewWidget\EnhancedStat::make('Average Invoice Total', CurrencyConverter::formatCentsToMoney($averageDraftTotal))
+                    ->suffix(CurrencyAccessor::getDefaultCurrency())
+                    ->description($totalDraftCount . ' draft invoices'),
             ];
         }
 
@@ -67,12 +73,18 @@ class InvoiceOverview extends EnhancedStatsOverviewWidget
             ? (int) round($totalValidInvoiceAmount / $totalValidInvoiceCount)
             : 0;
 
-        $averagePaymentTime = $this->getPageTableQuery()
-            ->whereNotNull('paid_at')
-            ->selectRaw('AVG(TIMESTAMPDIFF(DAY, approved_at, paid_at)) as avg_days')
-            ->value('avg_days');
+        $averagePaymentTimeFormatted = '-';
+        $averagePaymentTimeSuffix = null;
 
-        $averagePaymentTimeFormatted = Number::format($averagePaymentTime ?? 0, maxPrecision: 1);
+        if ($activeTab !== 'unpaid') {
+            $averagePaymentTime = $this->getPageTableQuery()
+                ->whereNotNull('paid_at')
+                ->selectRaw('AVG(TIMESTAMPDIFF(DAY, approved_at, paid_at)) as avg_days')
+                ->value('avg_days');
+
+            $averagePaymentTimeFormatted = Number::format($averagePaymentTime ?? 0, maxPrecision: 1);
+            $averagePaymentTimeSuffix = 'days';
+        }
 
         return [
             EnhancedStatsOverviewWidget\EnhancedStat::make('Total Unpaid', CurrencyConverter::formatCentsToMoney($amountUnpaid))
@@ -81,7 +93,7 @@ class InvoiceOverview extends EnhancedStatsOverviewWidget
             EnhancedStatsOverviewWidget\EnhancedStat::make('Due Within 30 Days', CurrencyConverter::formatCentsToMoney($amountDueWithin30Days))
                 ->suffix(CurrencyAccessor::getDefaultCurrency()),
             EnhancedStatsOverviewWidget\EnhancedStat::make('Average Payment Time', $averagePaymentTimeFormatted)
-                ->suffix('days'),
+                ->suffix($averagePaymentTimeSuffix),
             EnhancedStatsOverviewWidget\EnhancedStat::make('Average Invoice Total', CurrencyConverter::formatCentsToMoney($averageInvoiceTotal))
                 ->suffix(CurrencyAccessor::getDefaultCurrency()),
         ];

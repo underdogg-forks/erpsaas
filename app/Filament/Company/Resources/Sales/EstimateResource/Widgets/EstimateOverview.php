@@ -25,17 +25,10 @@ class EstimateOverview extends EnhancedStatsOverviewWidget
 
         if ($activeTab === 'draft') {
             return [
-                EnhancedStatsOverviewWidget\EnhancedStat::make('Active Estimates', '-')
-                    ->suffix('')
-                    ->description(''),
-                EnhancedStatsOverviewWidget\EnhancedStat::make('Accepted Estimates', '-')
-                    ->suffix('')
-                    ->description(''),
-                EnhancedStatsOverviewWidget\EnhancedStat::make('Converted Estimates', '-')
-                    ->suffix('')
-                    ->description(''),
-                EnhancedStatsOverviewWidget\EnhancedStat::make('Average Estimate Total', '-')
-                    ->suffix(''),
+                EnhancedStatsOverviewWidget\EnhancedStat::make('Active Estimates', '-'),
+                EnhancedStatsOverviewWidget\EnhancedStat::make('Accepted Estimates', '-'),
+                EnhancedStatsOverviewWidget\EnhancedStat::make('Converted Estimates', '-'),
+                EnhancedStatsOverviewWidget\EnhancedStat::make('Average Estimate Total', '-'),
             ];
         }
 

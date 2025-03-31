@@ -331,7 +331,7 @@ class InvoiceResource extends Resource
                     ->preload(),
                 Tables\Filters\SelectFilter::make('status')
                     ->options(InvoiceStatus::class)
-                    ->native(false),
+                    ->multiple(),
                 Tables\Filters\TernaryFilter::make('has_payments')
                     ->label('Has payments')
                     ->queries(

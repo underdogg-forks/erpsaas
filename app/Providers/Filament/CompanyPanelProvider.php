@@ -40,6 +40,7 @@ use App\Http\Middleware\ConfigureCurrentCompany;
 use App\Livewire\UpdatePassword;
 use App\Livewire\UpdateProfileInformation;
 use App\Models\Company;
+use App\Services\CompanySettingsService;
 use App\Support\FilamentComponentConfigurator;
 use Exception;
 use Filament\Actions;
@@ -274,11 +275,13 @@ class CompanyPanelProvider extends PanelProvider
         });
 
         Tables\Table::configureUsing(static function (Tables\Table $table): void {
+            $table::$defaultDateDisplayFormat = CompanySettingsService::getDefaultDateFormat(session('current_company_id') ?? auth()->user()->current_company_id);
+
             $table
                 ->paginationPageOptions([5, 10, 25, 50, 100])
                 ->filtersFormWidth(MaxWidth::Small)
                 ->filtersTriggerAction(fn (Tables\Actions\Action $action) => $action->slideOver());
-        }, isImportant: true);
+        });
 
         Tables\Columns\TextColumn::configureUsing(function (Tables\Columns\TextColumn $column): void {
             $column->placeholder('–');
@@ -296,7 +299,7 @@ class CompanyPanelProvider extends PanelProvider
             $select
                 ->native(false)
                 ->selectablePlaceholder($isSelectable);
-        }, isImportant: true);
+        });
     }
 
     protected function hasRequiredRule(Select $component): bool
