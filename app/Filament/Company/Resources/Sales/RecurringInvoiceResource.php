@@ -6,6 +6,7 @@ use App\Enums\Accounting\DocumentDiscountMethod;
 use App\Enums\Accounting\DocumentType;
 use App\Enums\Accounting\RecurringInvoiceStatus;
 use App\Enums\Setting\PaymentTerms;
+use App\Filament\Company\Resources\Sales\ClientResource\RelationManagers\RecurringInvoicesRelationManager;
 use App\Filament\Company\Resources\Sales\RecurringInvoiceResource\Pages;
 use App\Filament\Forms\Components\CreateCurrencySelect;
 use App\Filament\Forms\Components\DocumentFooterSection;
@@ -248,7 +249,8 @@ class RecurringInvoiceResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('client.name')
                     ->sortable()
-                    ->searchable(),
+                    ->searchable()
+                    ->hiddenOn(RecurringInvoicesRelationManager::class),
                 Tables\Columns\TextColumn::make('schedule')
                     ->label('Schedule')
                     ->getStateUsing(function (RecurringInvoice $record) {
@@ -287,7 +289,8 @@ class RecurringInvoiceResource extends Resource
                 Tables\Filters\SelectFilter::make('client')
                     ->relationship('client', 'name')
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->hiddenOn(RecurringInvoicesRelationManager::class),
                 Tables\Filters\SelectFilter::make('status')
                     ->options(RecurringInvoiceStatus::class)
                     ->native(false),

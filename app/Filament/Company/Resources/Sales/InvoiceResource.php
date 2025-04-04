@@ -328,7 +328,8 @@ class InvoiceResource extends Resource
                 Tables\Filters\SelectFilter::make('client')
                     ->relationship('client', 'name')
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->hiddenOn(InvoicesRelationManager::class),
                 Tables\Filters\SelectFilter::make('status')
                     ->options(InvoiceStatus::class)
                     ->multiple(),

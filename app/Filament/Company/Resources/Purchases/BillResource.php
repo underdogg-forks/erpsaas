@@ -288,7 +288,8 @@ class BillResource extends Resource
                 Tables\Filters\SelectFilter::make('vendor')
                     ->relationship('vendor', 'name')
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->hiddenOn(BillsRelationManager::class),
                 Tables\Filters\SelectFilter::make('status')
                     ->options(BillStatus::class)
                     ->native(false),

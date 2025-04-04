@@ -5,6 +5,7 @@ namespace App\Filament\Company\Resources\Sales;
 use App\Enums\Accounting\DocumentDiscountMethod;
 use App\Enums\Accounting\DocumentType;
 use App\Enums\Accounting\EstimateStatus;
+use App\Filament\Company\Resources\Sales\ClientResource\RelationManagers\EstimatesRelationManager;
 use App\Filament\Company\Resources\Sales\EstimateResource\Pages;
 use App\Filament\Company\Resources\Sales\EstimateResource\Widgets;
 use App\Filament\Forms\Components\CreateCurrencySelect;
@@ -275,7 +276,8 @@ class EstimateResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('client.name')
                     ->sortable()
-                    ->searchable(),
+                    ->searchable()
+                    ->hiddenOn(EstimatesRelationManager::class),
                 Tables\Columns\TextColumn::make('total')
                     ->currencyWithConversion(static fn (Estimate $record) => $record->currency_code)
                     ->sortable()
@@ -285,7 +287,8 @@ class EstimateResource extends Resource
                 Tables\Filters\SelectFilter::make('client')
                     ->relationship('client', 'name')
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->hiddenOn(EstimatesRelationManager::class),
                 Tables\Filters\SelectFilter::make('status')
                     ->options(EstimateStatus::class)
                     ->native(false),
