@@ -20,7 +20,7 @@ class EstimatePolicy
      */
     public function view(User $user, Estimate $estimate): bool
     {
-        return $user->belongsToCompany($estimate->company);
+        return true;
     }
 
     /**
@@ -40,7 +40,7 @@ class EstimatePolicy
             return false;
         }
 
-        return $user->belongsToCompany($estimate->company);
+        return true;
     }
 
     /**
@@ -48,7 +48,7 @@ class EstimatePolicy
      */
     public function delete(User $user, Estimate $estimate): bool
     {
-        return $user->belongsToCompany($estimate->company);
+        return true;
     }
 
     /**
@@ -56,7 +56,7 @@ class EstimatePolicy
      */
     public function restore(User $user, Estimate $estimate): bool
     {
-        return $user->belongsToCompany($estimate->company);
+        return true;
     }
 
     /**
@@ -64,6 +64,6 @@ class EstimatePolicy
      */
     public function forceDelete(User $user, Estimate $estimate): bool
     {
-        return $user->belongsToCompany($estimate->company);
+        return true;
     }
 }
