@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\Setting\DateFormat;
 use App\Enums\Setting\WeekStart;
 use App\Models\Company;
+use App\Models\Setting\Currency;
 use Illuminate\Support\Facades\Cache;
 
 class CompanySettingsService
@@ -30,10 +31,15 @@ class CompanySettingsService
                 return self::getDefaultSettings();
             }
 
+            $defaultCurrency = Currency::query()
+                ->where('company_id', $companyId)
+                ->where('enabled', true)
+                ->value('code') ?? 'USD';
+
             return [
                 'default_language' => $company->locale->language ?? config('transmatic.source_locale'),
                 'default_timezone' => $company->locale->timezone ?? config('app.timezone'),
-                'default_currency' => $company->currency_code ?? 'USD',
+                'default_currency' => $defaultCurrency,
                 'default_date_format' => $company->locale->date_format->value ?? DateFormat::DEFAULT,
                 'default_week_start' => $company->locale->week_start->value ?? WeekStart::DEFAULT,
             ];

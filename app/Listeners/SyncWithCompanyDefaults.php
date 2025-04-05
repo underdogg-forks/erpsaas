@@ -34,7 +34,7 @@ class SyncWithCompanyDefaults
             return;
         }
 
-        $companyId = auth()->user()->currentCompany->id;
+        $companyId = auth()->user()->current_company_id;
 
         if (! $companyId) {
             return;
@@ -47,6 +47,7 @@ class SyncWithCompanyDefaults
     {
         $modelName = class_basename($model);
 
+        /** @var CompanyDefault $default */
         $default = CompanyDefault::firstOrNew([
             'company_id' => $companyId,
         ]);

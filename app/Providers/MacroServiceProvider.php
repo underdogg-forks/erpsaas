@@ -8,6 +8,7 @@ use App\Enums\Accounting\AdjustmentComputation;
 use App\Enums\Setting\DateFormat;
 use App\Models\Accounting\AccountSubtype;
 use App\Models\Setting\Localization;
+use App\Services\CompanySettingsService;
 use App\Utilities\Accounting\AccountCode;
 use App\Utilities\Currency\CurrencyAccessor;
 use App\Utilities\Currency\CurrencyConverter;
@@ -433,10 +434,9 @@ class MacroServiceProvider extends ServiceProvider
         });
 
         Carbon::macro('toDefaultDateFormat', function () {
-            $localization = Localization::firstOrFail();
-
-            $dateFormat = $localization->date_format->value ?? DateFormat::DEFAULT;
-            $timezone = $localization->timezone ?? Carbon::now()->timezoneName;
+            $companyId = auth()->user()?->current_company_id;
+            $dateFormat = CompanySettingsService::getDefaultDateFormat($companyId);
+            $timezone = CompanySettingsService::getDefaultTimezone($companyId);
 
             return $this->setTimezone($timezone)->format($dateFormat);
         });
