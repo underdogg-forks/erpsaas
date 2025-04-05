@@ -11,8 +11,10 @@ class Money
 
     public function __construct(
         private readonly int $amount,
-        private readonly string $currencyCode
-    ) {}
+        private ?string $currencyCode,
+    ) {
+        $this->currencyCode = $currencyCode ?: CurrencyAccessor::getDefaultCurrency();
+    }
 
     public function getAmount(): int
     {

@@ -3,15 +3,17 @@
 namespace App\Filament\Company\Pages\Accounting;
 
 use App\Enums\Accounting\AccountCategory;
+use App\Enums\Banking\BankAccountType;
+use App\Filament\Forms\Components\CreateCurrencySelect;
 use App\Models\Accounting\Account;
 use App\Models\Accounting\AccountSubtype;
 use App\Utilities\Accounting\AccountCode;
-use App\Utilities\Currency\CurrencyAccessor;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\Component;
+use Filament\Forms\Components\Group;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -21,6 +23,8 @@ use Filament\Forms\Set;
 use Filament\Pages\Page;
 use Filament\Support\Enums\MaxWidth;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rules\Unique;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
 
@@ -39,6 +43,7 @@ class AccountChart extends Page
     {
         $action
             ->modal()
+            ->slideOver()
             ->modalWidth(MaxWidth::TwoExtraLarge);
     }
 
@@ -94,6 +99,7 @@ class AccountChart extends Page
                 $this->getTypeFormComponent($useActiveTab),
                 $this->getCodeFormComponent(),
                 $this->getNameFormComponent(),
+                ...$this->getBankAccountFormComponents(),
                 $this->getCurrencyFormComponent(),
                 $this->getDescriptionFormComponent(),
                 $this->getArchiveFormComponent(),
@@ -106,15 +112,17 @@ class AccountChart extends Page
             ->label('Type')
             ->required()
             ->live()
-            ->disabled(static function (string $operation): bool {
-                return $operation === 'edit';
-            })
+            ->disabledOn('edit')
             ->options($this->getChartSubtypeOptions($useActiveTab))
             ->afterStateUpdated(static function (?string $state, Set $set): void {
                 if ($state) {
                     $accountSubtype = AccountSubtype::find($state);
                     $generatedCode = AccountCode::generate($accountSubtype);
                     $set('code', $generatedCode);
+
+                    $set('is_bank_account', false);
+                    $set('bankAccount.type', null);
+                    $set('bankAccount.number', null);
                 }
             });
     }
@@ -124,9 +132,122 @@ class AccountChart extends Page
         return TextInput::make('code')
             ->label('Code')
             ->required()
+            ->hiddenOn('edit')
             ->validationAttribute('account code')
             ->unique(table: Account::class, column: 'code', ignoreRecord: true)
             ->validateAccountCode(static fn (Get $get) => $get('subtype_id'));
+    }
+
+    protected function getBankAccountFormComponents(): array
+    {
+        return [
+            Checkbox::make('is_bank_account')
+                ->live()
+                ->visible(function (Get $get, string $operation) {
+                    if ($operation === 'edit') {
+                        return false;
+                    }
+
+                    $subtype = $get('subtype_id');
+                    if (empty($subtype)) {
+                        return false;
+                    }
+
+                    $accountSubtype = AccountSubtype::find($subtype);
+
+                    if (! $accountSubtype) {
+                        return false;
+                    }
+
+                    return in_array($accountSubtype->category, [
+                        AccountCategory::Asset,
+                        AccountCategory::Liability,
+                    ]) && $accountSubtype->multi_currency;
+                })
+                ->afterStateUpdated(static function ($state, Get $get, Set $set) {
+                    if ($state) {
+                        $subtypeId = $get('subtype_id');
+
+                        if (empty($subtypeId)) {
+                            return;
+                        }
+
+                        $subtype = AccountSubtype::find($subtypeId);
+
+                        if (! $subtype) {
+                            return;
+                        }
+
+                        // Set default bank account type based on account category
+                        if ($subtype->category === AccountCategory::Asset) {
+                            $set('bankAccount.type', BankAccountType::Depository->value);
+                        } elseif ($subtype->category === AccountCategory::Liability) {
+                            $set('bankAccount.type', BankAccountType::Credit->value);
+                        }
+                    } else {
+                        // Clear bank account fields
+                        $set('bankAccount.type', null);
+                        $set('bankAccount.number', null);
+                    }
+                }),
+            Group::make()
+                ->relationship('bankAccount')
+                ->schema([
+                    Select::make('type')
+                        ->label('Bank account type')
+                        ->options(function (Get $get) {
+                            $subtype = $get('../subtype_id');
+
+                            if (empty($subtype)) {
+                                return [];
+                            }
+
+                            $accountSubtype = AccountSubtype::find($subtype);
+
+                            if (! $accountSubtype) {
+                                return [];
+                            }
+
+                            if ($accountSubtype->category === AccountCategory::Asset) {
+                                return [
+                                    BankAccountType::Depository->value => BankAccountType::Depository->getLabel(),
+                                    BankAccountType::Investment->value => BankAccountType::Investment->getLabel(),
+                                ];
+                            } elseif ($accountSubtype->category === AccountCategory::Liability) {
+                                return [
+                                    BankAccountType::Credit->value => BankAccountType::Credit->getLabel(),
+                                    BankAccountType::Loan->value => BankAccountType::Loan->getLabel(),
+                                ];
+                            }
+
+                            return [];
+                        })
+                        ->searchable()
+                        ->columnSpan(1)
+                        ->disabledOn('edit')
+                        ->required(),
+                    TextInput::make('number')
+                        ->label('Bank account number')
+                        ->unique(ignoreRecord: true, modifyRuleUsing: static function (Unique $rule, $state) {
+                            $companyId = Auth::user()->currentCompany->id;
+
+                            return $rule->where('company_id', $companyId)->where('number', $state);
+                        })
+                        ->maxLength(20)
+                        ->validationAttribute('account number'),
+                ])
+                ->visible(static function (Get $get, ?Account $record, string $operation) {
+                    if ($operation === 'create') {
+                        return (bool) $get('is_bank_account');
+                    }
+
+                    if ($operation === 'edit' && $record) {
+                        return (bool) $record->bankAccount;
+                    }
+
+                    return false;
+                }),
+        ];
     }
 
     protected function getNameFormComponent(): Component
@@ -136,28 +257,24 @@ class AccountChart extends Page
             ->required();
     }
 
-    protected function getCurrencyFormComponent()
+    protected function getCurrencyFormComponent(): Component
     {
-        return Select::make('currency_code')
-            ->localizeLabel('Currency')
-            ->relationship('currency', 'name')
-            ->default(CurrencyAccessor::getDefaultCurrency())
-            ->preload()
-            ->searchable()
-            ->disabled(static function (string $operation): bool {
-                return $operation === 'edit';
-            })
+        return CreateCurrencySelect::make('currency_code')
+            ->disabledOn('edit')
+            ->required(false)
+            ->requiredIfAccepted('is_bank_account')
+            ->validationMessages([
+                'required_if_accepted' => 'The currency is required for bank accounts.',
+            ])
             ->visible(function (Get $get): bool {
                 return filled($get('subtype_id')) && AccountSubtype::find($get('subtype_id'))->multi_currency;
-            })
-            ->live();
+            });
     }
 
     protected function getDescriptionFormComponent(): Component
     {
         return Textarea::make('description')
-            ->label('Description')
-            ->autosize();
+            ->label('Description');
     }
 
     protected function getArchiveFormComponent(): Component
@@ -165,9 +282,7 @@ class AccountChart extends Page
         return Checkbox::make('archived')
             ->label('Archive account')
             ->helperText('Archived accounts will not be available for selection in transactions.')
-            ->hidden(static function (string $operation): bool {
-                return $operation === 'create';
-            });
+            ->hiddenOn('create');
     }
 
     private function getChartSubtypeOptions($useActiveTab = true): array

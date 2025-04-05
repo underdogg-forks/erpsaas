@@ -5,7 +5,6 @@ namespace App\Observers;
 use App\Enums\Accounting\AccountCategory;
 use App\Enums\Accounting\AccountType;
 use App\Models\Accounting\Account;
-use App\Models\Accounting\AccountSubtype;
 use App\Utilities\Accounting\AccountCode;
 use App\Utilities\Currency\CurrencyAccessor;
 
@@ -13,33 +12,33 @@ class AccountObserver
 {
     public function creating(Account $account): void
     {
-        $this->setCategoryAndType($account, true);
-        $this->setCurrency($account);
+        $this->setCategoryAndType($account);
+        $this->ensureDefaultCurrency($account);
     }
 
     public function updating(Account $account): void
     {
         if ($account->isDirty('subtype_id')) {
-            $this->setCategoryAndType($account, false);
+            $this->setCategoryAndType($account);
         }
+
+        $this->ensureDefaultCurrency($account);
     }
 
-    private function setCategoryAndType(Account $account, bool $isCreating): void
+    private function setCategoryAndType(Account $account): void
     {
-        $subtype = $account->subtype_id ? AccountSubtype::find($account->subtype_id) : null;
-
-        if ($subtype) {
+        if ($subtype = $account->subtype) {
             $account->category = $subtype->category;
             $account->type = $subtype->type;
-        } elseif ($isCreating) {
+        } else {
             $account->category = AccountCategory::Asset;
             $account->type = AccountType::CurrentAsset;
         }
     }
 
-    private function setCurrency(Account $account): void
+    private function ensureDefaultCurrency(Account $account): void
     {
-        if ($account->currency_code === null && $account->subtype->multi_currency === false) {
+        if (! $account->currency_code) {
             $account->currency_code = CurrencyAccessor::getDefaultCurrency();
         }
     }
@@ -58,7 +57,7 @@ class AccountObserver
     {
         if (! $account->code) {
             $this->setAccountCode($account);
-            $account->save();
+            $account->saveQuietly();
         }
     }
 }
