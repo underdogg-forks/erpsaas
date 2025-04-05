@@ -21,7 +21,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 #[ObservedBy(AccountObserver::class)]
 class Account extends Model
@@ -111,17 +111,14 @@ class Account extends Model
             ->where('currency_code', CurrencyAccessor::getDefaultCurrency());
     }
 
-    public function getLastTransactionDate(): ?string
+    public function scopeWithLastTransactionDate(Builder $query): Builder
     {
-        $lastJournalEntryTransaction = $this->journalEntries()
-            ->join('transactions', 'journal_entries.transaction_id', '=', 'transactions.id')
-            ->max('transactions.posted_at');
-
-        if ($lastJournalEntryTransaction) {
-            return Carbon::parse($lastJournalEntryTransaction)->format('F j, Y');
-        }
-
-        return null;
+        return $query->addSelect([
+            'last_transaction_date' => JournalEntry::select(DB::raw('MAX(transactions.posted_at)'))
+                ->join('transactions', 'journal_entries.transaction_id', '=', 'transactions.id')
+                ->whereColumn('journal_entries.account_id', 'accounts.id')
+                ->limit(1),
+        ]);
     }
 
     protected function endingBalance(): Attribute

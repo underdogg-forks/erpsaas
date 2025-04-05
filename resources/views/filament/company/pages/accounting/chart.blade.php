@@ -58,8 +58,9 @@
                                             {{ $account->name }}
                                             <br>
                                             <small class="text-gray-500 dark:text-gray-400">
-                                                @if($account->getLastTransactionDate())
-                                                    Last transaction on {{ $account->getLastTransactionDate() }}
+                                                @if($account->last_transaction_date)
+                                                    Last transaction
+                                                    on {{ \Illuminate\Support\Carbon::parse($account->last_transaction_date)->toDefaultDateFormat() }}
                                                 @else
                                                     No transactions for this account
                                                 @endif
