@@ -46,7 +46,10 @@ class TransactionService
     {
         $transactionType = $startingBalance >= 0 ? TransactionType::Deposit : TransactionType::Withdrawal;
         $accountName = $startingBalance >= 0 ? "Owner's Investment" : "Owner's Drawings";
-        $chartAccount = $account->where('category', AccountCategory::Equity)->where('name', $accountName)->first();
+        $chartAccount = $company->accounts()
+            ->where('category', AccountCategory::Equity)
+            ->where('name', $accountName)
+            ->firstOrFail();
 
         $postedAt = Carbon::parse($startDate)->subDay()->toDateTimeString();
 

@@ -108,14 +108,15 @@ class ListInstitutions extends Component implements HasActions, HasForms
         $options = ['new' => 'New Account'];
 
         if ($institutionId) {
-            $options += BankAccount::query()
-                ->where('company_id', $this->user->currentCompany->id)
-                ->where('institution_id', $institutionId)
+            $accountOptions = BankAccount::query()
+                ->join('accounts', 'bank_accounts.account_id', '=', 'accounts.id')
+                ->where('bank_accounts.institution_id', $institutionId)
                 ->whereDoesntHave('connectedBankAccount')
-                ->with('account')
-                ->get()
-                ->pluck('account.name', 'id')
+                ->select(['bank_accounts.id', 'accounts.name'])
+                ->pluck('accounts.name', 'bank_accounts.id')
                 ->toArray();
+
+            $options += $accountOptions;
         }
 
         return $options;

@@ -375,9 +375,13 @@ class BillResource extends Resource
                                 Forms\Components\Select::make('bank_account_id')
                                     ->label('Account')
                                     ->required()
-                                    ->options(BankAccount::query()
-                                        ->get()
-                                        ->pluck('account.name', 'id'))
+                                    ->options(function () {
+                                        return BankAccount::query()
+                                            ->join('accounts', 'bank_accounts.account_id', '=', 'accounts.id')
+                                            ->select(['bank_accounts.id', 'accounts.name'])
+                                            ->pluck('accounts.name', 'bank_accounts.id')
+                                            ->toArray();
+                                    })
                                     ->searchable(),
                                 Forms\Components\Textarea::make('notes')
                                     ->label('Notes'),
@@ -484,9 +488,13 @@ class BillResource extends Resource
                             Forms\Components\Select::make('bank_account_id')
                                 ->label('Account')
                                 ->required()
-                                ->options(BankAccount::query()
-                                    ->get()
-                                    ->pluck('account.name', 'id'))
+                                ->options(function () {
+                                    return BankAccount::query()
+                                        ->join('accounts', 'bank_accounts.account_id', '=', 'accounts.id')
+                                        ->select(['bank_accounts.id', 'accounts.name'])
+                                        ->pluck('accounts.name', 'bank_accounts.id')
+                                        ->toArray();
+                                })
                                 ->searchable(),
                             Forms\Components\Textarea::make('notes')
                                 ->label('Notes'),
