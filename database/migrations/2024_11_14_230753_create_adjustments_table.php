@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('company_id')->constrained()->cascadeOnDelete();
             $table->foreignId('account_id')->nullable()->constrained('accounts')->nullOnDelete();
             $table->string('name')->nullable();
+            $table->string('status')->default('active');
             $table->text('description')->nullable();
             $table->string('category')->default('tax');
             $table->string('type')->default('sales');

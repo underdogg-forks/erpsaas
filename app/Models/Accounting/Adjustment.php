@@ -8,6 +8,7 @@ use App\Concerns\CompanyOwned;
 use App\Enums\Accounting\AdjustmentCategory;
 use App\Enums\Accounting\AdjustmentComputation;
 use App\Enums\Accounting\AdjustmentScope;
+use App\Enums\Accounting\AdjustmentStatus;
 use App\Enums\Accounting\AdjustmentType;
 use App\Models\Common\Offering;
 use App\Observers\AdjustmentObserver;
@@ -32,6 +33,7 @@ class Adjustment extends Model
         'company_id',
         'account_id',
         'name',
+        'status',
         'description',
         'category',
         'type',
@@ -46,6 +48,7 @@ class Adjustment extends Model
     ];
 
     protected $casts = [
+        'status' => AdjustmentStatus::class,
         'category' => AdjustmentCategory::class,
         'type' => AdjustmentType::class,
         'recoverable' => 'boolean',
@@ -89,6 +92,23 @@ class Adjustment extends Model
     public function isPurchaseDiscount(): bool
     {
         return $this->category->isDiscount() && $this->type->isPurchase();
+    }
+
+    public function calculateStatus(): AdjustmentStatus
+    {
+        if ($this->status === AdjustmentStatus::Archived) {
+            return AdjustmentStatus::Archived;
+        }
+
+        if ($this->start_date?->isFuture()) {
+            return AdjustmentStatus::Upcoming;
+        }
+
+        if ($this->end_date?->isPast()) {
+            return AdjustmentStatus::Expired;
+        }
+
+        return AdjustmentStatus::Active;
     }
 
     protected static function newFactory(): Factory

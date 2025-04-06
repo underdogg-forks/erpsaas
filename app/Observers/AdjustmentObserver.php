@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Enums\Accounting\AdjustmentStatus;
 use App\Models\Accounting\Account;
 use App\Models\Accounting\Adjustment;
 
@@ -26,6 +27,10 @@ class AdjustmentObserver
                 $adjustment->account()->associate($account);
             }
         }
+
+        if ($adjustment->status !== AdjustmentStatus::Archived) {
+            $adjustment->status = $adjustment->calculateStatus();
+        }
     }
 
     public function updating(Adjustment $adjustment): void
@@ -35,6 +40,10 @@ class AdjustmentObserver
                 'name' => $adjustment->name,
                 'description' => $adjustment->description,
             ]);
+        }
+
+        if ($adjustment->status !== AdjustmentStatus::Archived) {
+            $adjustment->status = $adjustment->calculateStatus();
         }
     }
 }

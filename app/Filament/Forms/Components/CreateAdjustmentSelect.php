@@ -155,7 +155,8 @@ class CreateAdjustmentSelect extends Select
             Group::make()
                 ->schema([
                     DateTimePicker::make('start_date'),
-                    DateTimePicker::make('end_date'),
+                    DateTimePicker::make('end_date')
+                        ->after('start_date'),
                 ])
                 ->visible(function (Get $get) {
                     $category = $this->getCategory() ?? AdjustmentCategory::parse($get('category'));

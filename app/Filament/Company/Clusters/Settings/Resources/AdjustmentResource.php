@@ -5,6 +5,7 @@ namespace App\Filament\Company\Clusters\Settings\Resources;
 use App\Enums\Accounting\AdjustmentCategory;
 use App\Enums\Accounting\AdjustmentComputation;
 use App\Enums\Accounting\AdjustmentScope;
+use App\Enums\Accounting\AdjustmentStatus;
 use App\Enums\Accounting\AdjustmentType;
 use App\Filament\Company\Clusters\Settings;
 use App\Filament\Company\Clusters\Settings\Resources\AdjustmentResource\Pages;
@@ -76,7 +77,8 @@ class AdjustmentResource extends Resource
                 Forms\Components\Section::make('Dates')
                     ->schema([
                         Forms\Components\DateTimePicker::make('start_date'),
-                        Forms\Components\DateTimePicker::make('end_date'),
+                        Forms\Components\DateTimePicker::make('end_date')
+                            ->after('start_date'),
                     ])
                     ->columns()
                     ->visible(fn (Forms\Get $get) => AdjustmentCategory::parse($get('category'))->isDiscount()),
@@ -94,6 +96,8 @@ class AdjustmentResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('type')
                     ->searchable(),
+                Tables\Columns\TextColumn::make('status')
+                    ->badge(),
                 Tables\Columns\TextColumn::make('rate')
                     ->localizeLabel()
                     ->rate(static fn (Adjustment $record) => $record->computation->value)
@@ -104,7 +108,16 @@ class AdjustmentResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\Action::make('archive')
+                        ->label('Archive')
+                        ->icon('heroicon-o-archive-box-x-mark')
+                        ->color('danger')
+                        ->requiresConfirmation()
+                        ->visible(static fn (Adjustment $record) => $record->status !== AdjustmentStatus::Archived)
+                        ->action(fn (Adjustment $record) => $record->update(['status' => AdjustmentStatus::Archived])),
+                ]),
             ])
             ->bulkActions([
                 //
