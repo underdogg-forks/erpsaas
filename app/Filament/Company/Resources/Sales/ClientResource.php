@@ -225,7 +225,7 @@ class ClientResource extends Resource
                                         $fieldsToSync = [
                                             'address_line_1',
                                             'address_line_2',
-                                            'country',
+                                            'country_code',
                                             'state_id',
                                             'city',
                                             'postal_code',
