@@ -114,6 +114,7 @@ class AccountChart extends Page
             ->required()
             ->live()
             ->disabledOn('edit')
+            ->searchable()
             ->options($this->getChartSubtypeOptions($useActiveTab))
             ->afterStateUpdated(static function (?string $state, Set $set): void {
                 if ($state) {
@@ -282,7 +283,7 @@ class AccountChart extends Page
     {
         return Checkbox::make('archived')
             ->label('Archive account')
-            ->helperText('Archived accounts will not be available for selection in transactions.')
+            ->helperText('Archived accounts will not be available for selection in transactions, offerings, or other new records.')
             ->hiddenOn('create');
     }
 

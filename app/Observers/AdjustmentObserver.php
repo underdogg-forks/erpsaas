@@ -9,7 +9,7 @@ class AdjustmentObserver
 {
     public function creating(Adjustment $adjustment): void
     {
-        if ($adjustment->account_id === null && ! $adjustment->isNonRecoverablePurchaseTax()) {
+        if (! $adjustment->account_id && ! $adjustment->isNonRecoverablePurchaseTax()) {
             $account = null;
 
             if ($adjustment->isSalesTax()) {

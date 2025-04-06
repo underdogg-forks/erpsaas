@@ -4,9 +4,12 @@ namespace App\Filament\Company\Resources\Common;
 
 use App\Enums\Accounting\AccountCategory;
 use App\Enums\Accounting\AccountType;
+use App\Enums\Accounting\AdjustmentCategory;
+use App\Enums\Accounting\AdjustmentType;
 use App\Enums\Common\OfferingType;
 use App\Filament\Company\Resources\Common\OfferingResource\Pages;
-use App\Models\Accounting\Account;
+use App\Filament\Forms\Components\CreateAccountSelect;
+use App\Filament\Forms\Components\CreateAdjustmentSelect;
 use App\Models\Common\Offering;
 use App\Utilities\Currency\CurrencyAccessor;
 use Filament\Forms;
@@ -65,63 +68,52 @@ class OfferingResource extends Resource
                 // Sellable Section
                 Forms\Components\Section::make('Sale Information')
                     ->schema([
-                        Forms\Components\Select::make('income_account_id')
+                        CreateAccountSelect::make('income_account_id')
                             ->label('Income account')
-                            ->options(Account::query()
-                                ->where('category', AccountCategory::Revenue)
-                                ->where('type', AccountType::OperatingRevenue)
-                                ->pluck('name', 'id')
-                                ->toArray())
-                            ->searchable()
-                            ->preload()
+                            ->category(AccountCategory::Revenue)
+                            ->type(AccountType::OperatingRevenue)
                             ->required()
                             ->validationMessages([
                                 'required' => 'The income account is required for sellable offerings.',
                             ]),
-                        Forms\Components\Select::make('salesTaxes')
+                        CreateAdjustmentSelect::make('salesTaxes')
                             ->label('Sales tax')
-                            ->relationship('salesTaxes', 'name')
-                            ->preload()
+                            ->category(AdjustmentCategory::Tax)
+                            ->type(AdjustmentType::Sales)
                             ->multiple(),
-                        Forms\Components\Select::make('salesDiscounts')
+                        CreateAdjustmentSelect::make('salesDiscounts')
                             ->label('Sales discount')
-                            ->relationship('salesDiscounts', 'name')
-                            ->preload()
+                            ->category(AdjustmentCategory::Discount)
+                            ->type(AdjustmentType::Sales)
                             ->multiple(),
                     ])
                     ->columns()
-                    ->visible(fn (Forms\Get $get) => in_array('Sellable', $get('attributes') ?? [])),
+                    ->visible(static fn (Forms\Get $get) => in_array('Sellable', $get('attributes') ?? [])),
 
                 // Purchasable Section
                 Forms\Components\Section::make('Purchase Information')
                     ->schema([
-                        Forms\Components\Select::make('expense_account_id')
+                        CreateAccountSelect::make('expense_account_id')
                             ->label('Expense account')
-                            ->options(Account::query()
-                                ->where('category', AccountCategory::Expense)
-                                ->where('type', AccountType::OperatingExpense)
-                                ->orderBy('name')
-                                ->pluck('name', 'id')
-                                ->toArray())
-                            ->searchable()
-                            ->preload()
+                            ->category(AccountCategory::Expense)
+                            ->type(AccountType::OperatingExpense)
                             ->required()
                             ->validationMessages([
                                 'required' => 'The expense account is required for purchasable offerings.',
                             ]),
-                        Forms\Components\Select::make('purchaseTaxes')
+                        CreateAdjustmentSelect::make('purchaseTaxes')
                             ->label('Purchase tax')
-                            ->relationship('purchaseTaxes', 'name')
-                            ->preload()
+                            ->category(AdjustmentCategory::Tax)
+                            ->type(AdjustmentType::Purchase)
                             ->multiple(),
-                        Forms\Components\Select::make('purchaseDiscounts')
+                        CreateAdjustmentSelect::make('purchaseDiscounts')
                             ->label('Purchase discount')
-                            ->relationship('purchaseDiscounts', 'name')
-                            ->preload()
+                            ->category(AdjustmentCategory::Discount)
+                            ->type(AdjustmentType::Purchase)
                             ->multiple(),
                     ])
                     ->columns()
-                    ->visible(fn (Forms\Get $get) => in_array('Purchasable', $get('attributes') ?? [])),
+                    ->visible(static fn (Forms\Get $get) => in_array('Purchasable', $get('attributes') ?? [])),
             ])->columns();
     }
 

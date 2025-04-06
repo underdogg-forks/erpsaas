@@ -14,7 +14,6 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Wallo\FilamentSelectify\Components\ToggleButton;
 
 class AdjustmentResource extends Resource
 {
@@ -33,8 +32,7 @@ class AdjustmentResource extends Resource
                             ->required()
                             ->maxLength(255),
                         Forms\Components\Textarea::make('description')
-                            ->label('Description')
-                            ->autosize(),
+                            ->label('Description'),
                     ]),
                 Forms\Components\Section::make('Configuration')
                     ->schema([
@@ -50,9 +48,10 @@ class AdjustmentResource extends Resource
                             ->default(AdjustmentType::Sales)
                             ->live()
                             ->required(),
-                        ToggleButton::make('recoverable')
+                        Forms\Components\Checkbox::make('recoverable')
                             ->label('Recoverable')
                             ->default(false)
+                            ->helperText('When enabled, tax is tracked separately as claimable from the government. Non-recoverable taxes are treated as part of the expense.')
                             ->visible(fn (Forms\Get $get) => AdjustmentCategory::parse($get('category'))->isTax() && AdjustmentType::parse($get('type'))->isPurchase()),
                     ])
                     ->columns()
