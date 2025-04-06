@@ -34,6 +34,7 @@ class Adjustment extends Model
         'account_id',
         'name',
         'status',
+        'status_reason',
         'description',
         'category',
         'type',
@@ -43,6 +44,9 @@ class Adjustment extends Model
         'scope',
         'start_date',
         'end_date',
+        'paused_at',
+        'paused_until',
+        'archived_at',
         'created_by',
         'updated_by',
     ];
@@ -57,6 +61,9 @@ class Adjustment extends Model
         'scope' => AdjustmentScope::class,
         'start_date' => 'datetime',
         'end_date' => 'datetime',
+        'paused_at' => 'datetime',
+        'paused_until' => 'datetime',
+        'archived_at' => 'datetime',
     ];
 
     public function account(): BelongsTo
@@ -94,12 +101,37 @@ class Adjustment extends Model
         return $this->category->isDiscount() && $this->type->isPurchase();
     }
 
-    public function calculateStatus(): AdjustmentStatus
-    {
-        if ($this->status === AdjustmentStatus::Archived) {
-            return AdjustmentStatus::Archived;
-        }
+    // Add these methods to your Adjustment model
 
+    /**
+     * Check if adjustment can be paused
+     */
+    public function canBePaused(): bool
+    {
+        return $this->status === AdjustmentStatus::Active;
+    }
+
+    /**
+     * Check if adjustment can be resumed
+     */
+    public function canBeResumed(): bool
+    {
+        return $this->status === AdjustmentStatus::Paused;
+    }
+
+    /**
+     * Check if adjustment can be archived
+     */
+    public function canBeArchived(): bool
+    {
+        return $this->status !== AdjustmentStatus::Archived;
+    }
+
+    /**
+     * Calculate the natural status of the adjustment based on dates
+     */
+    public function calculateNaturalStatus(): AdjustmentStatus
+    {
         if ($this->start_date?->isFuture()) {
             return AdjustmentStatus::Upcoming;
         }
@@ -109,6 +141,94 @@ class Adjustment extends Model
         }
 
         return AdjustmentStatus::Active;
+    }
+
+    /**
+     * Pause the adjustment
+     */
+    public function pause(?string $reason = null, ?\DateTime $untilDate = null): bool
+    {
+        if (! $this->canBePaused()) {
+            return false;
+        }
+
+        $this->paused_at = now();
+        $this->paused_until = $untilDate;
+        $this->status = AdjustmentStatus::Paused;
+        $this->status_reason = $reason;
+
+        return $this->save();
+    }
+
+    /**
+     * Resume the adjustment
+     */
+    public function resume(): bool
+    {
+        if (! $this->canBeResumed()) {
+            return false;
+        }
+
+        $this->paused_at = null;
+        $this->paused_until = null;
+        $this->status_reason = null;
+        $this->status = $this->calculateNaturalStatus();
+
+        return $this->save();
+    }
+
+    /**
+     * Archive the adjustment
+     */
+    public function archive(?string $reason = null): bool
+    {
+        if (! $this->canBeArchived()) {
+            return false;
+        }
+
+        $this->status = AdjustmentStatus::Archived;
+        $this->status_reason = $reason;
+
+        return $this->save();
+    }
+
+    /**
+     * Check if the adjustment should be automatically resumed
+     */
+    public function shouldAutoResume(): bool
+    {
+        return $this->status === AdjustmentStatus::Paused &&
+            $this->paused_until !== null &&
+            $this->paused_until->isPast();
+    }
+
+    /**
+     * Refresh the status based on current dates and conditions
+     */
+    public function refreshStatus(): bool
+    {
+        // Don't automatically change archived or paused status
+        if ($this->status === AdjustmentStatus::Archived ||
+            ($this->status === AdjustmentStatus::Paused && ! $this->shouldAutoResume())) {
+            return false;
+        }
+
+        // Check if a paused adjustment should be auto-resumed
+        if ($this->shouldAutoResume()) {
+            return $this->resume();
+        }
+
+        // Calculate natural status based on dates
+        $naturalStatus = $this->calculateNaturalStatus();
+
+        // Only update if the status would change
+        if ($this->status !== $naturalStatus) {
+            $this->status = $naturalStatus;
+
+            return $this->save();
+        }
+
+        return false;
     }
 
     protected static function newFactory(): Factory

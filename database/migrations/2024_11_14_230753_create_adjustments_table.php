@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreignId('account_id')->nullable()->constrained('accounts')->nullOnDelete();
             $table->string('name')->nullable();
             $table->string('status')->default('active');
+            $table->text('status_reason')->nullable();
             $table->text('description')->nullable();
             $table->string('category')->default('tax');
             $table->string('type')->default('sales');
@@ -26,6 +27,9 @@ return new class extends Migration
             $table->string('scope')->nullable();
             $table->dateTime('start_date')->nullable();
             $table->dateTime('end_date')->nullable();
+            $table->timestamp('paused_at')->nullable();
+            $table->timestamp('paused_until')->nullable();
+            $table->timestamp('archived_at')->nullable();
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();

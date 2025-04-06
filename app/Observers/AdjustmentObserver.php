@@ -27,10 +27,6 @@ class AdjustmentObserver
                 $adjustment->account()->associate($account);
             }
         }
-
-        if ($adjustment->status !== AdjustmentStatus::Archived) {
-            $adjustment->status = $adjustment->calculateStatus();
-        }
     }
 
     public function updating(Adjustment $adjustment): void
@@ -41,9 +37,33 @@ class AdjustmentObserver
                 'description' => $adjustment->description,
             ]);
         }
+    }
 
-        if ($adjustment->status !== AdjustmentStatus::Archived) {
-            $adjustment->status = $adjustment->calculateStatus();
+    /**
+     * Handle the Adjustment "saving" event.
+     */
+    public function saving(Adjustment $adjustment): void
+    {
+        // Handle dates changes affecting status
+        // Only if the status isn't being explicitly changed and not in a manual state
+        if ($adjustment->isDirty(['start_date', 'end_date']) &&
+            ! $adjustment->isDirty('status') &&
+            ! in_array($adjustment->status, [AdjustmentStatus::Archived, AdjustmentStatus::Paused])) {
+
+            $adjustment->status = $adjustment->calculateNaturalStatus();
+        }
+
+        // Handle auto-resume for paused adjustments with a paused_until date
+        if ($adjustment->shouldAutoResume() && ! $adjustment->isDirty('status')) {
+            $adjustment->status = $adjustment->calculateNaturalStatus();
+            $adjustment->paused_at = null;
+            $adjustment->paused_until = null;
+            $adjustment->status_reason = null;
+        }
+
+        // Ensure consistency between paused status and paused_at field
+        if ($adjustment->status === AdjustmentStatus::Paused && ! $adjustment->paused_at) {
+            $adjustment->paused_at = now();
         }
     }
 }
