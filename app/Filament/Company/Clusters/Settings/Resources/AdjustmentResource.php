@@ -114,7 +114,6 @@ class AdjustmentResource extends Resource
                     Tables\Actions\Action::make('pause')
                         ->label('Pause')
                         ->icon('heroicon-m-pause')
-                        ->color('warning')
                         ->form([
                             Forms\Components\DateTimePicker::make('paused_until')
                                 ->label('Auto-resume Date')
@@ -133,7 +132,6 @@ class AdjustmentResource extends Resource
                     Tables\Actions\Action::make('resume')
                         ->label('Resume')
                         ->icon('heroicon-m-play')
-                        ->color('success')
                         ->requiresConfirmation()
                         ->visible(fn (Adjustment $record) => $record->canBeResumed())
                         ->action(fn (Adjustment $record) => $record->resume()),
