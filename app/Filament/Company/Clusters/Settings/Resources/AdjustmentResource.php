@@ -15,7 +15,9 @@ use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Filters\Indicator;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
 class AdjustmentResource extends Resource
@@ -120,15 +122,54 @@ class AdjustmentResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\TernaryFilter::make('archived')
-                    ->label('Archived')
-                    ->default(false)
-                    ->attribute('archived_at')
-                    ->nullable(),
                 Tables\Filters\SelectFilter::make('status')
                     ->label('Status')
                     ->native(false)
-                    ->options(AdjustmentStatus::class),
+                    ->default('unarchived')
+                    ->options(
+                        collect(AdjustmentStatus::cases())
+                            ->mapWithKeys(fn (AdjustmentStatus $status) => [$status->value => $status->getLabel()])
+                            ->merge([
+                                'unarchived' => 'Unarchived',
+                            ])
+                            ->toArray()
+                    )
+                    ->indicateUsing(function (Tables\Filters\SelectFilter $filter, array $state) {
+                        if (blank($state['value'] ?? null)) {
+                            return [];
+                        }
+
+                        $label = collect($filter->getOptions())
+                            ->mapWithKeys(fn (string | array $label, string $value): array => is_array($label) ? $label : [$value => $label])
+                            ->get($state['value']);
+
+                        if (blank($label)) {
+                            return [];
+                        }
+
+                        $indicator = $filter->getIndicator();
+
+                        if (! $indicator instanceof Indicator) {
+                            if ($state['value'] === 'unarchived') {
+                                $indicator = $label;
+                            } else {
+                                $indicator = Indicator::make("{$indicator}: {$label}");
+                            }
+                        }
+
+                        return [$indicator];
+                    })
+                    ->query(function (Builder $query, array $data): Builder {
+                        if (blank($data['value'] ?? null)) {
+                            return $query;
+                        }
+
+                        if ($data['value'] !== 'unarchived') {
+                            return $query->where('status', $data['value']);
+                        } else {
+                            return $query->where('status', '!=', AdjustmentStatus::Archived->value);
+                        }
+                    }),
                 Tables\Filters\SelectFilter::make('category')
                     ->label('Category')
                     ->native(false)
@@ -157,18 +198,30 @@ class AdjustmentResource extends Resource
                                 ->label('Reason for pausing')
                                 ->maxLength(255),
                         ])
+                        ->databaseTransaction()
+                        ->successNotificationTitle('Adjustment paused')
+                        ->failureNotificationTitle('Failed to pause adjustment')
                         ->visible(fn (Adjustment $record) => $record->canBePaused())
-                        ->action(function (Adjustment $record, array $data) {
+                        ->action(function (Adjustment $record, array $data, Tables\Actions\Action $action) {
                             $pausedUntil = $data['paused_until'] ?? null;
                             $reason = $data['status_reason'] ?? null;
                             $record->pause($reason, $pausedUntil);
+
+                            $action->success();
                         }),
                     Tables\Actions\Action::make('resume')
                         ->label('Resume')
                         ->icon('heroicon-m-play')
                         ->requiresConfirmation()
+                        ->databaseTransaction()
+                        ->successNotificationTitle('Adjustment resumed')
+                        ->failureNotificationTitle('Failed to resume adjustment')
                         ->visible(fn (Adjustment $record) => $record->canBeResumed())
-                        ->action(fn (Adjustment $record) => $record->resume()),
+                        ->action(function (Adjustment $record, Tables\Actions\Action $action) {
+                            $record->resume();
+
+                            $action->success();
+                        }),
                     Tables\Actions\Action::make('archive')
                         ->label('Archive')
                         ->icon('heroicon-m-archive-box')
@@ -178,10 +231,15 @@ class AdjustmentResource extends Resource
                                 ->label('Reason for archiving')
                                 ->maxLength(255),
                         ])
+                        ->databaseTransaction()
+                        ->successNotificationTitle('Adjustment archived')
+                        ->failureNotificationTitle('Failed to archive adjustment')
                         ->visible(fn (Adjustment $record) => $record->canBeArchived())
-                        ->action(function (Adjustment $record, array $data) {
+                        ->action(function (Adjustment $record, array $data, Tables\Actions\Action $action) {
                             $reason = $data['status_reason'] ?? null;
                             $record->archive($reason);
+
+                            $action->success();
                         }),
                 ]),
             ])
