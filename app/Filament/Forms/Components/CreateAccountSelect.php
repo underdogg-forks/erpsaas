@@ -46,6 +46,21 @@ class CreateAccountSelect extends Select
         return $this;
     }
 
+    public function getCategory(): ?AccountCategory
+    {
+        return $this->category;
+    }
+
+    public function getType(): ?AccountType
+    {
+        return $this->type;
+    }
+
+    public function includesArchived(): bool
+    {
+        return $this->includeArchived;
+    }
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -59,15 +74,15 @@ class CreateAccountSelect extends Select
         $this->options(function () {
             $query = Account::query();
 
-            if ($this->category) {
-                $query->where('category', $this->category);
+            if ($this->getCategory()) {
+                $query->where('category', $this->getCategory());
             }
 
-            if ($this->type) {
-                $query->where('type', $this->type);
+            if ($this->getType()) {
+                $query->where('type', $this->getType());
             }
 
-            if (! $this->includeArchived) {
+            if (! $this->includesArchived()) {
                 $query->where('archived', false);
             }
 
@@ -101,12 +116,12 @@ class CreateAccountSelect extends Select
                 ->options(function () {
                     $query = AccountSubtype::query()->orderBy('name');
 
-                    if ($this->category) {
-                        $query->where('category', $this->category);
+                    if ($this->getCategory()) {
+                        $query->where('category', $this->getCategory());
                     }
 
-                    if ($this->type) {
-                        $query->where('type', $this->type);
+                    if ($this->getType()) {
+                        $query->where('type', $this->getType());
 
                         return $query->pluck('name', 'id')
                             ->toArray();

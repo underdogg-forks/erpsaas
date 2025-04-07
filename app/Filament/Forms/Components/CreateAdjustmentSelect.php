@@ -5,6 +5,7 @@ namespace App\Filament\Forms\Components;
 use App\Enums\Accounting\AdjustmentCategory;
 use App\Enums\Accounting\AdjustmentComputation;
 use App\Enums\Accounting\AdjustmentScope;
+use App\Enums\Accounting\AdjustmentStatus;
 use App\Enums\Accounting\AdjustmentType;
 use App\Models\Accounting\Adjustment;
 use Filament\Forms\Components\Actions\Action;
@@ -25,6 +26,8 @@ class CreateAdjustmentSelect extends Select
 
     protected ?AdjustmentType $type = null;
 
+    protected bool $includeInactive = false;
+
     public function category(AdjustmentCategory $category): static
     {
         $this->category = $category;
@@ -39,6 +42,13 @@ class CreateAdjustmentSelect extends Select
         return $this;
     }
 
+    public function includeInactive(bool $includeInactive = true): static
+    {
+        $this->includeInactive = $includeInactive;
+
+        return $this;
+    }
+
     public function getCategory(): ?AdjustmentCategory
     {
         return $this->category;
@@ -47,6 +57,11 @@ class CreateAdjustmentSelect extends Select
     public function getType(): ?AdjustmentType
     {
         return $this->type;
+    }
+
+    public function includesInactive(): bool
+    {
+        return $this->includeInactive;
     }
 
     protected function setUp(): void
@@ -63,12 +78,16 @@ class CreateAdjustmentSelect extends Select
             name: 'adjustments',
             titleAttribute: 'name',
             modifyQueryUsing: function (Builder $query) {
-                if ($this->category) {
-                    $query->where('category', $this->category);
+                if ($this->getCategory()) {
+                    $query->where('category', $this->getCategory());
                 }
 
-                if ($this->type) {
-                    $query->where('type', $this->type);
+                if ($this->getType()) {
+                    $query->where('type', $this->getType());
+                }
+
+                if (! $this->includesInactive()) {
+                    $query->where('status', AdjustmentStatus::Active);
                 }
 
                 return $query->orderBy('name');

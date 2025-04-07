@@ -135,10 +135,10 @@ class CompanyPanelProvider extends PanelProvider
                             ->label('Sales')
                             ->icon('heroicon-o-currency-dollar')
                             ->items([
+                                ...ClientResource::getNavigationItems(),
+                                ...EstimateResource::getNavigationItems(),
                                 ...InvoiceResource::getNavigationItems(),
                                 ...RecurringInvoiceResource::getNavigationItems(),
-                                ...EstimateResource::getNavigationItems(),
-                                ...ClientResource::getNavigationItems(),
                             ]),
                         NavigationGroup::make('Purchases')
                             ->label('Purchases')
