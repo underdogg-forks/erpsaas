@@ -2,6 +2,7 @@
 
 namespace App\Filament\Company\Resources\Purchases;
 
+use App\Enums\Accounting\AdjustmentStatus;
 use App\Enums\Accounting\BillStatus;
 use App\Enums\Accounting\DocumentDiscountMethod;
 use App\Enums\Accounting\DocumentType;
@@ -117,17 +118,17 @@ class BillResource extends Resource
                                     Header::make($settings->resolveColumnLabel('item_name', 'Items'))
                                         ->width($hasDiscounts ? '15%' : '20%'),
                                     Header::make('Description')
-                                        ->width($hasDiscounts ? '25%' : '30%'),
+                                        ->width($hasDiscounts ? '15%' : '20%'), // Reduced from 25%/30%
                                     Header::make($settings->resolveColumnLabel('unit_name', 'Quantity'))
                                         ->width('10%'),
                                     Header::make($settings->resolveColumnLabel('price_name', 'Price'))
                                         ->width('10%'),
                                     Header::make('Taxes')
-                                        ->width($hasDiscounts ? '15%' : '20%'),
+                                        ->width($hasDiscounts ? '20%' : '30%'), // Increased from 15%/20%
                                 ];
 
                                 if ($hasDiscounts) {
-                                    $headers[] = Header::make('Discounts')->width('15%');
+                                    $headers[] = Header::make('Discounts')->width('20%'); // Increased from 15%
                                 }
 
                                 $headers[] = Header::make($settings->resolveColumnLabel('amount_name', 'Amount'))
@@ -146,7 +147,14 @@ class BillResource extends Resource
                                     ->live()
                                     ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {
                                         $offeringId = $state;
-                                        $offeringRecord = Offering::with(['purchaseTaxes', 'purchaseDiscounts'])->find($offeringId);
+                                        $offeringRecord = Offering::with([
+                                            'purchaseTaxes' => function ($query) {
+                                                $query->where('status', AdjustmentStatus::Active);
+                                            },
+                                            'purchaseDiscounts' => function ($query) {
+                                                $query->where('status', AdjustmentStatus::Active);
+                                            },
+                                        ])->find($offeringId);
 
                                         if (! $offeringRecord) {
                                             return;
@@ -180,6 +188,11 @@ class BillResource extends Resource
                                 Forms\Components\Select::make('purchaseTaxes')
                                     ->label('Taxes')
                                     ->relationship('purchaseTaxes', 'name')
+                                    ->disableOptionWhen(function (string $value) {
+                                        $adjustment = Adjustment::find($value);
+
+                                        return $adjustment?->status !== AdjustmentStatus::Active;
+                                    })
                                     ->saveRelationshipsUsing(null)
                                     ->dehydrated(true)
                                     ->preload()
@@ -189,6 +202,11 @@ class BillResource extends Resource
                                 Forms\Components\Select::make('purchaseDiscounts')
                                     ->label('Discounts')
                                     ->relationship('purchaseDiscounts', 'name')
+                                    ->disableOptionWhen(function (string $value) {
+                                        $adjustment = Adjustment::find($value);
+
+                                        return $adjustment?->status !== AdjustmentStatus::Active;
+                                    })
                                     ->saveRelationshipsUsing(null)
                                     ->dehydrated(true)
                                     ->preload()

@@ -29,10 +29,6 @@
 }
 
 /* Choices.js select field overrides */
-.choices__list.choices__list--single {
-    @apply w-full;
-}
-
 .choices:focus-visible {
     outline: none;
 }
@@ -41,85 +37,66 @@
     @apply text-gray-900 dark:text-white font-semibold;
 }
 
-.choices[data-type="select-one"] .choices__inner {
-    line-height: 1.5;
-    display: flex;
-    align-items: center;
-    min-height: 2.25rem;
-    box-sizing: border-box;
-}
-
 .choices:not(.is-disabled) .choices__item {
     cursor: pointer;
 }
 
-/* Base horizontal scrolling */
-.table-repeater-container {
-    overflow-x: auto;
-    max-width: 100%;
-    -webkit-overflow-scrolling: touch;
-}
-
-.table-repeater-container:has(.choices.is-open) {
-    overflow: visible;
-}
-
-.table-repeater-container table {
-    min-width: 100%;
-    width: max-content;
-}
-
-.fi-ta-table:has(.budget-items-relation-manager) {
-    .fi-ta-row {
-        @apply divide-x divide-gray-200 dark:divide-gray-700;
+/* Table Repeater Styles */
+:not(.is-spreadsheet) {
+    .table-repeater-container {
+        @apply rounded-none ring-0;
     }
 
-    .fi-ta-summary-row-heading {
-        @apply px-3 py-3 !important;
+    .table-repeater-component {
+        @apply space-y-10;
     }
 
-    .fi-ta-text-summary {
-        @apply px-3 py-3 !important;
-
-        > span {
-            @apply font-medium text-gray-950 dark:text-white;
-        }
+    .table-repeater-component ul {
+        @apply justify-start;
     }
 
-    .fi-ta-text {
-        @apply px-3 py-0 !important;
+    .table-repeater-row {
+        @apply divide-x-0 !important;
     }
 
-    .fi-ta-text-input {
-        @apply px-0 py-0 !important;
+    .table-repeater-column {
+        @apply py-2 !important;
     }
 
-    .fi-ta-icon {
-        @apply px-3 py-0 !important;
+    .table-repeater-header {
+        @apply rounded-t-none !important;
     }
 
-    .fi-ta-text-input {
-        .fi-input-wrp,
-        .fi-input {
-            @apply ring-0 bg-transparent shadow-none rounded-none !important;
-        }
+    .table-repeater-rows-wrapper {
+        @apply divide-gray-300 last:border-b last:border-gray-300 dark:divide-white/20 dark:last:border-white/20;
     }
 
-    .fi-ta-cell:focus-within {
-        outline: 2px solid #2563eb;
-        outline-offset: -2px;
-        z-index: 1;
+    .table-repeater-header tr {
+        @apply divide-x-0 text-base sm:text-sm sm:leading-6 !important;
     }
 
-    .fi-ta-col-wrp button:focus {
-        outline: none !important;
-        box-shadow: none !important;
+    .table-repeater-header-column {
+        @apply ps-3 pe-3 font-semibold bg-gray-200 dark:bg-gray-800 rounded-none !important;
     }
 }
-
 
 /* Excel/Spreadsheet styling */
 .is-spreadsheet {
+    .table-repeater-container {
+        overflow-x: auto;
+        max-width: 100%;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .table-repeater-container:has(.choices.is-open) {
+        overflow: visible;
+    }
+
+    .table-repeater-container table {
+        min-width: 100%;
+        width: max-content;
+    }
+
     .table-repeater-container {
         border: 1px solid #e5e7eb !important;
         border-radius: 0 !important;
