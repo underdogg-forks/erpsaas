@@ -5,6 +5,7 @@ namespace App\Filament\Company\Clusters\Settings\Resources;
 use App\Enums\Accounting\AdjustmentCategory;
 use App\Enums\Accounting\AdjustmentComputation;
 use App\Enums\Accounting\AdjustmentScope;
+use App\Enums\Accounting\AdjustmentStatus;
 use App\Enums\Accounting\AdjustmentType;
 use App\Filament\Company\Clusters\Settings;
 use App\Filament\Company\Clusters\Settings\Resources\AdjustmentResource\Pages;
@@ -93,20 +94,53 @@ class AdjustmentResource extends Resource
                 Tables\Columns\TextColumn::make('name')
                     ->label('Name')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('status')
+                    ->badge(),
                 Tables\Columns\TextColumn::make('category')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('type')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('status')
-                    ->badge(),
                 Tables\Columns\TextColumn::make('rate')
                     ->localizeLabel()
                     ->rate(static fn (Adjustment $record) => $record->computation->value)
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('paused_until')
+                    ->label('Auto-Resume Date')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('start_date')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('end_date')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                Tables\Filters\TernaryFilter::make('archived')
+                    ->label('Archived')
+                    ->default(false)
+                    ->attribute('archived_at')
+                    ->nullable(),
+                Tables\Filters\SelectFilter::make('status')
+                    ->label('Status')
+                    ->native(false)
+                    ->options(AdjustmentStatus::class),
+                Tables\Filters\SelectFilter::make('category')
+                    ->label('Category')
+                    ->native(false)
+                    ->options(AdjustmentCategory::class),
+                Tables\Filters\SelectFilter::make('type')
+                    ->label('Type')
+                    ->native(false)
+                    ->options(AdjustmentType::class),
+                Tables\Filters\SelectFilter::make('computation')
+                    ->label('Computation')
+                    ->native(false)
+                    ->options(AdjustmentComputation::class),
             ])
             ->actions([
                 Tables\Actions\ActionGroup::make([
@@ -116,11 +150,11 @@ class AdjustmentResource extends Resource
                         ->icon('heroicon-m-pause')
                         ->form([
                             Forms\Components\DateTimePicker::make('paused_until')
-                                ->label('Auto-resume Date')
+                                ->label('Auto-resume date')
                                 ->helperText('When should this adjustment automatically resume? Leave empty to keep paused indefinitely.')
                                 ->after('now'),
                             Forms\Components\Textarea::make('status_reason')
-                                ->label('Reason for Pausing')
+                                ->label('Reason for pausing')
                                 ->maxLength(255),
                         ])
                         ->visible(fn (Adjustment $record) => $record->canBePaused())
@@ -141,7 +175,7 @@ class AdjustmentResource extends Resource
                         ->color('danger')
                         ->form([
                             Forms\Components\Textarea::make('status_reason')
-                                ->label('Reason for Archiving')
+                                ->label('Reason for archiving')
                                 ->maxLength(255),
                         ])
                         ->visible(fn (Adjustment $record) => $record->canBeArchived())
@@ -156,20 +190,19 @@ class AdjustmentResource extends Resource
                     Tables\Actions\BulkAction::make('pause')
                         ->label('Pause')
                         ->icon('heroicon-m-pause')
-                        ->color('warning')
                         ->form([
                             Forms\Components\DateTimePicker::make('paused_until')
-                                ->label('Auto-resume Date')
+                                ->label('Auto-resume date')
                                 ->helperText('When should these adjustments automatically resume? Leave empty to keep paused indefinitely.')
                                 ->after('now'),
                             Forms\Components\Textarea::make('status_reason')
-                                ->label('Reason for Pausing')
+                                ->label('Reason for pausing')
                                 ->maxLength(255),
                         ])
                         ->databaseTransaction()
                         ->successNotificationTitle('Adjustments paused')
                         ->failureNotificationTitle('Failed to pause adjustments')
-                        ->before(function (Collection $records, Tables\Actions\BulkAction $action) {
+                        ->beforeFormFilled(function (Collection $records, Tables\Actions\BulkAction $action) {
                             $isInvalid = $records->contains(fn (Adjustment $record) => ! $record->canBePaused());
 
                             if ($isInvalid) {
@@ -184,19 +217,21 @@ class AdjustmentResource extends Resource
                             }
                         })
                         ->deselectRecordsAfterCompletion()
-                        ->action(function (Collection $records, array $data) {
+                        ->action(function (Collection $records, array $data, Tables\Actions\BulkAction $action) {
                             $pausedUntil = $data['paused_until'] ?? null;
                             $reason = $data['status_reason'] ?? null;
 
                             $records->each(function (Adjustment $record) use ($reason, $pausedUntil) {
                                 $record->pause($reason, $pausedUntil);
                             });
+
+                            $action->success();
                         }),
                     Tables\Actions\BulkAction::make('resume')
                         ->label('Resume')
                         ->icon('heroicon-m-play')
-                        ->color('success')
                         ->databaseTransaction()
+                        ->requiresConfirmation()
                         ->successNotificationTitle('Adjustments resumed')
                         ->failureNotificationTitle('Failed to resume adjustments')
                         ->before(function (Collection $records, Tables\Actions\BulkAction $action) {
@@ -214,10 +249,12 @@ class AdjustmentResource extends Resource
                             }
                         })
                         ->deselectRecordsAfterCompletion()
-                        ->action(function (Collection $records) {
+                        ->action(function (Collection $records, Tables\Actions\BulkAction $action) {
                             $records->each(function (Adjustment $record) {
                                 $record->resume();
                             });
+
+                            $action->success();
                         }),
                     Tables\Actions\BulkAction::make('archive')
                         ->label('Archive')
@@ -225,13 +262,13 @@ class AdjustmentResource extends Resource
                         ->color('danger')
                         ->form([
                             Forms\Components\Textarea::make('status_reason')
-                                ->label('Reason for Archiving')
+                                ->label('Reason for archiving')
                                 ->maxLength(255),
                         ])
                         ->databaseTransaction()
                         ->successNotificationTitle('Adjustments archived')
                         ->failureNotificationTitle('Failed to archive adjustments')
-                        ->before(function (Collection $records, Tables\Actions\BulkAction $action) {
+                        ->beforeFormFilled(function (Collection $records, Tables\Actions\BulkAction $action) {
                             $isInvalid = $records->contains(fn (Adjustment $record) => ! $record->canBeArchived());
 
                             if ($isInvalid) {
@@ -246,12 +283,14 @@ class AdjustmentResource extends Resource
                             }
                         })
                         ->deselectRecordsAfterCompletion()
-                        ->action(function (Collection $records, array $data) {
+                        ->action(function (Collection $records, array $data, Tables\Actions\BulkAction $action) {
                             $reason = $data['status_reason'] ?? null;
 
                             $records->each(function (Adjustment $record) use ($reason) {
                                 $record->archive($reason);
                             });
+
+                            $action->success();
                         }),
                 ]),
             ]);

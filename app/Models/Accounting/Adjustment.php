@@ -162,6 +162,7 @@ class Adjustment extends Model
         }
 
         return $this->update([
+            'archived_at' => now(),
             'status' => AdjustmentStatus::Archived,
             'status_reason' => $reason,
         ]);
