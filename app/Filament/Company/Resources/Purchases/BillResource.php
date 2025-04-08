@@ -16,6 +16,7 @@ use App\Filament\Tables\Columns;
 use App\Filament\Tables\Filters\DateRangeFilter;
 use App\Models\Accounting\Adjustment;
 use App\Models\Accounting\Bill;
+use App\Models\Accounting\DocumentLineItem;
 use App\Models\Banking\BankAccount;
 use App\Models\Common\Offering;
 use App\Models\Common\Vendor;
@@ -145,16 +146,40 @@ class BillResource extends Resource
                                     ->searchable()
                                     ->required()
                                     ->live()
-                                    ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {
+                                    ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state, ?DocumentLineItem $record) {
                                         $offeringId = $state;
-                                        $offeringRecord = Offering::with([
-                                            'purchaseTaxes' => function ($query) {
-                                                $query->where('status', AdjustmentStatus::Active);
+                                        $discountMethod = DocumentDiscountMethod::parse($get('../../discount_method'));
+                                        $isPerLineItem = $discountMethod->isPerLineItem();
+
+                                        $existingTaxIds = [];
+                                        $existingDiscountIds = [];
+
+                                        if ($record) {
+                                            $existingTaxIds = $record->purchaseTaxes()->pluck('adjustments.id')->toArray();
+                                            if ($isPerLineItem) {
+                                                $existingDiscountIds = $record->purchaseDiscounts()->pluck('adjustments.id')->toArray();
+                                            }
+                                        }
+
+                                        $with = [
+                                            'purchaseTaxes' => static function ($query) use ($existingTaxIds) {
+                                                $query->where(static function ($query) use ($existingTaxIds) {
+                                                    $query->where('status', AdjustmentStatus::Active)
+                                                        ->orWhereIn('adjustments.id', $existingTaxIds);
+                                                });
                                             },
-                                            'purchaseDiscounts' => function ($query) {
-                                                $query->where('status', AdjustmentStatus::Active);
-                                            },
-                                        ])->find($offeringId);
+                                        ];
+
+                                        if ($isPerLineItem) {
+                                            $with['purchaseDiscounts'] = static function ($query) use ($existingDiscountIds) {
+                                                $query->where(static function ($query) use ($existingDiscountIds) {
+                                                    $query->where('status', AdjustmentStatus::Active)
+                                                        ->orWhereIn('adjustments.id', $existingDiscountIds);
+                                                });
+                                            };
+                                        }
+
+                                        $offeringRecord = Offering::with($with)->find($offeringId);
 
                                         if (! $offeringRecord) {
                                             return;
@@ -166,8 +191,7 @@ class BillResource extends Resource
                                         $set('unit_price', $unitPrice);
                                         $set('purchaseTaxes', $offeringRecord->purchaseTaxes->pluck('id')->toArray());
 
-                                        $discountMethod = DocumentDiscountMethod::parse($get('../../discount_method'));
-                                        if ($discountMethod->isPerLineItem()) {
+                                        if ($isPerLineItem) {
                                             $set('purchaseDiscounts', $offeringRecord->purchaseDiscounts->pluck('id')->toArray());
                                         }
                                     }),
@@ -187,12 +211,22 @@ class BillResource extends Resource
                                     ->default(0),
                                 Forms\Components\Select::make('purchaseTaxes')
                                     ->label('Taxes')
-                                    ->relationship('purchaseTaxes', 'name')
-                                    ->disableOptionWhen(function (string $value) {
-                                        $adjustment = Adjustment::find($value);
+                                    ->relationship(
+                                        name: 'purchaseTaxes',
+                                        titleAttribute: 'name',
+                                        modifyQueryUsing: function (Builder $query, ?DocumentLineItem $record) {
+                                            $existingAdjustmentIds = $record?->purchaseTaxes()
+                                                ->pluck('adjustments.id')
+                                                ->toArray() ?? [];
 
-                                        return $adjustment?->status !== AdjustmentStatus::Active;
-                                    })
+                                            $query->where(function ($query) use ($existingAdjustmentIds) {
+                                                $query->where('status', AdjustmentStatus::Active)
+                                                    ->orWhereIn('adjustments.id', $existingAdjustmentIds);
+                                            });
+
+                                            return $query;
+                                        }
+                                    )
                                     ->saveRelationshipsUsing(null)
                                     ->dehydrated(true)
                                     ->preload()
@@ -201,12 +235,22 @@ class BillResource extends Resource
                                     ->searchable(),
                                 Forms\Components\Select::make('purchaseDiscounts')
                                     ->label('Discounts')
-                                    ->relationship('purchaseDiscounts', 'name')
-                                    ->disableOptionWhen(function (string $value) {
-                                        $adjustment = Adjustment::find($value);
+                                    ->relationship(
+                                        name: 'purchaseDiscounts',
+                                        titleAttribute: 'name',
+                                        modifyQueryUsing: function (Builder $query, ?DocumentLineItem $record) {
+                                            $existingAdjustmentIds = $record?->purchaseDiscounts()
+                                                ->pluck('adjustments.id')
+                                                ->toArray() ?? [];
 
-                                        return $adjustment?->status !== AdjustmentStatus::Active;
-                                    })
+                                            $query->where(function ($query) use ($existingAdjustmentIds) {
+                                                $query->where('status', AdjustmentStatus::Active)
+                                                    ->orWhereIn('adjustments.id', $existingAdjustmentIds);
+                                            });
+
+                                            return $query;
+                                        }
+                                    )
                                     ->saveRelationshipsUsing(null)
                                     ->dehydrated(true)
                                     ->preload()
