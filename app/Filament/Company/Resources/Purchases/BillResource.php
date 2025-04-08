@@ -2,13 +2,16 @@
 
 namespace App\Filament\Company\Resources\Purchases;
 
+use App\Enums\Accounting\AdjustmentCategory;
 use App\Enums\Accounting\AdjustmentStatus;
+use App\Enums\Accounting\AdjustmentType;
 use App\Enums\Accounting\BillStatus;
 use App\Enums\Accounting\DocumentDiscountMethod;
 use App\Enums\Accounting\DocumentType;
 use App\Enums\Accounting\PaymentMethod;
 use App\Filament\Company\Resources\Purchases\BillResource\Pages;
 use App\Filament\Company\Resources\Purchases\VendorResource\RelationManagers\BillsRelationManager;
+use App\Filament\Forms\Components\CreateAdjustmentSelect;
 use App\Filament\Forms\Components\CreateCurrencySelect;
 use App\Filament\Forms\Components\DocumentTotals;
 use App\Filament\Tables\Actions\ReplicateBulkAction;
@@ -209,51 +212,24 @@ class BillResource extends Resource
                                     ->live()
                                     ->maxValue(9999999999.99)
                                     ->default(0),
-                                Forms\Components\Select::make('purchaseTaxes')
+                                CreateAdjustmentSelect::make('purchaseTaxes')
                                     ->label('Taxes')
-                                    ->relationship(
-                                        name: 'purchaseTaxes',
-                                        titleAttribute: 'name',
-                                        modifyQueryUsing: function (Builder $query, ?DocumentLineItem $record) {
-                                            $existingAdjustmentIds = $record?->purchaseTaxes()
-                                                ->pluck('adjustments.id')
-                                                ->toArray() ?? [];
-
-                                            $query->where(function ($query) use ($existingAdjustmentIds) {
-                                                $query->where('status', AdjustmentStatus::Active)
-                                                    ->orWhereIn('adjustments.id', $existingAdjustmentIds);
-                                            });
-
-                                            return $query;
-                                        }
-                                    )
+                                    ->category(AdjustmentCategory::Tax)
+                                    ->type(AdjustmentType::Purchase)
+                                    ->adjustmentsRelationship('purchaseTaxes')
                                     ->saveRelationshipsUsing(null)
                                     ->dehydrated(true)
                                     ->preload()
                                     ->multiple()
                                     ->live()
                                     ->searchable(),
-                                Forms\Components\Select::make('purchaseDiscounts')
+                                CreateAdjustmentSelect::make('purchaseDiscounts')
                                     ->label('Discounts')
-                                    ->relationship(
-                                        name: 'purchaseDiscounts',
-                                        titleAttribute: 'name',
-                                        modifyQueryUsing: function (Builder $query, ?DocumentLineItem $record) {
-                                            $existingAdjustmentIds = $record?->purchaseDiscounts()
-                                                ->pluck('adjustments.id')
-                                                ->toArray() ?? [];
-
-                                            $query->where(function ($query) use ($existingAdjustmentIds) {
-                                                $query->where('status', AdjustmentStatus::Active)
-                                                    ->orWhereIn('adjustments.id', $existingAdjustmentIds);
-                                            });
-
-                                            return $query;
-                                        }
-                                    )
+                                    ->category(AdjustmentCategory::Discount)
+                                    ->type(AdjustmentType::Purchase)
+                                    ->adjustmentsRelationship('purchaseDiscounts')
                                     ->saveRelationshipsUsing(null)
                                     ->dehydrated(true)
-                                    ->preload()
                                     ->multiple()
                                     ->live()
                                     ->hidden(function (Forms\Get $get) {
