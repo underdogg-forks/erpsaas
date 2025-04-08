@@ -413,7 +413,6 @@ class InvoiceResource extends Resource
                             ->url(static fn (Invoice $record) => Pages\ViewInvoice::getUrl(['record' => $record])),
                         Invoice::getReplicateAction(Tables\Actions\ReplicateAction::class),
                         Invoice::getApproveDraftAction(Tables\Actions\Action::class),
-                        Invoice::getBlockedApproveAction(Tables\Actions\Action::class),
                         Invoice::getMarkAsSentAction(Tables\Actions\Action::class),
                         Tables\Actions\Action::make('recordPayment')
                             ->label(fn (Invoice $record) => $record->status === InvoiceStatus::Overpaid ? 'Refund Overpayment' : 'Record Payment')

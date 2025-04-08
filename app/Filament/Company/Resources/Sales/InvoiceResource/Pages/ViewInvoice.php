@@ -5,6 +5,7 @@ namespace App\Filament\Company\Resources\Sales\InvoiceResource\Pages;
 use App\Enums\Accounting\DocumentType;
 use App\Filament\Company\Resources\Sales\ClientResource;
 use App\Filament\Company\Resources\Sales\InvoiceResource;
+use App\Filament\Infolists\Components\BannerEntry;
 use App\Filament\Infolists\Components\DocumentPreview;
 use App\Models\Accounting\Invoice;
 use Filament\Actions;
@@ -17,6 +18,7 @@ use Filament\Support\Enums\FontWeight;
 use Filament\Support\Enums\IconPosition;
 use Filament\Support\Enums\IconSize;
 use Filament\Support\Enums\MaxWidth;
+use Illuminate\Support\HtmlString;
 
 class ViewInvoice extends ViewRecord
 {
@@ -40,7 +42,6 @@ class ViewInvoice extends ViewRecord
             Actions\ActionGroup::make([
                 Actions\ActionGroup::make([
                     Invoice::getApproveDraftAction(),
-                    Invoice::getBlockedApproveAction(),
                     Invoice::getMarkAsSentAction(),
                     Invoice::getPrintDocumentAction(),
                     Invoice::getReplicateAction(),
@@ -61,6 +62,31 @@ class ViewInvoice extends ViewRecord
     {
         return $infolist
             ->schema([
+                BannerEntry::make('inactiveAdjustments')
+                    ->label('Inactive adjustments')
+                    ->warning()
+                    ->icon('heroicon-o-exclamation-triangle')
+                    ->visible(fn (Invoice $record) => $record->hasInactiveAdjustments() && $record->canBeApproved())
+                    ->columnSpanFull()
+                    ->description(function (Invoice $record) {
+                        $inactiveAdjustments = collect();
+
+                        foreach ($record->lineItems as $lineItem) {
+                            foreach ($lineItem->adjustments as $adjustment) {
+                                if ($adjustment->isInactive() && $inactiveAdjustments->doesntContain($adjustment->name)) {
+                                    $inactiveAdjustments->push($adjustment->name);
+                                }
+                            }
+                        }
+
+                        $adjustmentsList = $inactiveAdjustments->map(static function ($name) {
+                            return "<span class='font-medium'>{$name}</span>";
+                        })->join(', ');
+
+                        $output = "<p class='text-sm'>This invoice contains inactive adjustments that need to be addressed before approval: {$adjustmentsList}</p>";
+
+                        return new HtmlString($output);
+                    }),
                 Section::make('Invoice Details')
                     ->columns(4)
                     ->schema([

@@ -23,6 +23,7 @@ use Filament\Actions\Action;
 use Filament\Actions\MountableAction;
 use Filament\Actions\ReplicateAction;
 use Filament\Actions\StaticAction;
+use Filament\Notifications\Notification;
 use Filament\Support\Enums\Alignment;
 use Illuminate\Database\Eloquent\Attributes\CollectedBy;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
@@ -34,6 +35,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\HtmlString;
+use Livewire\Component;
 
 #[CollectedBy(DocumentCollection::class)]
 #[ObservedBy(InvoiceObserver::class)]
@@ -461,15 +463,6 @@ class Invoice extends Document
         return CurrencyConverter::convertCentsToFormatSimple($convertedCents);
     }
 
-    public function hasInactiveAdjustments(): bool
-    {
-        return $this->lineItems->contains(function (DocumentLineItem $lineItem) {
-            return $lineItem->adjustments->contains(function (Adjustment $adjustment) {
-                return $adjustment->isInactive();
-            });
-        });
-    }
-
     // TODO: Potentially handle this another way
     public static function getBlockedApproveAction(string $action = Action::class): MountableAction
     {
@@ -515,15 +508,30 @@ class Invoice extends Document
             ->label('Approve')
             ->icon('heroicon-m-check-circle')
             ->visible(function (self $record) {
-                return $record->canBeApproved() && ! $record->hasInactiveAdjustments();
+                return $record->canBeApproved();
             })
             ->requiresConfirmation()
             ->databaseTransaction()
             ->successNotificationTitle('Invoice approved')
-            ->action(function (self $record, MountableAction $action) {
-                $record->approveDraft();
+            ->action(function (self $record, MountableAction $action, Component $livewire) {
+                if ($record->hasInactiveAdjustments()) {
+                    $isViewPage = $livewire instanceof InvoiceResource\Pages\ViewInvoice;
 
-                $action->success();
+                    if (! $isViewPage) {
+                        redirect(InvoiceResource\Pages\ViewInvoice::getUrl(['record' => $record->id]));
+                    } else {
+                        Notification::make()
+                            ->warning()
+                            ->title('Cannot approve invoice')
+                            ->body('This invoice has inactive adjustments that must be addressed first.')
+                            ->persistent()
+                            ->send();
+                    }
+                } else {
+                    $record->approveDraft();
+
+                    $action->success();
+                }
             });
     }
 

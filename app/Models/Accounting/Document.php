@@ -35,6 +35,15 @@ abstract class Document extends Model
         return $this->lineItems()->exists();
     }
 
+    public function hasInactiveAdjustments(): bool
+    {
+        return $this->lineItems->contains(function (DocumentLineItem $lineItem) {
+            return $lineItem->adjustments->contains(function (Adjustment $adjustment) {
+                return $adjustment->isInactive();
+            });
+        });
+    }
+
     public static function getPrintDocumentAction(string $action = Action::class): MountableAction
     {
         return $action::make('printPdf')
