@@ -22,6 +22,8 @@ use App\Utilities\Currency\CurrencyConverter;
 use Filament\Actions\Action;
 use Filament\Actions\MountableAction;
 use Filament\Actions\ReplicateAction;
+use Filament\Actions\StaticAction;
+use Filament\Support\Enums\Alignment;
 use Illuminate\Database\Eloquent\Attributes\CollectedBy;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
@@ -31,6 +33,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\HtmlString;
 
 #[CollectedBy(DocumentCollection::class)]
 #[ObservedBy(InvoiceObserver::class)]
@@ -458,14 +461,63 @@ class Invoice extends Document
         return CurrencyConverter::convertCentsToFormatSimple($convertedCents);
     }
 
+    public function hasInactiveAdjustments(): bool
+    {
+        return $this->lineItems->contains(function (DocumentLineItem $lineItem) {
+            return $lineItem->adjustments->contains(function (Adjustment $adjustment) {
+                return $adjustment->isInactive();
+            });
+        });
+    }
+
+    // TODO: Potentially handle this another way
+    public static function getBlockedApproveAction(string $action = Action::class): MountableAction
+    {
+        return $action::make('blockedApprove')
+            ->label('Approve')
+            ->icon('heroicon-m-check-circle')
+            ->visible(fn (self $record) => $record->canBeApproved() && $record->hasInactiveAdjustments())
+            ->requiresConfirmation()
+            ->modalAlignment(Alignment::Start)
+            ->modalIconColor('danger')
+            ->modalDescription(function (self $record) {
+                $inactiveAdjustments = collect();
+
+                foreach ($record->lineItems as $lineItem) {
+                    foreach ($lineItem->adjustments as $adjustment) {
+                        if ($adjustment->isInactive() && $inactiveAdjustments->doesntContain($adjustment->name)) {
+                            $inactiveAdjustments->push($adjustment->name);
+                        }
+                    }
+                }
+
+                $output = "<p class='text-sm mb-4'>This invoice contains inactive adjustments that need to be addressed before approval:</p>";
+                $output .= "<ul role='list' class='list-disc list-inside space-y-1 text-sm'>";
+
+                foreach ($inactiveAdjustments as $name) {
+                    $output .= "<li class='py-1'><span class='font-medium'>{$name}</span></li>";
+                }
+
+                $output .= '</ul>';
+                $output .= "<p class='text-sm mt-4'>Please update these adjustments before approving the invoice.</p>";
+
+                return new HtmlString($output);
+            })
+            ->modalSubmitAction(function (StaticAction $action, self $record) {
+                $action->label('Edit Invoice')
+                    ->url(InvoiceResource\Pages\EditInvoice::getUrl(['record' => $record->id]));
+            });
+    }
+
     public static function getApproveDraftAction(string $action = Action::class): MountableAction
     {
         return $action::make('approveDraft')
             ->label('Approve')
             ->icon('heroicon-m-check-circle')
             ->visible(function (self $record) {
-                return $record->canBeApproved();
+                return $record->canBeApproved() && ! $record->hasInactiveAdjustments();
             })
+            ->requiresConfirmation()
             ->databaseTransaction()
             ->successNotificationTitle('Invoice approved')
             ->action(function (self $record, MountableAction $action) {

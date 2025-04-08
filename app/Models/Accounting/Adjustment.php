@@ -99,6 +99,16 @@ class Adjustment extends Model
         return $this->category->isDiscount() && $this->type->isPurchase();
     }
 
+    public function isActive(): bool
+    {
+        return $this->status === AdjustmentStatus::Active;
+    }
+
+    public function isInactive(): bool
+    {
+        return ! $this->isActive();
+    }
+
     public function canBePaused(): bool
     {
         return $this->status === AdjustmentStatus::Active;
