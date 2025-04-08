@@ -18,6 +18,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Get;
 use Filament\Support\Enums\MaxWidth;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 class CreateAdjustmentSelect extends Select
@@ -27,6 +28,8 @@ class CreateAdjustmentSelect extends Select
     protected ?AdjustmentType $type = null;
 
     protected bool $includeInactive = false;
+
+    protected string $adjustmentsRelationship = 'adjustments';
 
     public function category(AdjustmentCategory $category): static
     {
@@ -49,6 +52,13 @@ class CreateAdjustmentSelect extends Select
         return $this;
     }
 
+    public function adjustmentsRelationship(string $relationship): static
+    {
+        $this->adjustmentsRelationship = $relationship;
+
+        return $this;
+    }
+
     public function getCategory(): ?AdjustmentCategory
     {
         return $this->category;
@@ -64,6 +74,11 @@ class CreateAdjustmentSelect extends Select
         return $this->includeInactive;
     }
 
+    public function getAdjustmentsRelationship(): string
+    {
+        return $this->adjustmentsRelationship;
+    }
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -75,9 +90,9 @@ class CreateAdjustmentSelect extends Select
             ->createOptionAction(fn (Action $action) => $this->createAdjustmentAction($action));
 
         $this->relationship(
-            name: 'adjustments',
+            name: $this->getAdjustmentsRelationship(),
             titleAttribute: 'name',
-            modifyQueryUsing: function (Builder $query) {
+            modifyQueryUsing: function (Builder $query, ?Model $record) {
                 if ($this->getCategory()) {
                     $query->where('category', $this->getCategory());
                 }
@@ -87,7 +102,14 @@ class CreateAdjustmentSelect extends Select
                 }
 
                 if (! $this->includesInactive()) {
-                    $query->where('status', AdjustmentStatus::Active);
+                    $existingAdjustmentIds = $record?->{$this->getAdjustmentsRelationship()}()
+                        ->pluck('adjustments.id')
+                        ->toArray() ?? [];
+
+                    $query->where(function ($query) use ($existingAdjustmentIds) {
+                        $query->where('status', AdjustmentStatus::Active)
+                            ->orWhereIn('adjustments.id', $existingAdjustmentIds);
+                    });
                 }
 
                 return $query->orderBy('name');
