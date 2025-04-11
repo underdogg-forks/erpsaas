@@ -166,6 +166,16 @@ class TransactionObserver
             ->when($excludedTransaction, fn (Builder $query) => $query->whereKeyNot($excludedTransaction->getKey()))
             ->get()
             ->sum(function (Transaction $transaction) use ($billCurrency) {
+                // If the transaction has stored the original bill amount in metadata, use that
+                if (! empty($transaction->meta) &&
+                    isset($transaction->meta['original_bill_currency']) &&
+                    $transaction->meta['original_bill_currency'] === $billCurrency &&
+                    isset($transaction->meta['amount_in_bill_currency_cents'])) {
+
+                    return (int) $transaction->meta['amount_in_bill_currency_cents'];
+                }
+
+                // Fall back to conversion if metadata is not available
                 $bankAccountCurrency = $transaction->bankAccount->account->currency_code;
                 $amountCents = (int) $transaction->getRawOriginal('amount');
 

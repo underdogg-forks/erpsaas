@@ -152,7 +152,7 @@ class CompanyPanelProvider extends PanelProvider
                             ->icon('heroicon-o-clipboard-document-list')
                             ->extraSidebarAttributes(['class' => 'es-sidebar-group'])
                             ->items([
-                                ...BudgetResource::getNavigationItems(),
+                                // ...BudgetResource::getNavigationItems(),
                                 ...AccountChart::getNavigationItems(),
                                 ...Transactions::getNavigationItems(),
                             ]),

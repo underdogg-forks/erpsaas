@@ -45,6 +45,7 @@ class Transaction extends Model
         'posted_at',
         'created_by',
         'updated_by',
+        'meta',
     ];
 
     protected $casts = [
@@ -54,6 +55,7 @@ class Transaction extends Model
         'pending' => 'boolean',
         'reviewed' => 'boolean',
         'posted_at' => 'date',
+        'meta' => 'array',
     ];
 
     public function account(): BelongsTo

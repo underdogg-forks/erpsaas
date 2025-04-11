@@ -27,6 +27,7 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->string('reference')->nullable();
             $table->bigInteger('amount')->default(0);
+            $table->json('meta')->nullable();
             $table->boolean('pending')->default(false);
             $table->boolean('reviewed')->default(false);
             $table->dateTime('posted_at');
