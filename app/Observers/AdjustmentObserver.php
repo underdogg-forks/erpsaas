@@ -39,6 +39,21 @@ class AdjustmentObserver
         }
     }
 
+    public function saved(Adjustment $adjustment): void
+    {
+        if ($adjustment->wasChanged('status') || $adjustment->wasRecentlyCreated) {
+            if ($adjustment->isInactive()) {
+                $adjustment->account?->update([
+                    'archived' => true,
+                ]);
+            } else {
+                $adjustment->account?->update([
+                    'archived' => false,
+                ]);
+            }
+        }
+    }
+
     /**
      * Handle the Adjustment "saving" event.
      */

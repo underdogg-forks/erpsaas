@@ -111,4 +111,11 @@ class Offering extends Model
     {
         return $this->adjustments()->where('category', AdjustmentCategory::Discount)->where('type', AdjustmentType::Purchase);
     }
+
+    public function hasInactiveAdjustments(): bool
+    {
+        return $this->adjustments->contains(function (Adjustment $adjustment) {
+            return $adjustment->isInactive();
+        });
+    }
 }

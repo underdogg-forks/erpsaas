@@ -17,6 +17,7 @@ use App\Enums\Accounting\InvoiceStatus;
 use App\Enums\Accounting\Month;
 use App\Enums\Accounting\RecurringInvoiceStatus;
 use App\Enums\Setting\PaymentTerms;
+use App\Filament\Company\Resources\Sales\RecurringInvoiceResource\Pages\ViewRecurringInvoice;
 use App\Filament\Forms\Components\Banner;
 use App\Filament\Forms\Components\CustomSection;
 use App\Models\Common\Client;
@@ -28,6 +29,7 @@ use Filament\Actions\Action;
 use Filament\Actions\MountableAction;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Guava\FilamentClusters\Forms\Cluster;
 use Illuminate\Database\Eloquent\Attributes\CollectedBy;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
@@ -35,6 +37,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
+use Livewire\Component;
 
 #[CollectedBy(DocumentCollection::class)]
 #[ObservedBy(RecurringInvoiceObserver::class)]
@@ -557,16 +560,32 @@ class RecurringInvoice extends Document
     {
         return $action::make('approveDraft')
             ->label('Approve')
-            ->icon('heroicon-o-check-circle')
+            ->icon('heroicon-m-check-circle')
             ->visible(function (self $record) {
                 return $record->canBeApproved();
             })
+            ->requiresConfirmation()
             ->databaseTransaction()
             ->successNotificationTitle('Recurring invoice approved')
-            ->action(function (self $record, MountableAction $action) {
-                $record->approveDraft();
+            ->action(function (self $record, MountableAction $action, Component $livewire) {
+                if ($record->hasInactiveAdjustments()) {
+                    $isViewPage = $livewire instanceof ViewRecurringInvoice;
 
-                $action->success();
+                    if (! $isViewPage) {
+                        redirect(ViewRecurringInvoice::getUrl(['record' => $record->id]));
+                    } else {
+                        Notification::make()
+                            ->warning()
+                            ->title('Cannot approve recurring invoice')
+                            ->body('This recurring invoice has inactive adjustments that must be addressed first.')
+                            ->persistent()
+                            ->send();
+                    }
+                } else {
+                    $record->approveDraft();
+
+                    $action->success();
+                }
             });
     }
 

@@ -8,6 +8,7 @@ use App\Enums\Accounting\AdjustmentCategory;
 use App\Enums\Accounting\AdjustmentType;
 use App\Enums\Common\OfferingType;
 use App\Filament\Company\Resources\Common\OfferingResource\Pages;
+use App\Filament\Forms\Components\Banner;
 use App\Filament\Forms\Components\CreateAccountSelect;
 use App\Filament\Forms\Components\CreateAdjustmentSelect;
 use App\Models\Common\Offering;
@@ -18,6 +19,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 use JaOcero\RadioDeck\Forms\Components\RadioDeck;
 
@@ -31,6 +33,29 @@ class OfferingResource extends Resource
     {
         return $form
             ->schema([
+                Banner::make('inactiveAdjustments')
+                    ->label('Inactive adjustments')
+                    ->warning()
+                    ->icon('heroicon-o-exclamation-triangle')
+                    ->visible(fn (Offering $record) => $record->hasInactiveAdjustments())
+                    ->columnSpanFull()
+                    ->description(function (Offering $record) {
+                        $inactiveAdjustments = collect();
+
+                        foreach ($record->adjustments as $adjustment) {
+                            if ($adjustment->isInactive() && $inactiveAdjustments->doesntContain($adjustment->name)) {
+                                $inactiveAdjustments->push($adjustment->name);
+                            }
+                        }
+
+                        $adjustmentsList = $inactiveAdjustments->map(static function ($name) {
+                            return "<span class='font-medium'>{$name}</span>";
+                        })->join(', ');
+
+                        $output = "<p class='text-sm'>This offering contains inactive adjustments that need to be addressed: {$adjustmentsList}</p>";
+
+                        return new HtmlString($output);
+                    }),
                 Forms\Components\Section::make('General')
                     ->schema([
                         RadioDeck::make('type')
