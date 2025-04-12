@@ -257,8 +257,8 @@ class Bill extends Document
             'description' => $transactionDescription,
             'notes' => $data['notes'] ?? null,
             'meta' => [
-                'original_bill_currency' => $billCurrency,
-                'amount_in_bill_currency_cents' => $amountInBillCurrencyCents,
+                'original_document_currency' => $billCurrency,
+                'amount_in_document_currency_cents' => $amountInBillCurrencyCents,
             ],
         ]);
     }

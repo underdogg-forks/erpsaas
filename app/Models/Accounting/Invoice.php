@@ -311,8 +311,10 @@ class Invoice extends Document
         $invoiceCurrency = $this->currency_code;
         $requiresConversion = $invoiceCurrency !== $bankAccountCurrency;
 
+        // Store the original payment amount in invoice currency before any conversion
+        $amountInInvoiceCurrencyCents = CurrencyConverter::convertToCents($data['amount'], $invoiceCurrency);
+
         if ($requiresConversion) {
-            $amountInInvoiceCurrencyCents = CurrencyConverter::convertToCents($data['amount'], $invoiceCurrency);
             $amountInBankCurrencyCents = CurrencyConverter::convertBalance(
                 $amountInInvoiceCurrencyCents,
                 $invoiceCurrency,
@@ -338,6 +340,10 @@ class Invoice extends Document
             'account_id' => Account::getAccountsReceivableAccount()->id,
             'description' => $transactionDescription,
             'notes' => $data['notes'] ?? null,
+            'meta' => [
+                'original_document_currency' => $invoiceCurrency,
+                'amount_in_document_currency_cents' => $amountInInvoiceCurrencyCents,
+            ],
         ]);
     }
 
