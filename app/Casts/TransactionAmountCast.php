@@ -11,12 +11,42 @@ use UnexpectedValueException;
 
 class TransactionAmountCast implements CastsAttributes
 {
-    private array $currencyCache = [];
+    /**
+     * Static cache to persist across instances
+     */
+    private static array $currencyCache = [];
+
+    /**
+     * Eagerly load all required bank accounts at once if needed
+     */
+    private function loadMissingBankAccounts(array $ids): void
+    {
+        $missingIds = array_filter($ids, static fn ($id) => ! isset(self::$currencyCache[$id]) && $id !== null);
+
+        if (empty($missingIds)) {
+            return;
+        }
+
+        /** @var BankAccount[] $accounts */
+        $accounts = BankAccount::with('account')
+            ->whereIn('id', $missingIds)
+            ->get();
+
+        foreach ($accounts as $account) {
+            self::$currencyCache[$account->id] = $account->account->currency_code ?? CurrencyAccessor::getDefaultCurrency();
+        }
+    }
 
     public function get(Model $model, string $key, mixed $value, array $attributes): string
     {
         // Attempt to retrieve the currency code from the related bankAccount->account model
-        $currencyCode = $this->getCurrencyCodeFromBankAccountId($attributes['bank_account_id'] ?? null);
+        $bankAccountId = $attributes['bank_account_id'] ?? null;
+
+        if ($bankAccountId !== null && ! isset(self::$currencyCache[$bankAccountId])) {
+            $this->loadMissingBankAccounts([$bankAccountId]);
+        }
+
+        $currencyCode = $this->getCurrencyCodeFromBankAccountId($bankAccountId);
 
         if ($value !== null) {
             return CurrencyConverter::prepareForMutator($value, $currencyCode);
@@ -30,7 +60,13 @@ class TransactionAmountCast implements CastsAttributes
      */
     public function set(Model $model, string $key, mixed $value, array $attributes): int
     {
-        $currencyCode = $this->getCurrencyCodeFromBankAccountId($attributes['bank_account_id'] ?? null);
+        $bankAccountId = $attributes['bank_account_id'] ?? null;
+
+        if ($bankAccountId !== null && ! isset(self::$currencyCache[$bankAccountId])) {
+            $this->loadMissingBankAccounts([$bankAccountId]);
+        }
+
+        $currencyCode = $this->getCurrencyCodeFromBankAccountId($bankAccountId);
 
         if (is_numeric($value)) {
             $value = (string) $value;
@@ -42,8 +78,7 @@ class TransactionAmountCast implements CastsAttributes
     }
 
     /**
-     * Using this is necessary because the relationship is not always loaded into memory when the cast is called
-     * Instead of using: $model->bankAccount->account->currency_code directly, find the bank account and get the currency code
+     * Get currency code from the cache or use default
      */
     private function getCurrencyCodeFromBankAccountId(?int $bankAccountId): string
     {
@@ -51,15 +86,6 @@ class TransactionAmountCast implements CastsAttributes
             return CurrencyAccessor::getDefaultCurrency();
         }
 
-        if (isset($this->currencyCache[$bankAccountId])) {
-            return $this->currencyCache[$bankAccountId];
-        }
-
-        $bankAccount = BankAccount::find($bankAccountId);
-
-        $currencyCode = $bankAccount?->account?->currency_code ?? CurrencyAccessor::getDefaultCurrency();
-        $this->currencyCache[$bankAccountId] = $currencyCode;
-
-        return $currencyCode;
+        return self::$currencyCache[$bankAccountId] ?? CurrencyAccessor::getDefaultCurrency();
     }
 }

@@ -164,7 +164,7 @@ class Bill extends Document
         return ! in_array($this->status, [
             BillStatus::Paid,
             BillStatus::Void,
-        ]) && $this->currency_code === CurrencyAccessor::getDefaultCurrency();
+        ]);
     }
 
     public function hasPayments(): bool
@@ -227,8 +227,10 @@ class Bill extends Document
         $billCurrency = $this->currency_code;
         $requiresConversion = $billCurrency !== $bankAccountCurrency;
 
+        // Store the original payment amount in bill currency before any conversion
+        $amountInBillCurrencyCents = CurrencyConverter::convertToCents($data['amount'], $billCurrency);
+
         if ($requiresConversion) {
-            $amountInBillCurrencyCents = CurrencyConverter::convertToCents($data['amount'], $billCurrency);
             $amountInBankCurrencyCents = CurrencyConverter::convertBalance(
                 $amountInBillCurrencyCents,
                 $billCurrency,
@@ -254,6 +256,10 @@ class Bill extends Document
             'account_id' => Account::getAccountsPayableAccount()->id,
             'description' => $transactionDescription,
             'notes' => $data['notes'] ?? null,
+            'meta' => [
+                'original_document_currency' => $billCurrency,
+                'amount_in_document_currency_cents' => $amountInBillCurrencyCents,
+            ],
         ]);
     }
 

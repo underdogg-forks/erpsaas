@@ -57,7 +57,7 @@ class CreateConnectedAccount
 
     public function processConnectedBankAccount($plaidAccount, Company $company, Institution $institution, $authResponse, $accessToken): void
     {
-        $identifierHash = md5($institution->external_institution_id . $plaidAccount->name . $plaidAccount->mask);
+        $identifierHash = md5($company->id . $institution->external_institution_id . $plaidAccount->name . $plaidAccount->mask);
 
         $company->connectedBankAccounts()->updateOrCreate([
             'identifier' => $identifierHash,

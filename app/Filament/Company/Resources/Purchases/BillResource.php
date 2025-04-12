@@ -2,12 +2,16 @@
 
 namespace App\Filament\Company\Resources\Purchases;
 
+use App\Enums\Accounting\AdjustmentCategory;
+use App\Enums\Accounting\AdjustmentStatus;
+use App\Enums\Accounting\AdjustmentType;
 use App\Enums\Accounting\BillStatus;
 use App\Enums\Accounting\DocumentDiscountMethod;
 use App\Enums\Accounting\DocumentType;
 use App\Enums\Accounting\PaymentMethod;
 use App\Filament\Company\Resources\Purchases\BillResource\Pages;
 use App\Filament\Company\Resources\Purchases\VendorResource\RelationManagers\BillsRelationManager;
+use App\Filament\Forms\Components\CreateAdjustmentSelect;
 use App\Filament\Forms\Components\CreateCurrencySelect;
 use App\Filament\Forms\Components\DocumentTotals;
 use App\Filament\Tables\Actions\ReplicateBulkAction;
@@ -15,6 +19,7 @@ use App\Filament\Tables\Columns;
 use App\Filament\Tables\Filters\DateRangeFilter;
 use App\Models\Accounting\Adjustment;
 use App\Models\Accounting\Bill;
+use App\Models\Accounting\DocumentLineItem;
 use App\Models\Banking\BankAccount;
 use App\Models\Common\Offering;
 use App\Models\Common\Vendor;
@@ -117,17 +122,17 @@ class BillResource extends Resource
                                     Header::make($settings->resolveColumnLabel('item_name', 'Items'))
                                         ->width($hasDiscounts ? '15%' : '20%'),
                                     Header::make('Description')
-                                        ->width($hasDiscounts ? '25%' : '30%'),
+                                        ->width($hasDiscounts ? '15%' : '20%'),
                                     Header::make($settings->resolveColumnLabel('unit_name', 'Quantity'))
                                         ->width('10%'),
                                     Header::make($settings->resolveColumnLabel('price_name', 'Price'))
                                         ->width('10%'),
                                     Header::make('Taxes')
-                                        ->width($hasDiscounts ? '15%' : '20%'),
+                                        ->width($hasDiscounts ? '20%' : '30%'),
                                 ];
 
                                 if ($hasDiscounts) {
-                                    $headers[] = Header::make('Discounts')->width('15%');
+                                    $headers[] = Header::make('Discounts')->width('20%');
                                 }
 
                                 $headers[] = Header::make($settings->resolveColumnLabel('amount_name', 'Amount'))
@@ -144,9 +149,40 @@ class BillResource extends Resource
                                     ->searchable()
                                     ->required()
                                     ->live()
-                                    ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {
+                                    ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state, ?DocumentLineItem $record) {
                                         $offeringId = $state;
-                                        $offeringRecord = Offering::with(['purchaseTaxes', 'purchaseDiscounts'])->find($offeringId);
+                                        $discountMethod = DocumentDiscountMethod::parse($get('../../discount_method'));
+                                        $isPerLineItem = $discountMethod->isPerLineItem();
+
+                                        $existingTaxIds = [];
+                                        $existingDiscountIds = [];
+
+                                        if ($record) {
+                                            $existingTaxIds = $record->purchaseTaxes()->pluck('adjustments.id')->toArray();
+                                            if ($isPerLineItem) {
+                                                $existingDiscountIds = $record->purchaseDiscounts()->pluck('adjustments.id')->toArray();
+                                            }
+                                        }
+
+                                        $with = [
+                                            'purchaseTaxes' => static function ($query) use ($existingTaxIds) {
+                                                $query->where(static function ($query) use ($existingTaxIds) {
+                                                    $query->where('status', AdjustmentStatus::Active)
+                                                        ->orWhereIn('adjustments.id', $existingTaxIds);
+                                                });
+                                            },
+                                        ];
+
+                                        if ($isPerLineItem) {
+                                            $with['purchaseDiscounts'] = static function ($query) use ($existingDiscountIds) {
+                                                $query->where(static function ($query) use ($existingDiscountIds) {
+                                                    $query->where('status', AdjustmentStatus::Active)
+                                                        ->orWhereIn('adjustments.id', $existingDiscountIds);
+                                                });
+                                            };
+                                        }
+
+                                        $offeringRecord = Offering::with($with)->find($offeringId);
 
                                         if (! $offeringRecord) {
                                             return;
@@ -158,8 +194,7 @@ class BillResource extends Resource
                                         $set('unit_price', $unitPrice);
                                         $set('purchaseTaxes', $offeringRecord->purchaseTaxes->pluck('id')->toArray());
 
-                                        $discountMethod = DocumentDiscountMethod::parse($get('../../discount_method'));
-                                        if ($discountMethod->isPerLineItem()) {
+                                        if ($isPerLineItem) {
                                             $set('purchaseDiscounts', $offeringRecord->purchaseDiscounts->pluck('id')->toArray());
                                         }
                                     }),
@@ -177,21 +212,24 @@ class BillResource extends Resource
                                     ->live()
                                     ->maxValue(9999999999.99)
                                     ->default(0),
-                                Forms\Components\Select::make('purchaseTaxes')
+                                CreateAdjustmentSelect::make('purchaseTaxes')
                                     ->label('Taxes')
-                                    ->relationship('purchaseTaxes', 'name')
+                                    ->category(AdjustmentCategory::Tax)
+                                    ->type(AdjustmentType::Purchase)
+                                    ->adjustmentsRelationship('purchaseTaxes')
                                     ->saveRelationshipsUsing(null)
                                     ->dehydrated(true)
                                     ->preload()
                                     ->multiple()
                                     ->live()
                                     ->searchable(),
-                                Forms\Components\Select::make('purchaseDiscounts')
+                                CreateAdjustmentSelect::make('purchaseDiscounts')
                                     ->label('Discounts')
-                                    ->relationship('purchaseDiscounts', 'name')
+                                    ->category(AdjustmentCategory::Discount)
+                                    ->type(AdjustmentType::Purchase)
+                                    ->adjustmentsRelationship('purchaseDiscounts')
                                     ->saveRelationshipsUsing(null)
                                     ->dehydrated(true)
-                                    ->preload()
                                     ->multiple()
                                     ->live()
                                     ->hidden(function (Forms\Get $get) {
@@ -288,7 +326,8 @@ class BillResource extends Resource
                 Tables\Filters\SelectFilter::make('vendor')
                     ->relationship('vendor', 'name')
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->hiddenOn(BillsRelationManager::class),
                 Tables\Filters\SelectFilter::make('status')
                     ->options(BillStatus::class)
                     ->native(false),
@@ -374,9 +413,13 @@ class BillResource extends Resource
                                 Forms\Components\Select::make('bank_account_id')
                                     ->label('Account')
                                     ->required()
-                                    ->options(BankAccount::query()
-                                        ->get()
-                                        ->pluck('account.name', 'id'))
+                                    ->options(function () {
+                                        return BankAccount::query()
+                                            ->join('accounts', 'bank_accounts.account_id', '=', 'accounts.id')
+                                            ->select(['bank_accounts.id', 'accounts.name'])
+                                            ->pluck('accounts.name', 'bank_accounts.id')
+                                            ->toArray();
+                                    })
                                     ->searchable(),
                                 Forms\Components\Textarea::make('notes')
                                     ->label('Notes'),
@@ -483,9 +526,13 @@ class BillResource extends Resource
                             Forms\Components\Select::make('bank_account_id')
                                 ->label('Account')
                                 ->required()
-                                ->options(BankAccount::query()
-                                    ->get()
-                                    ->pluck('account.name', 'id'))
+                                ->options(function () {
+                                    return BankAccount::query()
+                                        ->join('accounts', 'bank_accounts.account_id', '=', 'accounts.id')
+                                        ->select(['bank_accounts.id', 'accounts.name'])
+                                        ->pluck('accounts.name', 'bank_accounts.id')
+                                        ->toArray();
+                                })
                                 ->searchable(),
                             Forms\Components\Textarea::make('notes')
                                 ->label('Notes'),
@@ -529,13 +576,6 @@ class BillResource extends Resource
                         }),
                 ]),
             ]);
-    }
-
-    public static function getRelations(): array
-    {
-        return [
-            BillResource\RelationManagers\PaymentsRelationManager::class,
-        ];
     }
 
     public static function getPages(): array

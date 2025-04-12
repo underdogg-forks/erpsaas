@@ -62,10 +62,10 @@ class ViewBill extends ViewRecord
                             ->url(static fn (Bill $record) => VendorResource::getUrl('edit', ['record' => $record->vendor_id])),
                         TextEntry::make('total')
                             ->label('Total')
-                            ->money(),
+                            ->currency(fn (Bill $record) => $record->currency_code),
                         TextEntry::make('amount_due')
                             ->label('Amount due')
-                            ->money(),
+                            ->currency(fn (Bill $record) => $record->currency_code),
                         TextEntry::make('date')
                             ->label('Date')
                             ->date(),
@@ -78,5 +78,12 @@ class ViewBill extends ViewRecord
                             ->date(),
                     ]),
             ]);
+    }
+
+    protected function getAllRelationManagers(): array
+    {
+        return [
+            BillResource\RelationManagers\PaymentsRelationManager::class,
+        ];
     }
 }

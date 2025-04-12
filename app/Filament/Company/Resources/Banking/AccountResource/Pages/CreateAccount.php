@@ -2,17 +2,15 @@
 
 namespace App\Filament\Company\Resources\Banking\AccountResource\Pages;
 
+use App\Concerns\RedirectToListPage;
 use App\Filament\Company\Resources\Banking\AccountResource;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateAccount extends CreateRecord
 {
-    protected static string $resource = AccountResource::class;
+    use RedirectToListPage;
 
-    protected function getRedirectUrl(): string
-    {
-        return $this->getResource()::getUrl('index');
-    }
+    protected static string $resource = AccountResource::class;
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {

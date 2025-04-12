@@ -22,6 +22,9 @@ use App\Utilities\Currency\CurrencyConverter;
 use Filament\Actions\Action;
 use Filament\Actions\MountableAction;
 use Filament\Actions\ReplicateAction;
+use Filament\Actions\StaticAction;
+use Filament\Notifications\Notification;
+use Filament\Support\Enums\Alignment;
 use Illuminate\Database\Eloquent\Attributes\CollectedBy;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
@@ -31,6 +34,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\HtmlString;
+use Livewire\Component;
 
 #[CollectedBy(DocumentCollection::class)]
 #[ObservedBy(InvoiceObserver::class)]
@@ -306,8 +311,10 @@ class Invoice extends Document
         $invoiceCurrency = $this->currency_code;
         $requiresConversion = $invoiceCurrency !== $bankAccountCurrency;
 
+        // Store the original payment amount in invoice currency before any conversion
+        $amountInInvoiceCurrencyCents = CurrencyConverter::convertToCents($data['amount'], $invoiceCurrency);
+
         if ($requiresConversion) {
-            $amountInInvoiceCurrencyCents = CurrencyConverter::convertToCents($data['amount'], $invoiceCurrency);
             $amountInBankCurrencyCents = CurrencyConverter::convertBalance(
                 $amountInInvoiceCurrencyCents,
                 $invoiceCurrency,
@@ -333,6 +340,10 @@ class Invoice extends Document
             'account_id' => Account::getAccountsReceivableAccount()->id,
             'description' => $transactionDescription,
             'notes' => $data['notes'] ?? null,
+            'meta' => [
+                'original_document_currency' => $invoiceCurrency,
+                'amount_in_document_currency_cents' => $amountInInvoiceCurrencyCents,
+            ],
         ]);
     }
 
@@ -458,6 +469,45 @@ class Invoice extends Document
         return CurrencyConverter::convertCentsToFormatSimple($convertedCents);
     }
 
+    // TODO: Potentially handle this another way
+    public static function getBlockedApproveAction(string $action = Action::class): MountableAction
+    {
+        return $action::make('blockedApprove')
+            ->label('Approve')
+            ->icon('heroicon-m-check-circle')
+            ->visible(fn (self $record) => $record->canBeApproved() && $record->hasInactiveAdjustments())
+            ->requiresConfirmation()
+            ->modalAlignment(Alignment::Start)
+            ->modalIconColor('danger')
+            ->modalDescription(function (self $record) {
+                $inactiveAdjustments = collect();
+
+                foreach ($record->lineItems as $lineItem) {
+                    foreach ($lineItem->adjustments as $adjustment) {
+                        if ($adjustment->isInactive() && $inactiveAdjustments->doesntContain($adjustment->name)) {
+                            $inactiveAdjustments->push($adjustment->name);
+                        }
+                    }
+                }
+
+                $output = "<p class='text-sm mb-4'>This invoice contains inactive adjustments that need to be addressed before approval:</p>";
+                $output .= "<ul role='list' class='list-disc list-inside space-y-1 text-sm'>";
+
+                foreach ($inactiveAdjustments as $name) {
+                    $output .= "<li class='py-1'><span class='font-medium'>{$name}</span></li>";
+                }
+
+                $output .= '</ul>';
+                $output .= "<p class='text-sm mt-4'>Please update these adjustments before approving the invoice.</p>";
+
+                return new HtmlString($output);
+            })
+            ->modalSubmitAction(function (StaticAction $action, self $record) {
+                $action->label('Edit Invoice')
+                    ->url(InvoiceResource\Pages\EditInvoice::getUrl(['record' => $record->id]));
+            });
+    }
+
     public static function getApproveDraftAction(string $action = Action::class): MountableAction
     {
         return $action::make('approveDraft')
@@ -466,12 +516,28 @@ class Invoice extends Document
             ->visible(function (self $record) {
                 return $record->canBeApproved();
             })
+            ->requiresConfirmation()
             ->databaseTransaction()
             ->successNotificationTitle('Invoice approved')
-            ->action(function (self $record, MountableAction $action) {
-                $record->approveDraft();
+            ->action(function (self $record, MountableAction $action, Component $livewire) {
+                if ($record->hasInactiveAdjustments()) {
+                    $isViewPage = $livewire instanceof InvoiceResource\Pages\ViewInvoice;
 
-                $action->success();
+                    if (! $isViewPage) {
+                        redirect(InvoiceResource\Pages\ViewInvoice::getUrl(['record' => $record->id]));
+                    } else {
+                        Notification::make()
+                            ->warning()
+                            ->title('Cannot approve invoice')
+                            ->body('This invoice has inactive adjustments that must be addressed first.')
+                            ->persistent()
+                            ->send();
+                    }
+                } else {
+                    $record->approveDraft();
+
+                    $action->success();
+                }
             });
     }
 

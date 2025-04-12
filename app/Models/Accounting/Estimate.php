@@ -19,6 +19,7 @@ use App\Observers\EstimateObserver;
 use Filament\Actions\Action;
 use Filament\Actions\MountableAction;
 use Filament\Actions\ReplicateAction;
+use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Attributes\CollectedBy;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
@@ -27,6 +28,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
+use Livewire\Component;
 
 #[CollectedBy(DocumentCollection::class)]
 #[ObservedBy(EstimateObserver::class)]
@@ -124,7 +126,7 @@ class Estimate extends Document
     protected function isCurrentlyExpired(): Attribute
     {
         return Attribute::get(function () {
-            return $this->expiration_date?->isBefore(today()) && $this->canBeExpired();
+            return $this->expiration_date?->isBefore(today());
         });
     }
 
@@ -170,6 +172,7 @@ class Estimate extends Document
             EstimateStatus::Accepted,
             EstimateStatus::Declined,
             EstimateStatus::Converted,
+            EstimateStatus::Expired,
         ]);
     }
 
@@ -265,12 +268,28 @@ class Estimate extends Document
             ->visible(function (self $record) {
                 return $record->canBeApproved();
             })
+            ->requiresConfirmation()
             ->databaseTransaction()
             ->successNotificationTitle('Estimate approved')
-            ->action(function (self $record, MountableAction $action) {
-                $record->approveDraft();
+            ->action(function (self $record, MountableAction $action, Component $livewire) {
+                if ($record->hasInactiveAdjustments()) {
+                    $isViewPage = $livewire instanceof EstimateResource\Pages\ViewEstimate;
 
-                $action->success();
+                    if (! $isViewPage) {
+                        redirect(EstimateResource\Pages\ViewEstimate::getUrl(['record' => $record->id]));
+                    } else {
+                        Notification::make()
+                            ->warning()
+                            ->title('Cannot approve estimate')
+                            ->body('This estimate has inactive adjustments that must be addressed first.')
+                            ->persistent()
+                            ->send();
+                    }
+                } else {
+                    $record->approveDraft();
+
+                    $action->success();
+                }
             });
     }
 

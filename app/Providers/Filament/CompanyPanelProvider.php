@@ -25,6 +25,7 @@ use App\Filament\Company\Pages\ManageCompany;
 use App\Filament\Company\Pages\Reports;
 use App\Filament\Company\Pages\Service\ConnectedAccount;
 use App\Filament\Company\Pages\Service\LiveCurrency;
+use App\Filament\Company\Resources\Accounting\BudgetResource;
 use App\Filament\Company\Resources\Banking\AccountResource;
 use App\Filament\Company\Resources\Common\OfferingResource;
 use App\Filament\Company\Resources\Purchases\BillResource;
@@ -39,6 +40,7 @@ use App\Http\Middleware\ConfigureCurrentCompany;
 use App\Livewire\UpdatePassword;
 use App\Livewire\UpdateProfileInformation;
 use App\Models\Company;
+use App\Services\CompanySettingsService;
 use App\Support\FilamentComponentConfigurator;
 use Exception;
 use Filament\Actions;
@@ -133,10 +135,10 @@ class CompanyPanelProvider extends PanelProvider
                             ->label('Sales')
                             ->icon('heroicon-o-currency-dollar')
                             ->items([
+                                ...ClientResource::getNavigationItems(),
+                                ...EstimateResource::getNavigationItems(),
                                 ...InvoiceResource::getNavigationItems(),
                                 ...RecurringInvoiceResource::getNavigationItems(),
-                                ...EstimateResource::getNavigationItems(),
-                                ...ClientResource::getNavigationItems(),
                             ]),
                         NavigationGroup::make('Purchases')
                             ->label('Purchases')
@@ -150,6 +152,7 @@ class CompanyPanelProvider extends PanelProvider
                             ->icon('heroicon-o-clipboard-document-list')
                             ->extraSidebarAttributes(['class' => 'es-sidebar-group'])
                             ->items([
+                                // ...BudgetResource::getNavigationItems(),
                                 ...AccountChart::getNavigationItems(),
                                 ...Transactions::getNavigationItems(),
                             ]),
@@ -272,11 +275,13 @@ class CompanyPanelProvider extends PanelProvider
         });
 
         Tables\Table::configureUsing(static function (Tables\Table $table): void {
+            $table::$defaultDateDisplayFormat = CompanySettingsService::getDefaultDateFormat(session('current_company_id') ?? auth()->user()->current_company_id);
+
             $table
                 ->paginationPageOptions([5, 10, 25, 50, 100])
                 ->filtersFormWidth(MaxWidth::Small)
                 ->filtersTriggerAction(fn (Tables\Actions\Action $action) => $action->slideOver());
-        }, isImportant: true);
+        });
 
         Tables\Columns\TextColumn::configureUsing(function (Tables\Columns\TextColumn $column): void {
             $column->placeholder('–');
@@ -294,7 +299,7 @@ class CompanyPanelProvider extends PanelProvider
             $select
                 ->native(false)
                 ->selectablePlaceholder($isSelectable);
-        }, isImportant: true);
+        });
     }
 
     protected function hasRequiredRule(Select $component): bool

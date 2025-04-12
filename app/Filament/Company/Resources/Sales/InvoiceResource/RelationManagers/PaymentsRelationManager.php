@@ -5,7 +5,6 @@ namespace App\Filament\Company\Resources\Sales\InvoiceResource\RelationManagers;
 use App\Enums\Accounting\InvoiceStatus;
 use App\Enums\Accounting\PaymentMethod;
 use App\Enums\Accounting\TransactionType;
-use App\Filament\Company\Resources\Sales\InvoiceResource\Pages\ViewInvoice;
 use App\Models\Accounting\Invoice;
 use App\Models\Accounting\Transaction;
 use App\Models\Banking\BankAccount;
@@ -41,7 +40,7 @@ class PaymentsRelationManager extends RelationManager
 
     public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
     {
-        return $ownerRecord->status !== InvoiceStatus::Draft && $pageClass === ViewInvoice::class;
+        return $ownerRecord->status !== InvoiceStatus::Draft;
     }
 
     public function form(Form $form): Form
@@ -51,59 +50,143 @@ class PaymentsRelationManager extends RelationManager
             ->schema([
                 Forms\Components\DatePicker::make('posted_at')
                     ->label('Date'),
-                Forms\Components\TextInput::make('amount')
-                    ->label('Amount')
-                    ->required()
-                    ->money()
-                    ->live(onBlur: true)
-                    ->helperText(function (RelationManager $livewire, $state, ?Transaction $record) {
-                        if (! CurrencyConverter::isValidAmount($state)) {
+                Forms\Components\Grid::make()
+                    ->schema([
+                        Forms\Components\Select::make('bank_account_id')
+                            ->label('Account')
+                            ->required()
+                            ->live()
+                            ->options(function () {
+                                return BankAccount::query()
+                                    ->join('accounts', 'bank_accounts.account_id', '=', 'accounts.id')
+                                    ->select(['bank_accounts.id', 'accounts.name', 'accounts.currency_code'])
+                                    ->get()
+                                    ->mapWithKeys(function ($account) {
+                                        $label = $account->name;
+                                        if ($account->currency_code) {
+                                            $label .= " ({$account->currency_code})";
+                                        }
+
+                                        return [$account->id => $label];
+                                    })
+                                    ->toArray();
+                            })
+                            ->searchable(),
+                        Forms\Components\TextInput::make('amount')
+                            ->label('Amount')
+                            ->required()
+                            ->money(function (RelationManager $livewire) {
+                                /** @var Invoice $invoice */
+                                $invoice = $livewire->getOwnerRecord();
+
+                                return $invoice->currency_code;
+                            })
+                            ->live(onBlur: true)
+                            ->helperText(function (RelationManager $livewire, $state, ?Transaction $record) {
+                                /** @var Invoice $ownerRecord */
+                                $ownerRecord = $livewire->getOwnerRecord();
+
+                                $invoiceCurrency = $ownerRecord->currency_code;
+
+                                if (! CurrencyConverter::isValidAmount($state, $invoiceCurrency)) {
+                                    return null;
+                                }
+
+                                $amountDue = $ownerRecord->getRawOriginal('amount_due');
+
+                                $amount = CurrencyConverter::convertToCents($state, $invoiceCurrency);
+
+                                if ($amount <= 0) {
+                                    return 'Please enter a valid positive amount';
+                                }
+
+                                $currentPaymentAmount = $record?->getRawOriginal('amount') ?? 0;
+
+                                if ($ownerRecord->status === InvoiceStatus::Overpaid) {
+                                    $newAmountDue = $amountDue + $amount - $currentPaymentAmount;
+                                } else {
+                                    $newAmountDue = $amountDue - $amount + $currentPaymentAmount;
+                                }
+
+                                return match (true) {
+                                    $newAmountDue > 0 => 'Amount due after payment will be ' . CurrencyConverter::formatCentsToMoney($newAmountDue, $invoiceCurrency),
+                                    $newAmountDue === 0 => 'Invoice will be fully paid',
+                                    default => 'Invoice will be overpaid by ' . CurrencyConverter::formatCentsToMoney(abs($newAmountDue), $invoiceCurrency),
+                                };
+                            })
+                            ->rules([
+                                static fn (RelationManager $livewire): Closure => static function (string $attribute, $value, Closure $fail) use ($livewire) {
+                                    /** @var Invoice $invoice */
+                                    $invoice = $livewire->getOwnerRecord();
+
+                                    if (! CurrencyConverter::isValidAmount($value, $invoice->currency_code)) {
+                                        $fail('Please enter a valid amount');
+                                    }
+                                },
+                            ]),
+                    ])->columns(2),
+                Forms\Components\Placeholder::make('currency_conversion')
+                    ->label('Currency Conversion')
+                    ->content(function (Forms\Get $get, RelationManager $livewire) {
+                        $amount = $get('amount');
+                        $bankAccountId = $get('bank_account_id');
+
+                        /** @var Invoice $invoice */
+                        $invoice = $livewire->getOwnerRecord();
+                        $invoiceCurrency = $invoice->currency_code;
+
+                        if (empty($amount) || empty($bankAccountId) || ! CurrencyConverter::isValidAmount($amount, $invoiceCurrency)) {
                             return null;
                         }
 
-                        /** @var Invoice $ownerRecord */
-                        $ownerRecord = $livewire->getOwnerRecord();
-
-                        $amountDue = $ownerRecord->getRawOriginal('amount_due');
-
-                        $amount = CurrencyConverter::convertToCents($state);
-
-                        if ($amount <= 0) {
-                            return 'Please enter a valid positive amount';
+                        $bankAccount = BankAccount::with('account')->find($bankAccountId);
+                        if (! $bankAccount) {
+                            return null;
                         }
 
-                        $currentPaymentAmount = $record?->getRawOriginal('amount') ?? 0;
+                        $bankCurrency = $bankAccount->account->currency_code ?? CurrencyAccessor::getDefaultCurrency();
 
-                        if ($ownerRecord->status === InvoiceStatus::Overpaid) {
-                            $newAmountDue = $amountDue + $amount - $currentPaymentAmount;
-                        } else {
-                            $newAmountDue = $amountDue - $amount + $currentPaymentAmount;
+                        // If currencies are the same, no conversion needed
+                        if ($invoiceCurrency === $bankCurrency) {
+                            return null;
                         }
 
-                        return match (true) {
-                            $newAmountDue > 0 => 'Amount due after payment will be ' . CurrencyConverter::formatCentsToMoney($newAmountDue),
-                            $newAmountDue === 0 => 'Invoice will be fully paid',
-                            default => 'Invoice will be overpaid by ' . CurrencyConverter::formatCentsToMoney(abs($newAmountDue)),
-                        };
+                        // Convert amount from invoice currency to bank currency
+                        $amountInInvoiceCurrencyCents = CurrencyConverter::convertToCents($amount, $invoiceCurrency);
+                        $amountInBankCurrencyCents = CurrencyConverter::convertBalance(
+                            $amountInInvoiceCurrencyCents,
+                            $invoiceCurrency,
+                            $bankCurrency
+                        );
+
+                        $formattedBankAmount = CurrencyConverter::formatCentsToMoney($amountInBankCurrencyCents, $bankCurrency);
+
+                        return "Payment will be recorded as {$formattedBankAmount} in the bank account's currency ({$bankCurrency}).";
                     })
-                    ->rules([
-                        static fn (): Closure => static function (string $attribute, $value, Closure $fail) {
-                            if (! CurrencyConverter::isValidAmount($value)) {
-                                $fail('Please enter a valid amount');
-                            }
-                        },
-                    ]),
+                    ->hidden(function (Forms\Get $get, RelationManager $livewire) {
+                        $bankAccountId = $get('bank_account_id');
+                        if (empty($bankAccountId)) {
+                            return true;
+                        }
+
+                        /** @var Invoice $invoice */
+                        $invoice = $livewire->getOwnerRecord();
+                        $invoiceCurrency = $invoice->currency_code;
+
+                        $bankAccount = BankAccount::with('account')->find($bankAccountId);
+                        if (! $bankAccount) {
+                            return true;
+                        }
+
+                        $bankCurrency = $bankAccount->account->currency_code ?? CurrencyAccessor::getDefaultCurrency();
+
+                        // Hide if currencies are the same
+                        return $invoiceCurrency === $bankCurrency;
+                    }),
                 Forms\Components\Select::make('payment_method')
                     ->label('Payment method')
                     ->required()
                     ->options(PaymentMethod::class),
-                Forms\Components\Select::make('bank_account_id')
-                    ->label('Account')
-                    ->required()
-                    ->options(BankAccount::query()
-                        ->get()
-                        ->pluck('account.name', 'id'))
-                    ->searchable(),
                 Forms\Components\Textarea::make('notes')
                     ->label('Notes'),
             ]);

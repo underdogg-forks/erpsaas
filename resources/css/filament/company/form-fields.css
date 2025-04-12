@@ -29,10 +29,6 @@
 }
 
 /* Choices.js select field overrides */
-.choices__list.choices__list--single {
-    @apply w-full;
-}
-
 .choices:focus-visible {
     outline: none;
 }
@@ -41,52 +37,166 @@
     @apply text-gray-900 dark:text-white font-semibold;
 }
 
-.choices[data-type="select-one"] .choices__inner {
-    line-height: 1.5;
-    display: flex;
-    align-items: center;
-    min-height: 2.25rem;
-    box-sizing: border-box;
-}
-
 .choices:not(.is-disabled) .choices__item {
     cursor: pointer;
 }
 
 /* Table Repeater Styles */
-.table-repeater-container {
-    @apply rounded-none ring-0;
+:not(.is-spreadsheet) {
+    .table-repeater-container {
+        @apply rounded-none ring-0;
+    }
+
+    .table-repeater-component {
+        @apply space-y-10;
+    }
+
+    .table-repeater-component ul {
+        @apply justify-start;
+    }
+
+    .table-repeater-row {
+        @apply divide-x-0 !important;
+    }
+
+    .table-repeater-column {
+        @apply py-2 !important;
+    }
+
+    .table-repeater-header {
+        @apply rounded-t-none !important;
+    }
+
+    .table-repeater-rows-wrapper {
+        @apply divide-gray-300 last:border-b last:border-gray-300 dark:divide-white/20 dark:last:border-white/20;
+    }
+
+    .table-repeater-header tr {
+        @apply divide-x-0 text-base sm:text-sm sm:leading-6 !important;
+    }
+
+    .table-repeater-header-column {
+        @apply ps-3 pe-3 font-semibold bg-gray-200 dark:bg-gray-800 rounded-none !important;
+    }
 }
 
-.table-repeater-component {
-    @apply space-y-10;
+/* Excel/Spreadsheet styling */
+.is-spreadsheet {
+    .table-repeater-container {
+        overflow-x: auto;
+        max-width: 100%;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .table-repeater-container:has(.choices.is-open) {
+        overflow: visible;
+    }
+
+    .table-repeater-container table {
+        min-width: 100%;
+        width: max-content;
+    }
+
+    .table-repeater-container {
+        border: 1px solid #e5e7eb !important;
+        border-radius: 0 !important;
+        @apply ring-0 !important;
+    }
+
+    .table-repeater-header {
+        background-color: #f8f9fa !important;
+    }
+
+    .table-repeater-header-column {
+        border: 1px solid #e5e7eb !important;
+        background-color: #f8f9fa !important;
+        font-weight: 600 !important;
+        padding: 8px 12px !important;
+    }
+
+    .table-repeater-column {
+        border: 1px solid #e5e7eb !important;
+        padding: 8px 12px !important;
+    }
+
+    .table-repeater-column input {
+        text-align: right !important;
+    }
+
+    .fi-input-wrapper,
+    .fi-input {
+        padding: 0 !important;
+    }
+
+    .fi-input-wrp,
+    .fi-fo-file-upload .filepond--root {
+        @apply ring-0 bg-transparent shadow-none rounded-none !important;
+    }
+
+    .fi-input-wrp input {
+        @apply bg-transparent !important;
+    }
+
+    .table-repeater-column:focus-within {
+        outline: 2px solid #2563eb !important;
+        outline-offset: -2px !important;
+        z-index: 1 !important;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+        @apply ring-0 shadow-none !important;
+        outline: none !important;
+    }
+
+    .table-repeater-row:nth-child(even) {
+        background-color: #f9fafb;
+    }
+
+    .fi-fo-field-wrp:has(.fi-fo-checkbox-list),
+    .fi-fo-field-wrp:has(.fi-checkbox-input),
+    .fi-fo-field-wrp:has(.fi-fo-radio) {
+        @apply py-2 px-3 !important;
+    }
+
+    .fi-fo-field-wrp:has(.fi-fo-toggle) {
+        @apply inline-block mt-1 !important;
+    }
 }
 
-.table-repeater-component ul {
-    @apply justify-start;
+/* Responsive behavior */
+@media (max-width: theme('screens.sm')) {
+    .table-repeater-component.break-point-sm .table-repeater-container {
+        overflow-x: visible;
+    }
 }
 
-.table-repeater-row {
-    @apply divide-x-0 !important;
+@media (max-width: theme('screens.md')) {
+    .table-repeater-component.break-point-md .table-repeater-container {
+        overflow-x: visible;
+    }
 }
 
-.table-repeater-column {
-    @apply py-2 !important;
+@media (max-width: theme('screens.lg')) {
+    .table-repeater-component.break-point-lg .table-repeater-container {
+        overflow-x: visible;
+    }
 }
 
-.table-repeater-header {
-    @apply rounded-t-none !important;
+@media (max-width: theme('screens.xl')) {
+    .table-repeater-component.break-point-xl .table-repeater-container {
+        overflow-x: visible;
+    }
 }
 
-.table-repeater-rows-wrapper {
-    @apply divide-gray-300 last:border-b last:border-gray-300 dark:divide-white/20 dark:last:border-white/20;
+@media (max-width: theme('screens.2xl')) {
+    .table-repeater-component.break-point-2xl .table-repeater-container {
+        overflow-x: visible;
+    }
 }
 
-.table-repeater-header tr {
-    @apply divide-x-0 text-base sm:text-sm sm:leading-6 !important;
-}
-
-.table-repeater-header-column {
-    @apply ps-3 pe-3 font-semibold bg-gray-200 dark:bg-gray-800 rounded-none !important;
+.is-spreadsheet .table-repeater-column .fi-input-wrp-suffix {
+    padding-right: 0 !important;
 }
 

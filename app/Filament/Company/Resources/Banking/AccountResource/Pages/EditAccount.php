@@ -2,12 +2,15 @@
 
 namespace App\Filament\Company\Resources\Banking\AccountResource\Pages;
 
+use App\Concerns\RedirectToListPage;
 use App\Filament\Company\Resources\Banking\AccountResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 
 class EditAccount extends EditRecord
 {
+    use RedirectToListPage;
+
     protected static string $resource = AccountResource::class;
 
     protected function getHeaderActions(): array
@@ -15,11 +18,6 @@ class EditAccount extends EditRecord
         return [
             Actions\DeleteAction::make(),
         ];
-    }
-
-    protected function getRedirectUrl(): string
-    {
-        return $this->getResource()::getUrl('index');
     }
 
     protected function mutateFormDataBeforeSave(array $data): array

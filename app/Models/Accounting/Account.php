@@ -10,8 +10,10 @@ use App\Facades\Accounting;
 use App\Models\Banking\BankAccount;
 use App\Models\Setting\Currency;
 use App\Observers\AccountObserver;
+use App\Utilities\Currency\CurrencyAccessor;
 use Database\Factories\Accounting\AccountFactory;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -19,7 +21,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 #[ObservedBy(AccountObserver::class)]
 class Account extends Model
@@ -84,17 +86,39 @@ class Account extends Model
         return $this->hasOne(Adjustment::class, 'account_id');
     }
 
-    public function getLastTransactionDate(): ?string
+    public function scopeBudgetable(Builder $query): Builder
     {
-        $lastJournalEntryTransaction = $this->journalEntries()
-            ->join('transactions', 'journal_entries.transaction_id', '=', 'transactions.id')
-            ->max('transactions.posted_at');
+        return $query->whereIn('category', [
+            AccountCategory::Revenue,
+            AccountCategory::Expense,
+        ])
+            ->whereNotIn('type', [
+                AccountType::ContraRevenue,
+                AccountType::ContraExpense,
+                AccountType::UncategorizedRevenue,
+                AccountType::UncategorizedExpense,
+            ])
+            ->whereDoesntHave('subtype', function (Builder $query) {
+                $query->whereIn('name', [
+                    'Receivables',
+                    'Input Tax Recoverable',
+                ]);
+            })
+            ->whereNotIn('name', [
+                'Gain on Foreign Exchange',
+                'Loss on Foreign Exchange',
+            ])
+            ->where('currency_code', CurrencyAccessor::getDefaultCurrency());
+    }
 
-        if ($lastJournalEntryTransaction) {
-            return Carbon::parse($lastJournalEntryTransaction)->format('F j, Y');
-        }
-
-        return null;
+    public function scopeWithLastTransactionDate(Builder $query): Builder
+    {
+        return $query->addSelect([
+            'last_transaction_date' => JournalEntry::select(DB::raw('MAX(transactions.posted_at)'))
+                ->join('transactions', 'journal_entries.transaction_id', '=', 'transactions.id')
+                ->whereColumn('journal_entries.account_id', 'accounts.id')
+                ->limit(1),
+        ]);
     }
 
     protected function endingBalance(): Attribute

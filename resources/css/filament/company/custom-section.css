@@ -48,10 +48,6 @@
     &.fi-section-not-contained:not(.fi-aside) {
         @apply grid gap-y-4;
 
-        & .fi-section-header {
-            @apply py-2;
-        }
-
         & .fi-section-content-ctn {
             @apply grid gap-y-4;
         }

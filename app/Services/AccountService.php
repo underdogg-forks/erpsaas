@@ -78,7 +78,7 @@ class AccountService
         return new Money($endingBalance, $account->currency_code);
     }
 
-    private function calculateNetMovementByCategory(AccountCategory $category, int $debitBalance, int $creditBalance): int
+    public function calculateNetMovementByCategory(AccountCategory $category, int $debitBalance, int $creditBalance): int
     {
         if ($category->isNormalDebitBalance()) {
             return $debitBalance - $creditBalance;

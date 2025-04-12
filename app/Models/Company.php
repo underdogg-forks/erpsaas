@@ -93,6 +93,21 @@ class Company extends FilamentCompaniesCompany implements HasAvatar
         return $this->hasMany(Accounting\Bill::class, 'company_id');
     }
 
+    public function budgets(): HasMany
+    {
+        return $this->hasMany(Accounting\Budget::class, 'company_id');
+    }
+
+    public function budgetItems(): HasMany
+    {
+        return $this->hasMany(Accounting\BudgetItem::class, 'company_id');
+    }
+
+    public function budgetAllocations(): HasMany
+    {
+        return $this->hasMany(Accounting\BudgetAllocation::class, 'company_id');
+    }
+
     public function accountSubtypes(): HasMany
     {
         return $this->hasMany(AccountSubtype::class, 'company_id');

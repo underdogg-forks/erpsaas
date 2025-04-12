@@ -2,7 +2,7 @@
 
 namespace App\Filament\Company\Resources\Sales\ClientResource\Pages;
 
-use App\Concerns\RedirectToListPage;
+use App\Concerns\RedirectToViewPage;
 use App\Filament\Company\Resources\Sales\ClientResource;
 use App\Models\Common\Client;
 use Filament\Actions;
@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class EditClient extends EditRecord
 {
-    use RedirectToListPage;
+    use RedirectToViewPage;
 
     protected static string $resource = ClientResource::class;
 

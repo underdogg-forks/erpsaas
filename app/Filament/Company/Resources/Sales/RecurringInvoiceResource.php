@@ -2,17 +2,23 @@
 
 namespace App\Filament\Company\Resources\Sales;
 
+use App\Enums\Accounting\AdjustmentCategory;
+use App\Enums\Accounting\AdjustmentStatus;
+use App\Enums\Accounting\AdjustmentType;
 use App\Enums\Accounting\DocumentDiscountMethod;
 use App\Enums\Accounting\DocumentType;
 use App\Enums\Accounting\RecurringInvoiceStatus;
 use App\Enums\Setting\PaymentTerms;
+use App\Filament\Company\Resources\Sales\ClientResource\RelationManagers\RecurringInvoicesRelationManager;
 use App\Filament\Company\Resources\Sales\RecurringInvoiceResource\Pages;
+use App\Filament\Forms\Components\CreateAdjustmentSelect;
 use App\Filament\Forms\Components\CreateCurrencySelect;
 use App\Filament\Forms\Components\DocumentFooterSection;
 use App\Filament\Forms\Components\DocumentHeaderSection;
 use App\Filament\Forms\Components\DocumentTotals;
 use App\Filament\Tables\Columns;
 use App\Models\Accounting\Adjustment;
+use App\Models\Accounting\DocumentLineItem;
 use App\Models\Accounting\RecurringInvoice;
 use App\Models\Common\Client;
 use App\Models\Common\Offering;
@@ -107,17 +113,17 @@ class RecurringInvoiceResource extends Resource
                                     Header::make($settings->resolveColumnLabel('item_name', 'Items'))
                                         ->width($hasDiscounts ? '15%' : '20%'),
                                     Header::make('Description')
-                                        ->width($hasDiscounts ? '25%' : '30%'),
+                                        ->width($hasDiscounts ? '15%' : '20%'),
                                     Header::make($settings->resolveColumnLabel('unit_name', 'Quantity'))
                                         ->width('10%'),
                                     Header::make($settings->resolveColumnLabel('price_name', 'Price'))
                                         ->width('10%'),
                                     Header::make('Taxes')
-                                        ->width($hasDiscounts ? '15%' : '20%'),
+                                        ->width($hasDiscounts ? '20%' : '30%'),
                                 ];
 
                                 if ($hasDiscounts) {
-                                    $headers[] = Header::make('Discounts')->width('15%');
+                                    $headers[] = Header::make('Discounts')->width('20%');
                                 }
 
                                 $headers[] = Header::make($settings->resolveColumnLabel('amount_name', 'Amount'))
@@ -133,9 +139,40 @@ class RecurringInvoiceResource extends Resource
                                     ->searchable()
                                     ->required()
                                     ->live()
-                                    ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {
+                                    ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state, ?DocumentLineItem $record) {
                                         $offeringId = $state;
-                                        $offeringRecord = Offering::with(['salesTaxes', 'salesDiscounts'])->find($offeringId);
+                                        $discountMethod = DocumentDiscountMethod::parse($get('../../discount_method'));
+                                        $isPerLineItem = $discountMethod->isPerLineItem();
+
+                                        $existingTaxIds = [];
+                                        $existingDiscountIds = [];
+
+                                        if ($record) {
+                                            $existingTaxIds = $record->salesTaxes()->pluck('adjustments.id')->toArray();
+                                            if ($isPerLineItem) {
+                                                $existingDiscountIds = $record->salesDiscounts()->pluck('adjustments.id')->toArray();
+                                            }
+                                        }
+
+                                        $with = [
+                                            'salesTaxes' => static function ($query) use ($existingTaxIds) {
+                                                $query->where(static function ($query) use ($existingTaxIds) {
+                                                    $query->where('status', AdjustmentStatus::Active)
+                                                        ->orWhereIn('adjustments.id', $existingTaxIds);
+                                                });
+                                            },
+                                        ];
+
+                                        if ($isPerLineItem) {
+                                            $with['salesDiscounts'] = static function ($query) use ($existingDiscountIds) {
+                                                $query->where(static function ($query) use ($existingDiscountIds) {
+                                                    $query->where('status', AdjustmentStatus::Active)
+                                                        ->orWhereIn('adjustments.id', $existingDiscountIds);
+                                                });
+                                            };
+                                        }
+
+                                        $offeringRecord = Offering::with($with)->find($offeringId);
 
                                         if (! $offeringRecord) {
                                             return;
@@ -147,8 +184,7 @@ class RecurringInvoiceResource extends Resource
                                         $set('unit_price', $unitPrice);
                                         $set('salesTaxes', $offeringRecord->salesTaxes->pluck('id')->toArray());
 
-                                        $discountMethod = DocumentDiscountMethod::parse($get('../../discount_method'));
-                                        if ($discountMethod->isPerLineItem()) {
+                                        if ($isPerLineItem) {
                                             $set('salesDiscounts', $offeringRecord->salesDiscounts->pluck('id')->toArray());
                                         }
                                     }),
@@ -165,19 +201,24 @@ class RecurringInvoiceResource extends Resource
                                     ->live()
                                     ->maxValue(9999999999.99)
                                     ->default(0),
-                                Forms\Components\Select::make('salesTaxes')
-                                    ->relationship('salesTaxes', 'name')
+                                CreateAdjustmentSelect::make('salesTaxes')
+                                    ->label('Taxes')
+                                    ->category(AdjustmentCategory::Tax)
+                                    ->type(AdjustmentType::Sales)
+                                    ->adjustmentsRelationship('salesTaxes')
                                     ->saveRelationshipsUsing(null)
                                     ->dehydrated(true)
                                     ->preload()
                                     ->multiple()
                                     ->live()
                                     ->searchable(),
-                                Forms\Components\Select::make('salesDiscounts')
-                                    ->relationship('salesDiscounts', 'name')
+                                CreateAdjustmentSelect::make('salesDiscounts')
+                                    ->label('Discounts')
+                                    ->category(AdjustmentCategory::Discount)
+                                    ->type(AdjustmentType::Sales)
+                                    ->adjustmentsRelationship('salesDiscounts')
                                     ->saveRelationshipsUsing(null)
                                     ->dehydrated(true)
-                                    ->preload()
                                     ->multiple()
                                     ->live()
                                     ->hidden(function (Forms\Get $get) {
@@ -248,7 +289,8 @@ class RecurringInvoiceResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('client.name')
                     ->sortable()
-                    ->searchable(),
+                    ->searchable()
+                    ->hiddenOn(RecurringInvoicesRelationManager::class),
                 Tables\Columns\TextColumn::make('schedule')
                     ->label('Schedule')
                     ->getStateUsing(function (RecurringInvoice $record) {
@@ -287,7 +329,8 @@ class RecurringInvoiceResource extends Resource
                 Tables\Filters\SelectFilter::make('client')
                     ->relationship('client', 'name')
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->hiddenOn(RecurringInvoicesRelationManager::class),
                 Tables\Filters\SelectFilter::make('status')
                     ->options(RecurringInvoiceStatus::class)
                     ->native(false),

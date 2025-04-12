@@ -3,7 +3,7 @@
 namespace App\Filament\Company\Resources\Sales\InvoiceResource\Pages;
 
 use App\Concerns\ManagesLineItems;
-use App\Concerns\RedirectToListPage;
+use App\Concerns\RedirectToViewPage;
 use App\Filament\Company\Resources\Sales\InvoiceResource;
 use App\Models\Accounting\Invoice;
 use App\Models\Common\Client;
@@ -15,7 +15,7 @@ use Livewire\Attributes\Url;
 class CreateInvoice extends CreateRecord
 {
     use ManagesLineItems;
-    use RedirectToListPage;
+    use RedirectToViewPage;
 
     protected static string $resource = InvoiceResource::class;
 
