@@ -12,7 +12,6 @@ use App\Enums\Accounting\InvoiceStatus;
 use App\Enums\Accounting\PaymentMethod;
 use App\Filament\Company\Resources\Sales\ClientResource\RelationManagers\InvoicesRelationManager;
 use App\Filament\Company\Resources\Sales\InvoiceResource\Pages;
-use App\Filament\Company\Resources\Sales\InvoiceResource\RelationManagers;
 use App\Filament\Company\Resources\Sales\InvoiceResource\Widgets;
 use App\Filament\Forms\Components\CreateAdjustmentSelect;
 use App\Filament\Forms\Components\CreateCurrencySelect;
@@ -703,13 +702,6 @@ class InvoiceResource extends Resource
                         }),
                 ]),
             ]);
-    }
-
-    public static function getRelations(): array
-    {
-        return [
-            RelationManagers\PaymentsRelationManager::class,
-        ];
     }
 
     public static function getPages(): array

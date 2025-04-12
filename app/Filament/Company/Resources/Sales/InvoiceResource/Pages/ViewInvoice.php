@@ -125,4 +125,11 @@ class ViewInvoice extends ViewRecord
                     ]),
             ]);
     }
+
+    protected function getAllRelationManagers(): array
+    {
+        return [
+            InvoiceResource\RelationManagers\PaymentsRelationManager::class,
+        ];
+    }
 }

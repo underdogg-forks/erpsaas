@@ -79,4 +79,11 @@ class ViewBill extends ViewRecord
                     ]),
             ]);
     }
+
+    protected function getAllRelationManagers(): array
+    {
+        return [
+            BillResource\RelationManagers\PaymentsRelationManager::class,
+        ];
+    }
 }

@@ -578,13 +578,6 @@ class BillResource extends Resource
             ]);
     }
 
-    public static function getRelations(): array
-    {
-        return [
-            BillResource\RelationManagers\PaymentsRelationManager::class,
-        ];
-    }
-
     public static function getPages(): array
     {
         return [
