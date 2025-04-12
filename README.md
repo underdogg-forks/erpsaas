@@ -22,7 +22,7 @@ A Laravel and Filament-powered accounting platform, crafting a modern and automa
 ## Installation
 
 Please check the official laravel installation guide for server requirements before you
-start. [Official Documentation](https://laravel.com/docs/10.x)
+start. [Official Documentation](https://laravel.com/docs/11.x)
 
 Clone the repository
 
