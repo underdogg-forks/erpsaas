@@ -59,7 +59,7 @@ class ViewBill extends ViewRecord
                             ->label('Vendor')
                             ->color('primary')
                             ->weight(FontWeight::SemiBold)
-                            ->url(static fn (Bill $record) => VendorResource::getUrl('edit', ['record' => $record->vendor_id])),
+                            ->url(static fn (Bill $record) => VendorResource::getUrl('view', ['record' => $record->vendor_id])),
                         TextEntry::make('total')
                             ->label('Total')
                             ->currency(fn (Bill $record) => $record->currency_code),
