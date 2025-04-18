@@ -338,8 +338,10 @@ class RecurringInvoiceResource extends Resource
             ->actions([
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\ActionGroup::make([
-                        Tables\Actions\EditAction::make(),
-                        Tables\Actions\ViewAction::make(),
+                        Tables\Actions\EditAction::make()
+                            ->url(static fn (RecurringInvoice $record): string => Pages\EditRecurringInvoice::getUrl(['record' => $record])),
+                        Tables\Actions\ViewAction::make()
+                            ->url(static fn (RecurringInvoice $record): string => Pages\ViewRecurringInvoice::getUrl(['record' => $record])),
                         RecurringInvoice::getManageScheduleAction(Tables\Actions\Action::class),
                     ])->dropdown(false),
                     Tables\Actions\DeleteAction::make(),

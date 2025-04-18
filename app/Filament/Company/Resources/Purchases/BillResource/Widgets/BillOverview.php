@@ -33,6 +33,7 @@ class BillOverview extends EnhancedStatsOverviewWidget
                 ->whereNotNull('paid_at')
                 ->selectRaw('AVG(TIMESTAMPDIFF(DAY, date, paid_at)) as avg_days')
                 ->groupBy('company_id')
+                ->reorder()
                 ->value('avg_days');
 
             $averagePaymentTimeFormatted = Number::format($averagePaymentTime ?? 0, maxPrecision: 1);
