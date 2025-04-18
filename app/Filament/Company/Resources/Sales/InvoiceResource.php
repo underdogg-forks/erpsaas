@@ -10,6 +10,7 @@ use App\Enums\Accounting\DocumentDiscountMethod;
 use App\Enums\Accounting\DocumentType;
 use App\Enums\Accounting\InvoiceStatus;
 use App\Enums\Accounting\PaymentMethod;
+use App\Enums\Setting\PaymentTerms;
 use App\Filament\Company\Resources\Sales\ClientResource\RelationManagers\InvoicesRelationManager;
 use App\Filament\Company\Resources\Sales\InvoiceResource\Pages;
 use App\Filament\Company\Resources\Sales\InvoiceResource\Widgets;
@@ -41,8 +42,10 @@ use Filament\Support\Enums\Alignment;
 use Filament\Support\Enums\MaxWidth;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Guava\FilamentClusters\Forms\Cluster;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 
 class InvoiceResource extends Resource
@@ -92,21 +95,57 @@ class InvoiceResource extends Resource
                                     ->default(static fn () => Invoice::getNextDocumentNumber()),
                                 Forms\Components\TextInput::make('order_number')
                                     ->label('P.O/S.O Number'),
-                                Forms\Components\DatePicker::make('date')
-                                    ->label('Invoice date')
-                                    ->live()
-                                    ->default(now())
-                                    ->disabled(function (?Invoice $record) {
-                                        return $record?->hasPayments();
-                                    })
-                                    ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {
-                                        $date = $state;
-                                        $dueDate = $get('due_date');
+                                Cluster::make([
+                                    Forms\Components\DatePicker::make('date')
+                                        ->label('Invoice date')
+                                        ->live()
+                                        ->default(now())
+                                        ->disabled(function (?Invoice $record) {
+                                            return $record?->hasPayments();
+                                        })
+                                        ->columnSpan(2)
+                                        ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {
+                                            $date = $state;
+                                            $dueDate = $get('due_date');
 
-                                        if ($date && $dueDate && $date > $dueDate) {
-                                            $set('due_date', $date);
-                                        }
-                                    }),
+                                            if ($date && $dueDate && $date > $dueDate) {
+                                                $set('due_date', $date);
+                                            }
+
+                                            // Update due date based on payment terms if selected
+                                            $paymentTerms = $get('payment_terms');
+                                            if ($date && $paymentTerms && $paymentTerms !== 'custom') {
+                                                $terms = PaymentTerms::parse($paymentTerms);
+                                                $set('due_date', Carbon::parse($date)->addDays($terms->getDays())->toDateString());
+                                            }
+                                        }),
+                                    Forms\Components\Select::make('payment_terms')
+                                        ->label('Payment terms')
+                                        ->options(function () {
+                                            return collect(PaymentTerms::cases())
+                                                ->mapWithKeys(function (PaymentTerms $paymentTerm) {
+                                                    return [$paymentTerm->value => $paymentTerm->getLabel()];
+                                                })
+                                                ->put('custom', 'Custom')
+                                                ->toArray();
+                                        })
+                                        ->selectablePlaceholder(false)
+                                        ->default($settings->payment_terms->value)
+                                        ->live()
+                                        ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {
+                                            if (! $state || $state === 'custom') {
+                                                return;
+                                            }
+
+                                            $date = $get('date');
+                                            if ($date) {
+                                                $terms = PaymentTerms::parse($state);
+                                                $set('due_date', Carbon::parse($date)->addDays($terms->getDays())->toDateString());
+                                            }
+                                        }),
+                                ])
+                                    ->label('Invoice date')
+                                    ->columns(3),
                                 Forms\Components\DatePicker::make('due_date')
                                     ->label('Payment due')
                                     ->default(function () use ($settings) {
@@ -114,6 +153,26 @@ class InvoiceResource extends Resource
                                     })
                                     ->minDate(static function (Forms\Get $get) {
                                         return $get('date') ?? now();
+                                    })
+                                    ->live()
+                                    ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {
+                                        if (! $state) {
+                                            return;
+                                        }
+
+                                        $invoiceDate = $get('date');
+                                        $paymentTerms = $get('payment_terms');
+
+                                        if (! $invoiceDate || $paymentTerms === 'custom') {
+                                            return;
+                                        }
+
+                                        $term = PaymentTerms::parse($paymentTerms);
+                                        $expectedDueDate = Carbon::parse($invoiceDate)->addDays($term->getDays());
+
+                                        if (! Carbon::parse($state)->isSameDay($expectedDueDate)) {
+                                            $set('payment_terms', 'custom');
+                                        }
                                     }),
                                 Forms\Components\Select::make('discount_method')
                                     ->label('Discount method')
@@ -509,7 +568,6 @@ class InvoiceResource extends Resource
                         ->successNotificationTitle('Invoices replicated successfully')
                         ->failureNotificationTitle('Failed to replicate invoices')
                         ->databaseTransaction()
-                        ->deselectRecordsAfterCompletion()
                         ->excludeAttributes([
                             'status',
                             'amount_paid',
