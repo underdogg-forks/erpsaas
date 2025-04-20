@@ -37,7 +37,7 @@ class OfferingResource extends Resource
                     ->label('Inactive adjustments')
                     ->warning()
                     ->icon('heroicon-o-exclamation-triangle')
-                    ->visible(fn (Offering $record) => $record->hasInactiveAdjustments())
+                    ->visible(fn (?Offering $record) => $record?->hasInactiveAdjustments())
                     ->columnSpanFull()
                     ->description(function (Offering $record) {
                         $inactiveAdjustments = collect();
