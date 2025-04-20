@@ -59,7 +59,8 @@ class InvoiceOverview extends EnhancedStatsOverviewWidget
             EnhancedStatsOverviewWidget\EnhancedStat::make('Average Payment Time', $averagePaymentTimeFormatted)
                 ->suffix('days'),
             EnhancedStatsOverviewWidget\EnhancedStat::make('Average Invoice Total', CurrencyConverter::formatCentsToMoney($averageInvoiceTotal))
-                ->suffix(CurrencyAccessor::getDefaultCurrency()),
+                ->suffix(CurrencyAccessor::getDefaultCurrency())
+                ->description('Excludes draft and voided invoices'),
         ];
     }
 }

@@ -8,6 +8,7 @@ use App\Enums\Accounting\AdjustmentType;
 use App\Enums\Accounting\DocumentDiscountMethod;
 use App\Enums\Accounting\DocumentType;
 use App\Enums\Accounting\EstimateStatus;
+use App\Enums\Setting\PaymentTerms;
 use App\Filament\Company\Resources\Sales\ClientResource\RelationManagers\EstimatesRelationManager;
 use App\Filament\Company\Resources\Sales\EstimateResource\Pages;
 use App\Filament\Company\Resources\Sales\EstimateResource\Widgets;
@@ -36,7 +37,9 @@ use Filament\Resources\Resource;
 use Filament\Support\Enums\MaxWidth;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Guava\FilamentClusters\Forms\Cluster;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 
 class EstimateResource extends Resource
@@ -83,18 +86,53 @@ class EstimateResource extends Resource
                                     ->default(static fn () => Estimate::getNextDocumentNumber()),
                                 Forms\Components\TextInput::make('reference_number')
                                     ->label('Reference number'),
-                                Forms\Components\DatePicker::make('date')
-                                    ->label('Estimate date')
-                                    ->live()
-                                    ->default(now())
-                                    ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {
-                                        $date = $state;
-                                        $expirationDate = $get('expiration_date');
+                                Cluster::make([
+                                    Forms\Components\DatePicker::make('date')
+                                        ->label('Estimate date')
+                                        ->live()
+                                        ->default(now())
+                                        ->columnSpan(2)
+                                        ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {
+                                            $date = $state;
+                                            $expirationDate = $get('expiration_date');
 
-                                        if ($date && $expirationDate && $date > $expirationDate) {
-                                            $set('expiration_date', $date);
-                                        }
-                                    }),
+                                            if ($date && $expirationDate && $date > $expirationDate) {
+                                                $set('expiration_date', $date);
+                                            }
+
+                                            $paymentTerms = $get('payment_terms');
+                                            if ($date && $paymentTerms && $paymentTerms !== 'custom') {
+                                                $terms = PaymentTerms::parse($paymentTerms);
+                                                $set('expiration_date', Carbon::parse($date)->addDays($terms->getDays())->toDateString());
+                                            }
+                                        }),
+                                    Forms\Components\Select::make('payment_terms')
+                                        ->label('Payment terms')
+                                        ->options(function () {
+                                            return collect(PaymentTerms::cases())
+                                                ->mapWithKeys(function (PaymentTerms $paymentTerm) {
+                                                    return [$paymentTerm->value => $paymentTerm->getLabel()];
+                                                })
+                                                ->put('custom', 'Custom')
+                                                ->toArray();
+                                        })
+                                        ->selectablePlaceholder(false)
+                                        ->default($settings->payment_terms->value)
+                                        ->live()
+                                        ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {
+                                            if (! $state || $state === 'custom') {
+                                                return;
+                                            }
+
+                                            $date = $get('date');
+                                            if ($date) {
+                                                $terms = PaymentTerms::parse($state);
+                                                $set('expiration_date', Carbon::parse($date)->addDays($terms->getDays())->toDateString());
+                                            }
+                                        }),
+                                ])
+                                    ->label('Estimate date')
+                                    ->columns(3),
                                 Forms\Components\DatePicker::make('expiration_date')
                                     ->label('Expiration date')
                                     ->default(function () use ($settings) {
@@ -102,6 +140,26 @@ class EstimateResource extends Resource
                                     })
                                     ->minDate(static function (Forms\Get $get) {
                                         return $get('date') ?? now();
+                                    })
+                                    ->live()
+                                    ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {
+                                        if (! $state) {
+                                            return;
+                                        }
+
+                                        $date = $get('date');
+                                        $paymentTerms = $get('payment_terms');
+
+                                        if (! $date || $paymentTerms === 'custom') {
+                                            return;
+                                        }
+
+                                        $term = PaymentTerms::parse($paymentTerms);
+                                        $expected = Carbon::parse($date)->addDays($term->getDays());
+
+                                        if (! Carbon::parse($state)->isSameDay($expected)) {
+                                            $set('payment_terms', 'custom');
+                                        }
                                     }),
                                 Forms\Components\Select::make('discount_method')
                                     ->label('Discount method')
