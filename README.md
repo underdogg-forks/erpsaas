@@ -17,6 +17,14 @@
 
 A Laravel and Filament-powered accounting platform, crafting a modern and automated solution for financial management.
 
+## Sponsorship
+
+While **ERPSAAS** is open-source, maintaining it requires significant time and resources. Your sponsorship directly supports ongoing development, bug fixes, and improved documentation.
+
+As a solo developer, I can only provide limited free support. Sponsors receive priority assistance, input on feature priorities, and early access to updates. Even a small monthly contribution makes a significant difference in keeping this project actively maintained.
+
+**Become a sponsor:** [GitHub Sponsors](https://github.com/sponsors/andrewdwallo)
+
 # Getting started
 
 ## Installation
