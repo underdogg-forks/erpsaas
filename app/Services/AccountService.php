@@ -381,7 +381,7 @@ class AccountService
         $driver = DB::getDriverName();
 
         $datediff = $driver === 'pgsql'
-            ? "DATE_PART('day', ?::date - invoices.due_date)"
+            ? '(?::date - invoices.due_date::date)'
             : 'DATEDIFF(?, invoices.due_date)';
 
         return Invoice::query()
@@ -404,7 +404,7 @@ class AccountService
         $driver = DB::getDriverName();
 
         $datediff = $driver === 'pgsql'
-            ? "DATE_PART('day', ?::date - bills.due_date)"
+            ? '(?::date - bills.due_date::date)'
             : 'DATEDIFF(?, bills.due_date)';
 
         return Bill::query()
