@@ -227,6 +227,7 @@ abstract class BaseReportPage extends Page
                     ->action(fn () => $this->exportCSV()),
                 Action::make('exportPDF')
                     ->label('PDF')
+                    ->hidden(app()->environment('demo'))
                     ->action(fn () => $this->exportPDF()),
             ])
                 ->label('Export')
