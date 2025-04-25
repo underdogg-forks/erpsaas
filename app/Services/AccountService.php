@@ -166,22 +166,24 @@ class AccountService
             ->addSelect([
                 DB::raw("
                     COALESCE(
-                        IF(accounts.category IN ('asset', 'expense'),
-                            SUM(IF(journal_entries.type = 'debit' AND transactions.posted_at < ?, journal_entries.amount, 0)) -
-                            SUM(IF(journal_entries.type = 'credit' AND transactions.posted_at < ?, journal_entries.amount, 0)),
-                            SUM(IF(journal_entries.type = 'credit' AND transactions.posted_at < ?, journal_entries.amount, 0)) -
-                            SUM(IF(journal_entries.type = 'debit' AND transactions.posted_at < ?, journal_entries.amount, 0))
-                        ), 0
+                        CASE
+                            WHEN accounts.category IN ('asset', 'expense') THEN
+                                SUM(CASE WHEN journal_entries.type = 'debit' AND transactions.posted_at < ? THEN journal_entries.amount ELSE 0 END) -
+                                SUM(CASE WHEN journal_entries.type = 'credit' AND transactions.posted_at < ? THEN journal_entries.amount ELSE 0 END)
+                            ELSE
+                                SUM(CASE WHEN journal_entries.type = 'credit' AND transactions.posted_at < ? THEN journal_entries.amount ELSE 0 END) -
+                                SUM(CASE WHEN journal_entries.type = 'debit' AND transactions.posted_at < ? THEN journal_entries.amount ELSE 0 END)
+                        END, 0
                     ) AS starting_balance
                 "),
                 DB::raw("
                     COALESCE(SUM(
-                        IF(journal_entries.type = 'debit' AND transactions.posted_at BETWEEN ? AND ?, journal_entries.amount, 0)
+                        CASE WHEN journal_entries.type = 'debit' AND transactions.posted_at BETWEEN ? AND ? THEN journal_entries.amount ELSE 0 END
                     ), 0) AS total_debit
                 "),
                 DB::raw("
                     COALESCE(SUM(
-                        IF(journal_entries.type = 'credit' AND transactions.posted_at BETWEEN ? AND ?, journal_entries.amount, 0)
+                        CASE WHEN journal_entries.type = 'credit' AND transactions.posted_at BETWEEN ? AND ? THEN journal_entries.amount ELSE 0 END
                     ), 0) AS total_credit
                 "),
             ])
@@ -227,22 +229,24 @@ class AccountService
             ->addSelect([
                 DB::raw("
                     COALESCE(
-                        IF(accounts.category IN ('asset', 'expense'),
-                            SUM(IF(journal_entries.type = 'debit' AND transactions.posted_at < ?, journal_entries.amount, 0)) -
-                            SUM(IF(journal_entries.type = 'credit' AND transactions.posted_at < ?, journal_entries.amount, 0)),
-                            SUM(IF(journal_entries.type = 'credit' AND transactions.posted_at < ?, journal_entries.amount, 0)) -
-                            SUM(IF(journal_entries.type = 'debit' AND transactions.posted_at < ?, journal_entries.amount, 0))
-                        ), 0
+                        CASE
+                            WHEN accounts.category IN ('asset', 'expense') THEN
+                                SUM(CASE WHEN journal_entries.type = 'debit' AND transactions.posted_at < ? THEN journal_entries.amount ELSE 0 END) -
+                                SUM(CASE WHEN journal_entries.type = 'credit' AND transactions.posted_at < ? THEN journal_entries.amount ELSE 0 END)
+                            ELSE
+                                SUM(CASE WHEN journal_entries.type = 'credit' AND transactions.posted_at < ? THEN journal_entries.amount ELSE 0 END) -
+                                SUM(CASE WHEN journal_entries.type = 'debit' AND transactions.posted_at < ? THEN journal_entries.amount ELSE 0 END)
+                        END, 0
                     ) AS starting_balance
                 "),
                 DB::raw("
                     COALESCE(SUM(
-                        IF(journal_entries.type = 'debit' AND transactions.posted_at BETWEEN ? AND ?, journal_entries.amount, 0)
+                        CASE WHEN journal_entries.type = 'debit' AND transactions.posted_at BETWEEN ? AND ? THEN journal_entries.amount ELSE 0 END
                     ), 0) AS total_debit
                 "),
                 DB::raw("
                     COALESCE(SUM(
-                        IF(journal_entries.type = 'credit' AND transactions.posted_at BETWEEN ? AND ?, journal_entries.amount, 0)
+                        CASE WHEN journal_entries.type = 'credit' AND transactions.posted_at BETWEEN ? AND ? THEN journal_entries.amount ELSE 0 END
                     ), 0) AS total_credit
                 "),
             ])
@@ -374,6 +378,11 @@ class AccountService
     public function getUnpaidClientInvoices(?string $asOfDate = null): Builder
     {
         $asOfDate = $asOfDate ?? now()->toDateString();
+        $driver = DB::getDriverName();
+
+        $datediff = $driver === 'pgsql'
+            ? "DATE_PART('day', ?::date - invoices.due_date)"
+            : 'DATEDIFF(?, invoices.due_date)';
 
         return Invoice::query()
             ->select([
@@ -382,7 +391,7 @@ class AccountService
                 'invoices.due_date',
                 'invoices.amount_due',
                 'invoices.currency_code',
-                DB::raw('DATEDIFF(?, invoices.due_date) as days_overdue'),
+                DB::raw("{$datediff} as days_overdue"),
             ])
             ->addBinding([$asOfDate], 'select')
             ->unpaid()
@@ -392,6 +401,11 @@ class AccountService
     public function getUnpaidVendorBills(?string $asOfDate = null): Builder
     {
         $asOfDate = $asOfDate ?? now()->toDateString();
+        $driver = DB::getDriverName();
+
+        $datediff = $driver === 'pgsql'
+            ? "DATE_PART('day', ?::date - bills.due_date)"
+            : 'DATEDIFF(?, bills.due_date)';
 
         return Bill::query()
             ->select([
@@ -400,7 +414,7 @@ class AccountService
                 'bills.due_date',
                 'bills.amount_due',
                 'bills.currency_code',
-                DB::raw('DATEDIFF(?, bills.due_date) as days_overdue'),
+                DB::raw("{$datediff} as days_overdue"),
             ])
             ->addBinding([$asOfDate], 'select')
             ->unpaid()
