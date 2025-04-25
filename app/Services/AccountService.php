@@ -381,18 +381,19 @@ class AccountService
         $driver = DB::getDriverName();
 
         $datediff = $driver === 'pgsql'
-            ? "DATE_PART('day', (:asOfDate)::date - invoices.due_date::date)"
-            : 'DATEDIFF(:asOfDate, invoices.due_date)';
+            ? "DATE_PART('day', ?::date - invoices.due_date)"
+            : 'DATEDIFF(?, invoices.due_date)';
 
         return Invoice::query()
-            ->selectRaw("
-            invoices.id,
-            invoices.client_id,
-            invoices.due_date,
-            invoices.amount_due,
-            invoices.currency_code,
-            {$datediff} as days_overdue
-        ", ['asOfDate' => $asOfDate])
+            ->select([
+                'invoices.id',
+                'invoices.client_id',
+                'invoices.due_date',
+                'invoices.amount_due',
+                'invoices.currency_code',
+                DB::raw("{$datediff} as days_overdue"),
+            ])
+            ->addBinding([$asOfDate], 'select')
             ->unpaid()
             ->where('amount_due', '>', 0);
     }
@@ -403,18 +404,19 @@ class AccountService
         $driver = DB::getDriverName();
 
         $datediff = $driver === 'pgsql'
-            ? "DATE_PART('day', (:asOfDate)::date - bills.due_date::date)"
-            : 'DATEDIFF(:asOfDate, bills.due_date)';
+            ? "DATE_PART('day', ?::date - bills.due_date)"
+            : 'DATEDIFF(?, bills.due_date)';
 
         return Bill::query()
-            ->selectRaw("
-            bills.id,
-            bills.vendor_id,
-            bills.due_date,
-            bills.amount_due,
-            bills.currency_code,
-            {$datediff} as days_overdue
-        ", ['asOfDate' => $asOfDate])
+            ->select([
+                'bills.id',
+                'bills.vendor_id',
+                'bills.due_date',
+                'bills.amount_due',
+                'bills.currency_code',
+                DB::raw("{$datediff} as days_overdue"),
+            ])
+            ->addBinding([$asOfDate], 'select')
             ->unpaid()
             ->where('amount_due', '>', 0);
     }
