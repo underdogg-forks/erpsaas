@@ -85,27 +85,28 @@ class CompanyPanelProvider extends PanelProvider
             ->id('company')
             ->path('company')
             ->login(Login::class)
-            ->registration(Register::class)
-            ->passwordReset()
+            ->registration(action: app()->environment('demo') ? null : Register::class)
+            ->passwordReset(requestAction: app()->environment('demo') ? null : Pages\Auth\PasswordReset\RequestPasswordReset::class)
             ->tenantMenu(false)
             ->plugin(
                 FilamentCompanies::make()
                     ->userPanel('user')
                     ->switchCurrentCompany()
-                    ->updateProfileInformation(component: UpdateProfileInformation::class)
-                    ->updatePasswords(component: UpdatePassword::class)
-                    ->setPasswords()
-                    ->connectedAccounts()
-                    ->manageBrowserSessions()
-                    ->accountDeletion()
-                    ->profilePhotos()
-                    ->api()
+                    ->updateProfileInformation(condition: ! app()->environment('demo'), component: UpdateProfileInformation::class)
+                    ->updatePasswords(condition: ! app()->environment('demo'), component: UpdatePassword::class)
+                    ->setPasswords(condition: ! app()->environment('demo'))
+                    ->connectedAccounts(condition: ! app()->environment('demo'))
+                    ->manageBrowserSessions(condition: ! app()->environment('demo'))
+                    ->accountDeletion(condition: ! app()->environment('demo'))
+                    ->profilePhotos(condition: ! app()->environment('demo'))
+                    ->api(condition: ! app()->environment('demo'))
                     ->companies(invitations: true)
                     ->autoAcceptInvitations()
                     ->termsAndPrivacyPolicy()
                     ->notifications()
                     ->modals()
                     ->socialite(
+                        condition: ! app()->environment('demo'),
                         providers: [Provider::Github],
                         features: [Feature::RememberSession, Feature::ProviderAvatars],
                     ),
