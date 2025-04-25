@@ -13,7 +13,6 @@ enum DocumentType: string implements HasIcon, HasLabel
     case Bill = 'bill';
     case Estimate = 'estimate';
     case RecurringInvoice = 'recurring_invoice';
-    case CreditNote = 'credit_note';
 
     public const DEFAULT = self::Invoice->value;
 
@@ -22,7 +21,6 @@ enum DocumentType: string implements HasIcon, HasLabel
         return match ($this) {
             self::Invoice, self::Bill, self::Estimate => $this->name,
             self::RecurringInvoice => 'Recurring Invoice',
-            self::CreditNote => 'Credit Note',
         };
     }
 
@@ -43,7 +41,7 @@ enum DocumentType: string implements HasIcon, HasLabel
     public function getTaxKey(): string
     {
         return match ($this) {
-            self::Invoice, self::RecurringInvoice, self::Estimate, self::CreditNote => 'salesTaxes',
+            self::Invoice, self::RecurringInvoice, self::Estimate => 'salesTaxes',
             self::Bill => 'purchaseTaxes',
         };
     }
@@ -51,7 +49,7 @@ enum DocumentType: string implements HasIcon, HasLabel
     public function getDiscountKey(): string
     {
         return match ($this) {
-            self::Invoice, self::RecurringInvoice, self::Estimate, self::CreditNote => 'salesDiscounts',
+            self::Invoice, self::RecurringInvoice, self::Estimate => 'salesDiscounts',
             self::Bill => 'purchaseDiscounts',
         };
     }
@@ -64,14 +62,6 @@ enum DocumentType: string implements HasIcon, HasLabel
                 number: 'Invoice Number',
                 referenceNumber: 'P.O/S.O Number',
                 date: 'Invoice Date',
-                dueDate: 'Payment Due',
-                amountDue: 'Amount Due',
-            ),
-            self::CreditNote => new DocumentLabelDTO(
-                title: self::CreditNote->getLabel(),
-                number: 'Credit Note Number',
-                referenceNumber: 'P.O/S.O Number',
-                date: 'Credit Note Date',
                 dueDate: 'Payment Due',
                 amountDue: 'Amount Due',
             ),
