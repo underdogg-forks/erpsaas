@@ -31,7 +31,7 @@ class DatabaseSeeder extends Seeder
             })
             ->create([
                 'name' => 'Admin',
-                'email' => 'admin@gmail.com',
+                'email' => 'admin@erpsaas.com',
                 'password' => bcrypt('password'),
                 'current_company_id' => 1,  // Assuming this will be the ID of the created company
             ]);
