@@ -123,7 +123,7 @@ class AccountService
                 'journal_entries.type',
                 'journal_entries.amount',
                 'journal_entries.description',
-                DB::raw('journal_entries.amount * IF(journal_entries.type = "debit", 1, -1) AS signed_amount')
+                DB::raw("journal_entries.amount * CASE WHEN journal_entries.type = 'debit' THEN 1 ELSE -1 END AS signed_amount")
             )
                 ->whereBetween('transactions.posted_at', [$startDate, $endDate])
                 ->join('transactions', 'transactions.id', '=', 'journal_entries.transaction_id')
