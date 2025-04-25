@@ -16,6 +16,7 @@ use App\Models\Accounting\JournalEntry;
 use App\Models\Accounting\Transaction;
 use App\Models\Banking\BankAccount;
 use App\Models\Company;
+use App\Services\PlaidService;
 use App\Utilities\Currency\CurrencyAccessor;
 use App\Utilities\Currency\CurrencyConverter;
 use Awcodes\TableRepeater\Header;
@@ -123,6 +124,7 @@ class Transactions extends Page implements HasTable
                     ->after(fn (Transaction $transaction) => $transaction->updateAmountIfBalanced()),
                 Actions\Action::make('connectBank')
                     ->label('Connect your bank')
+                    ->visible(app(PlaidService::class)->isEnabled())
                     ->url(ConnectedAccount::getUrl()),
             ])
                 ->label('More')
