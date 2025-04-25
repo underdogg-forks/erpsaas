@@ -37,7 +37,7 @@ class BillOverview extends EnhancedStatsOverviewWidget
 
             if ($driver === 'pgsql') {
                 $query->selectRaw('AVG(EXTRACT(EPOCH FROM (paid_at - date)) / 86400) as avg_days');
-            } elseif ($driver === 'mysql') {
+            } else {
                 $query->selectRaw('AVG(TIMESTAMPDIFF(DAY, date, paid_at)) as avg_days');
             }
 
