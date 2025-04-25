@@ -31,6 +31,10 @@ class CompanyPolicy
      */
     public function create(User $user): bool
     {
+        if (app()->environment('demo')) {
+            return false;
+        }
+
         return true;
     }
 
@@ -39,6 +43,10 @@ class CompanyPolicy
      */
     public function update(User $user, Company $company): bool
     {
+        if (app()->environment('demo')) {
+            return false;
+        }
+
         return $user->ownsCompany($company);
     }
 
@@ -47,6 +55,10 @@ class CompanyPolicy
      */
     public function addCompanyEmployee(User $user, Company $company): bool
     {
+        if (app()->environment('demo')) {
+            return false;
+        }
+
         return $user->ownsCompany($company);
     }
 
@@ -55,6 +67,10 @@ class CompanyPolicy
      */
     public function updateCompanyEmployee(User $user, Company $company): bool
     {
+        if (app()->environment('demo')) {
+            return false;
+        }
+
         return $user->ownsCompany($company);
     }
 
@@ -63,6 +79,10 @@ class CompanyPolicy
      */
     public function removeCompanyEmployee(User $user, Company $company): bool
     {
+        if (app()->environment('demo')) {
+            return false;
+        }
+
         return $user->ownsCompany($company);
     }
 
@@ -71,6 +91,10 @@ class CompanyPolicy
      */
     public function delete(User $user, Company $company): bool
     {
+        if (app()->environment('demo')) {
+            return false;
+        }
+
         return $user->ownsCompany($company);
     }
 }

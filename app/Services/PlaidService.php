@@ -58,6 +58,18 @@ class PlaidService
         $this->setBaseUrl($this->environment);
     }
 
+    /**
+     * Determine if the Plaid service is enabled and properly configured.
+     */
+    public function isEnabled(): bool
+    {
+        if (app()->environment('demo') || empty($this->clientId) || empty($this->clientSecret)) {
+            return false;
+        }
+
+        return true;
+    }
+
     public function setClientCredentials(?string $clientId, ?string $clientSecret): self
     {
         $this->clientId = $clientId ?? $this->clientId;
