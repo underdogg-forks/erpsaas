@@ -8,6 +8,7 @@ use App\Filament\Widgets\EnhancedStatsOverviewWidget;
 use App\Utilities\Currency\CurrencyAccessor;
 use App\Utilities\Currency\CurrencyConverter;
 use Filament\Widgets\Concerns\InteractsWithPageTable;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Number;
 
 class BillOverview extends EnhancedStatsOverviewWidget
@@ -29,9 +30,18 @@ class BillOverview extends EnhancedStatsOverviewWidget
         $lastMonthTotalSuffix = null;
 
         if ($activeTab !== 'unpaid') {
-            $averagePaymentTime = $this->getPageTableQuery()
-                ->whereNotNull('paid_at')
-                ->selectRaw('AVG(TIMESTAMPDIFF(DAY, date, paid_at)) as avg_days')
+            $driver = DB::getDriverName();
+
+            $query = $this->getPageTableQuery()
+                ->whereNotNull('paid_at');
+
+            if ($driver === 'pgsql') {
+                $query->selectRaw('AVG(EXTRACT(EPOCH FROM (paid_at - date)) / 86400) as avg_days');
+            } elseif ($driver === 'mysql') {
+                $query->selectRaw('AVG(TIMESTAMPDIFF(DAY, date, paid_at)) as avg_days');
+            }
+
+            $averagePaymentTime = $query
                 ->groupBy('company_id')
                 ->reorder()
                 ->value('avg_days');
