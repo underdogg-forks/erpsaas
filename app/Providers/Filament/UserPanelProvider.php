@@ -11,7 +11,6 @@ use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\NavigationBuilder;
 use Filament\Navigation\NavigationItem;
-use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -50,12 +49,13 @@ class UserPanelProvider extends PanelProvider
                                     ->icon('heroicon-s-building-office-2')
                                     ->url(static function (): ?string {
                                         $user = Auth::user();
+                                        $companyPanel = FilamentCompanies::getCompanyPanel();
 
                                         if ($company = $user?->primaryCompany()) {
-                                            return Pages\Dashboard::getUrl(panel: FilamentCompanies::getCompanyPanel(), tenant: $company);
+                                            return Filament::getPanel($companyPanel)->getUrl(tenant: $company);
                                         }
 
-                                        return Filament::getPanel(FilamentCompanies::getCompanyPanel())->getTenantRegistrationUrl();
+                                        return Filament::getPanel($companyPanel)->getTenantRegistrationUrl();
                                     }),
                             ]);
                     }),

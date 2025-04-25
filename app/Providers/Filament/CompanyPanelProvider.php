@@ -35,6 +35,7 @@ use App\Filament\Company\Resources\Sales\EstimateResource;
 use App\Filament\Company\Resources\Sales\InvoiceResource;
 use App\Filament\Company\Resources\Sales\RecurringInvoiceResource;
 use App\Filament\Components\PanelShiftDropdown;
+use App\Filament\Pages\Auth\Login;
 use App\Filament\User\Clusters\Account;
 use App\Http\Middleware\ConfigureCurrentCompany;
 use App\Livewire\UpdatePassword;
@@ -69,7 +70,6 @@ use Wallo\FilamentCompanies\Actions\GenerateRedirectForProvider;
 use Wallo\FilamentCompanies\Enums\Feature;
 use Wallo\FilamentCompanies\Enums\Provider;
 use Wallo\FilamentCompanies\FilamentCompanies;
-use Wallo\FilamentCompanies\Pages\Auth\Login;
 use Wallo\FilamentCompanies\Pages\Auth\Register;
 
 class CompanyPanelProvider extends PanelProvider
@@ -79,33 +79,38 @@ class CompanyPanelProvider extends PanelProvider
      */
     public function panel(Panel $panel): Panel
     {
+        $isDemoEnvironment = app()->environment('demo');
+
         return $panel
             ->default()
             ->id('company')
             ->path('company')
             ->login(Login::class)
-            ->registration(action: app()->environment('demo') ? null : Register::class)
-            ->passwordReset(requestAction: app()->environment('demo') ? null : Pages\Auth\PasswordReset\RequestPasswordReset::class)
+            ->when(! $isDemoEnvironment, function (Panel $panel) {
+                return $panel
+                    ->registration(Register::class)
+                    ->passwordReset();
+            })
             ->tenantMenu(false)
             ->plugin(
                 FilamentCompanies::make()
                     ->userPanel('user')
                     ->switchCurrentCompany()
-                    ->updateProfileInformation(condition: ! app()->environment('demo'), component: UpdateProfileInformation::class)
-                    ->updatePasswords(condition: ! app()->environment('demo'), component: UpdatePassword::class)
-                    ->setPasswords(condition: ! app()->environment('demo'))
-                    ->connectedAccounts(condition: ! app()->environment('demo'))
-                    ->manageBrowserSessions(condition: ! app()->environment('demo'))
-                    ->accountDeletion(condition: ! app()->environment('demo'))
-                    ->profilePhotos(condition: ! app()->environment('demo'))
-                    ->api(condition: ! app()->environment('demo'))
+                    ->updateProfileInformation(component: UpdateProfileInformation::class)
+                    ->updatePasswords(component: UpdatePassword::class)
+                    ->setPasswords()
+                    ->connectedAccounts()
+                    ->manageBrowserSessions()
+                    ->accountDeletion()
+                    ->profilePhotos()
+                    ->api()
                     ->companies(invitations: true)
                     ->autoAcceptInvitations()
                     ->termsAndPrivacyPolicy()
                     ->notifications()
                     ->modals()
                     ->socialite(
-                        condition: ! app()->environment('demo'),
+                        condition: ! $isDemoEnvironment,
                         providers: [Provider::Github],
                         features: [Feature::RememberSession, Feature::ProviderAvatars],
                     ),
@@ -178,13 +183,13 @@ class CompanyPanelProvider extends PanelProvider
             ->discoverPages(in: app_path('Filament/Company/Pages'), for: 'App\\Filament\\Company\\Pages')
             ->discoverClusters(in: app_path('Filament/Company/Clusters'), for: 'App\\Filament\\Company\\Clusters')
             ->pages([
-                Pages\Dashboard::class,
+                // Pages\Dashboard::class,
             ])
             ->authGuard('web')
             ->discoverWidgets(in: app_path('Filament/Company/Widgets'), for: 'App\\Filament\\Company\\Widgets')
             ->widgets([
-                Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
+                // Widgets\AccountWidget::class,
+                // Widgets\FilamentInfoWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,
