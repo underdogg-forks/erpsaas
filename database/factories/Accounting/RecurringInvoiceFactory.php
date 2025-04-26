@@ -13,6 +13,7 @@ use App\Enums\Setting\PaymentTerms;
 use App\Models\Accounting\DocumentLineItem;
 use App\Models\Accounting\RecurringInvoice;
 use App\Models\Common\Client;
+use App\Models\Company;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Carbon;
 
@@ -35,13 +36,19 @@ class RecurringInvoiceFactory extends Factory
     {
         return [
             'company_id' => 1,
-            'client_id' => Client::inRandomOrder()->value('id'),
+            'client_id' => fn (array $attributes) => Client::where('company_id', $attributes['company_id'])->inRandomOrder()->value('id'),
             'header' => 'Invoice',
             'subheader' => 'Invoice',
             'order_number' => $this->faker->unique()->numerify('ORD-####'),
             'payment_terms' => PaymentTerms::Net30,
             'status' => RecurringInvoiceStatus::Draft,
-            'currency_code' => 'USD',
+            'currency_code' => function (array $attributes) {
+                $client = Client::find($attributes['client_id']);
+
+                return $client->currency_code ??
+                    Company::find($attributes['company_id'])->default->currency_code ??
+                    'USD';
+            },
             'terms' => $this->faker->sentence,
             'footer' => $this->faker->sentence,
             'created_by' => 1,

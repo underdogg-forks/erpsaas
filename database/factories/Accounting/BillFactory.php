@@ -8,6 +8,7 @@ use App\Models\Accounting\Bill;
 use App\Models\Accounting\DocumentLineItem;
 use App\Models\Banking\BankAccount;
 use App\Models\Common\Vendor;
+use App\Models\Company;
 use App\Models\Setting\DocumentDefault;
 use App\Utilities\Currency\CurrencyConverter;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -42,13 +43,19 @@ class BillFactory extends Factory
 
         return [
             'company_id' => 1,
-            'vendor_id' => Vendor::inRandomOrder()->value('id'),
+            'vendor_id' => fn (array $attributes) => Vendor::where('company_id', $attributes['company_id'])->inRandomOrder()->value('id'),
             'bill_number' => $this->faker->unique()->numerify('BILL-####'),
             'order_number' => $this->faker->unique()->numerify('PO-####'),
             'date' => $billDate,
             'due_date' => Carbon::parse($billDate)->addDays($dueDays),
             'status' => BillStatus::Open,
-            'currency_code' => 'USD',
+            'currency_code' => function (array $attributes) {
+                $vendor = Vendor::find($attributes['vendor_id']);
+
+                return $vendor->currency_code ??
+                    Company::find($attributes['company_id'])->default->currency_code ??
+                    'USD';
+            },
             'notes' => $this->faker->sentence,
             'created_by' => 1,
             'updated_by' => 1,

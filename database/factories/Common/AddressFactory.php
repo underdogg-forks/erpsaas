@@ -4,6 +4,7 @@ namespace Database\Factories\Common;
 
 use App\Enums\Common\AddressType;
 use App\Models\Common\Address;
+use Database\Factories\Concerns\HasParentRelationship;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -11,6 +12,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class AddressFactory extends Factory
 {
+    use HasParentRelationship;
+
     /**
      * The name of the factory's corresponding model.
      */
@@ -58,6 +61,14 @@ class AddressFactory extends Factory
     {
         return $this->state([
             'type' => AddressType::General,
+        ]);
+    }
+
+    public function forCountry(string $countryCode): self
+    {
+        return $this->state([
+            'state_id' => $this->faker->state($countryCode),
+            'country_code' => $countryCode,
         ]);
     }
 }

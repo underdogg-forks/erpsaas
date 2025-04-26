@@ -42,6 +42,7 @@ class DocumentLineItemFactory extends Factory
     {
         return $this
             ->for($invoice, 'documentable')
+            ->for($invoice->company, 'company')
             ->state(function (array $attributes) {
                 $offering = Offering::where('sellable', true)
                     ->inRandomOrder()
@@ -76,6 +77,7 @@ class DocumentLineItemFactory extends Factory
     {
         return $this
             ->for($estimate, 'documentable')
+            ->for($estimate->company, 'company')
             ->state(function (array $attributes) {
                 $offering = Offering::where('sellable', true)
                     ->inRandomOrder()
@@ -110,6 +112,7 @@ class DocumentLineItemFactory extends Factory
     {
         return $this
             ->for($bill, 'documentable')
+            ->for($bill->company, 'company')
             ->state(function (array $attributes) {
                 $offering = Offering::where('purchasable', true)
                     ->inRandomOrder()
