@@ -2,8 +2,8 @@
 
 namespace App\Filament\Company\Resources\Sales\EstimateResource\Pages;
 
+use App\Concerns\HandlePageRedirect;
 use App\Concerns\ManagesLineItems;
-use App\Concerns\RedirectToViewPage;
 use App\Filament\Company\Resources\Sales\EstimateResource;
 use App\Models\Accounting\Estimate;
 use App\Models\Common\Client;
@@ -14,8 +14,8 @@ use Livewire\Attributes\Url;
 
 class CreateEstimate extends CreateRecord
 {
+    use HandlePageRedirect;
     use ManagesLineItems;
-    use RedirectToViewPage;
 
     protected static string $resource = EstimateResource::class;
 

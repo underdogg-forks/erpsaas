@@ -2,8 +2,8 @@
 
 namespace App\Filament\Company\Resources\Purchases\BillResource\Pages;
 
+use App\Concerns\HandlePageRedirect;
 use App\Concerns\ManagesLineItems;
-use App\Concerns\RedirectToViewPage;
 use App\Filament\Company\Resources\Purchases\BillResource;
 use App\Models\Accounting\Bill;
 use App\Models\Common\Vendor;
@@ -14,8 +14,8 @@ use Livewire\Attributes\Url;
 
 class CreateBill extends CreateRecord
 {
+    use HandlePageRedirect;
     use ManagesLineItems;
-    use RedirectToViewPage;
 
     protected static string $resource = BillResource::class;
 

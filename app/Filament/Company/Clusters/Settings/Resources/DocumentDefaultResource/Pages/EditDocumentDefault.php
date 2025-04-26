@@ -2,14 +2,14 @@
 
 namespace App\Filament\Company\Clusters\Settings\Resources\DocumentDefaultResource\Pages;
 
-use App\Concerns\RedirectToListPage;
+use App\Concerns\HandlePageRedirect;
 use App\Filament\Company\Clusters\Settings\Resources\DocumentDefaultResource;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Contracts\Support\Htmlable;
 
 class EditDocumentDefault extends EditRecord
 {
-    use RedirectToListPage;
+    use HandlePageRedirect;
 
     protected static string $resource = DocumentDefaultResource::class;
 

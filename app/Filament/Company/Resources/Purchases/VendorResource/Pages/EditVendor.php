@@ -2,7 +2,7 @@
 
 namespace App\Filament\Company\Resources\Purchases\VendorResource\Pages;
 
-use App\Concerns\RedirectToViewPage;
+use App\Concerns\HandlePageRedirect;
 use App\Filament\Company\Resources\Purchases\VendorResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
@@ -10,7 +10,7 @@ use Filament\Support\Enums\MaxWidth;
 
 class EditVendor extends EditRecord
 {
-    use RedirectToViewPage;
+    use HandlePageRedirect;
 
     protected static string $resource = VendorResource::class;
 

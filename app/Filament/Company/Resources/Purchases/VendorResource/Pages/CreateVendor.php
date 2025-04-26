@@ -2,14 +2,14 @@
 
 namespace App\Filament\Company\Resources\Purchases\VendorResource\Pages;
 
-use App\Concerns\RedirectToViewPage;
+use App\Concerns\HandlePageRedirect;
 use App\Filament\Company\Resources\Purchases\VendorResource;
 use Filament\Resources\Pages\CreateRecord;
 use Filament\Support\Enums\MaxWidth;
 
 class CreateVendor extends CreateRecord
 {
-    use RedirectToViewPage;
+    use HandlePageRedirect;
 
     protected static string $resource = VendorResource::class;
 
