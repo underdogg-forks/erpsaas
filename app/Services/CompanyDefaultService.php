@@ -17,7 +17,7 @@ class CompanyDefaultService
 
             // Create Chart of Accounts
             $chartOfAccountsService = app(ChartOfAccountsService::class);
-            $chartOfAccountsService->createChartOfAccounts($company);
+            $chartOfAccountsService->createChartOfAccounts($company, $currencyCode);
 
             // Get the default bank account and update the company default record
             $defaultBankAccount = $company->bankAccounts()->where('enabled', true)->firstOrFail();

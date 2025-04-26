@@ -9,13 +9,15 @@ use App\Models\Accounting\AccountSubtype;
 use App\Models\Accounting\Adjustment;
 use App\Models\Banking\BankAccount;
 use App\Models\Company;
-use App\Utilities\Currency\CurrencyAccessor;
 use Exception;
 
 class ChartOfAccountsService
 {
-    public function createChartOfAccounts(Company $company): void
+    private string $currencyCode;
+
+    public function createChartOfAccounts(Company $company, string $currencyCode = 'USD'): void
     {
+        $this->currencyCode = $currencyCode;
         $chartOfAccounts = config('chart-of-accounts.default');
 
         // Always create a non-recoverable "Purchase Tax" adjustment, even without an account
@@ -53,7 +55,7 @@ class ChartOfAccountsService
     {
         if (isset($subtypeConfig['accounts']) && is_array($subtypeConfig['accounts'])) {
             $baseCode = $subtypeConfig['base_code'];
-            $defaultCurrencyCode = CurrencyAccessor::getDefaultCurrency();
+            $defaultCurrencyCode = $this->currencyCode;
 
             if (empty($defaultCurrencyCode)) {
                 throw new Exception('No default currency available for creating accounts.');

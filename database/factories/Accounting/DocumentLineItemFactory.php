@@ -43,23 +43,20 @@ class DocumentLineItemFactory extends Factory
         return $this
             ->for($invoice, 'documentable')
             ->for($invoice->company, 'company')
-            ->state(function (array $attributes) {
-                $offering = Offering::where('sellable', true)
+            ->afterCreating(function (DocumentLineItem $lineItem) {
+                $offering = Offering::query()
+                    ->where('company_id', $lineItem->company_id)
+                    ->where('sellable', true)
                     ->inRandomOrder()
-                    ->first();
+                    ->firstOrFail();
 
-                return [
+                $lineItem->updateQuietly([
                     'offering_id' => $offering->id,
                     'unit_price' => $offering->price,
-                ];
-            })
-            ->afterCreating(function (DocumentLineItem $lineItem) {
-                $offering = $lineItem->offering;
+                ]);
 
-                if ($offering) {
-                    $lineItem->salesTaxes()->syncWithoutDetaching($offering->salesTaxes->pluck('id')->toArray());
-                    $lineItem->salesDiscounts()->syncWithoutDetaching($offering->salesDiscounts->pluck('id')->toArray());
-                }
+                $lineItem->salesTaxes()->syncWithoutDetaching($offering->salesTaxes->pluck('id')->toArray());
+                $lineItem->salesDiscounts()->syncWithoutDetaching($offering->salesDiscounts->pluck('id')->toArray());
 
                 $lineItem->refresh();
 
@@ -78,23 +75,20 @@ class DocumentLineItemFactory extends Factory
         return $this
             ->for($estimate, 'documentable')
             ->for($estimate->company, 'company')
-            ->state(function (array $attributes) {
-                $offering = Offering::where('sellable', true)
+            ->afterCreating(function (DocumentLineItem $lineItem) {
+                $offering = Offering::query()
+                    ->where('company_id', $lineItem->company_id)
+                    ->where('sellable', true)
                     ->inRandomOrder()
-                    ->first();
+                    ->firstOrFail();
 
-                return [
+                $lineItem->updateQuietly([
                     'offering_id' => $offering->id,
                     'unit_price' => $offering->price,
-                ];
-            })
-            ->afterCreating(function (DocumentLineItem $lineItem) {
-                $offering = $lineItem->offering;
+                ]);
 
-                if ($offering) {
-                    $lineItem->salesTaxes()->syncWithoutDetaching($offering->salesTaxes->pluck('id')->toArray());
-                    $lineItem->salesDiscounts()->syncWithoutDetaching($offering->salesDiscounts->pluck('id')->toArray());
-                }
+                $lineItem->salesTaxes()->syncWithoutDetaching($offering->salesTaxes->pluck('id')->toArray());
+                $lineItem->salesDiscounts()->syncWithoutDetaching($offering->salesDiscounts->pluck('id')->toArray());
 
                 $lineItem->refresh();
 
@@ -113,23 +107,20 @@ class DocumentLineItemFactory extends Factory
         return $this
             ->for($bill, 'documentable')
             ->for($bill->company, 'company')
-            ->state(function (array $attributes) {
-                $offering = Offering::where('purchasable', true)
+            ->afterCreating(function (DocumentLineItem $lineItem) {
+                $offering = Offering::query()
+                    ->where('company_id', $lineItem->company_id)
+                    ->where('purchasable', true)
                     ->inRandomOrder()
-                    ->first();
+                    ->firstOrFail();
 
-                return [
+                $lineItem->updateQuietly([
                     'offering_id' => $offering->id,
                     'unit_price' => $offering->price,
-                ];
-            })
-            ->afterCreating(function (DocumentLineItem $lineItem) {
-                $offering = $lineItem->offering;
+                ]);
 
-                if ($offering) {
-                    $lineItem->purchaseTaxes()->syncWithoutDetaching($offering->purchaseTaxes->pluck('id')->toArray());
-                    $lineItem->purchaseDiscounts()->syncWithoutDetaching($offering->purchaseDiscounts->pluck('id')->toArray());
-                }
+                $lineItem->purchaseTaxes()->syncWithoutDetaching($offering->purchaseTaxes->pluck('id')->toArray());
+                $lineItem->purchaseDiscounts()->syncWithoutDetaching($offering->purchaseDiscounts->pluck('id')->toArray());
 
                 $lineItem->refresh();
 

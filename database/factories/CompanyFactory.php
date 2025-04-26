@@ -111,9 +111,7 @@ class CompanyFactory extends Factory
         return $this->afterCreating(function (Company $company) use ($count) {
             Offering::factory()
                 ->count($count)
-                ->sellable()
                 ->withSalesAdjustments()
-                ->purchasable()
                 ->withPurchaseAdjustments()
                 ->create([
                     'company_id' => $company->id,
