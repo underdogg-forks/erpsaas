@@ -38,7 +38,7 @@ class DatabaseSeeder extends Seeder
             ]);
 
         $additionalCompanies = [
-            ['name' => 'European Retail GmbH', 'country' => 'DE', 'currency' => 'EUR', 'locale' => 'de'],
+            ['name' => 'European Retail GmbH', 'country' => 'DE', 'currency' => 'EUR', 'locale' => 'en'],
             ['name' => 'UK Services Ltd', 'country' => 'GB', 'currency' => 'GBP', 'locale' => 'en'],
             ['name' => 'Canadian Manufacturing Inc', 'country' => 'CA', 'currency' => 'CAD', 'locale' => 'en'],
             ['name' => 'Australian Hospitality Pty', 'country' => 'AU', 'currency' => 'AUD', 'locale' => 'en'],

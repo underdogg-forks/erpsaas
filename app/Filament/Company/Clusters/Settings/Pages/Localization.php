@@ -126,6 +126,7 @@ class Localization extends Page
                     ->softRequired()
                     ->localizeLabel()
                     ->options(LocalizationModel::getAllLanguages())
+                    ->disabled(app()->environment('demo'))
                     ->searchable(),
                 Select::make('timezone')
                     ->softRequired()

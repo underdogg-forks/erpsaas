@@ -17,6 +17,7 @@ class CountrySelect extends Select
         $this
             ->localizeLabel('Country')
             ->searchable()
+            ->disabled(app()->environment('demo'))
             ->options($options = Country::getAvailableCountryOptions())
             ->getSearchResultsUsing(static fn (string $search): array => Country::getSearchResultsUsing($search))
             ->getOptionLabelUsing(static fn (string $value): ?string => $options[$value] ?? $value);
