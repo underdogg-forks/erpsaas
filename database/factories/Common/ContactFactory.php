@@ -3,6 +3,7 @@
 namespace Database\Factories\Common;
 
 use App\Models\Common\Contact;
+use Database\Factories\Concerns\HasParentRelationship;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -10,6 +11,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class ContactFactory extends Factory
 {
+    use HasParentRelationship;
+
     /**
      * The name of the factory's corresponding model.
      */

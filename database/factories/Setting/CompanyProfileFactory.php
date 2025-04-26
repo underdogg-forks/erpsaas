@@ -42,8 +42,15 @@ class CompanyProfileFactory extends Factory
         ]);
     }
 
-    public function withAddress(): self
+    public function withAddress(?string $countryCode = null): self
     {
-        return $this->has(Address::factory()->general());
+        return $this->has(
+            Address::factory()
+                ->general()
+                ->when($countryCode, function (Factory $factory) use ($countryCode) {
+                    return $factory->forCountry($countryCode);
+                })
+                ->useParentCompany()
+        );
     }
 }

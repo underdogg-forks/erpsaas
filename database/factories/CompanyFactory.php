@@ -39,22 +39,25 @@ class CompanyFactory extends Factory
         ];
     }
 
-    public function withCompanyProfile(): self
+    public function withCompanyProfile(?string $countryCode = null): self
     {
-        return $this->afterCreating(function (Company $company) {
-            CompanyProfile::factory()->forCompany($company)->withAddress()->create();
+        return $this->afterCreating(function (Company $company) use ($countryCode) {
+            CompanyProfile::factory()
+                ->forCompany($company)
+                ->withAddress($countryCode)
+                ->create();
         });
     }
 
     /**
      * Set up default settings for the company after creation.
      */
-    public function withCompanyDefaults(): self
+    public function withCompanyDefaults(string $currencyCode = 'USD', string $locale = 'en'): self
     {
-        return $this->afterCreating(function (Company $company) {
+        return $this->afterCreating(function (Company $company) use ($currencyCode, $locale) {
             $countryCode = $company->profile->address->country_code;
             $companyDefaultService = app(CompanyDefaultService::class);
-            $companyDefaultService->createCompanyDefaults($company, $company->owner, 'USD', $countryCode, 'en');
+            $companyDefaultService->createCompanyDefaults($company, $company->owner, $currencyCode, $countryCode, $locale);
         });
     }
 
@@ -75,12 +78,32 @@ class CompanyFactory extends Factory
 
     public function withClients(int $count = 10): self
     {
-        return $this->has(Client::factory()->count($count)->withPrimaryContact()->withAddresses());
+        return $this->afterCreating(function (Company $company) use ($count) {
+            Client::factory()
+                ->count($count)
+                ->withPrimaryContact()
+                ->withAddresses()
+                ->create([
+                    'company_id' => $company->id,
+                    'created_by' => $company->user_id,
+                    'updated_by' => $company->user_id,
+                ]);
+        });
     }
 
     public function withVendors(int $count = 10): self
     {
-        return $this->has(Vendor::factory()->count($count)->withContact()->withAddress());
+        return $this->afterCreating(function (Company $company) use ($count) {
+            Vendor::factory()
+                ->count($count)
+                ->withContact()
+                ->withAddress()
+                ->create([
+                    'company_id' => $company->id,
+                    'created_by' => $company->user_id,
+                    'updated_by' => $company->user_id,
+                ]);
+        });
     }
 
     public function withOfferings(int $count = 10): self
@@ -88,9 +111,7 @@ class CompanyFactory extends Factory
         return $this->afterCreating(function (Company $company) use ($count) {
             Offering::factory()
                 ->count($count)
-                ->sellable()
                 ->withSalesAdjustments()
-                ->purchasable()
                 ->withPurchaseAdjustments()
                 ->create([
                     'company_id' => $company->id,

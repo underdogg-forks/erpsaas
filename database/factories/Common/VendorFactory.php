@@ -7,6 +7,7 @@ use App\Enums\Common\VendorType;
 use App\Models\Common\Address;
 use App\Models\Common\Contact;
 use App\Models\Common\Vendor;
+use App\Models\Company;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -39,7 +40,7 @@ class VendorFactory extends Factory
             'ein' => function (array $attributes) {
                 return $attributes['contractor_type'] === ContractorType::Business ? $this->faker->numerify(str_repeat('#', 9)) : null;
             },
-            'currency_code' => 'USD',
+            'currency_code' => fn (array $attributes) => Company::find($attributes['company_id'])->default->currency_code ?? 'USD',
             'account_number' => $this->faker->unique()->numerify(str_repeat('#', 12)),
             'website' => $this->faker->url,
             'notes' => $this->faker->sentence,
@@ -80,11 +81,11 @@ class VendorFactory extends Factory
 
     public function withContact(): self
     {
-        return $this->has(Contact::factory()->primary());
+        return $this->has(Contact::factory()->primary()->useParentCompany());
     }
 
     public function withAddress(): self
     {
-        return $this->has(Address::factory()->general());
+        return $this->has(Address::factory()->general()->useParentCompany());
     }
 }
