@@ -122,3 +122,10 @@ if (! function_exists('rateFormat')) {
         return null;
     }
 }
+
+if (! function_exists('is_demo_environment')) {
+    function is_demo_environment(): bool
+    {
+        return app()->environment('demo');
+    }
+}

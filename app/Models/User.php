@@ -71,7 +71,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaul
 
     public function canAccessPanel(Panel $panel): bool
     {
-        if ($panel->getId() === 'user' && app()->environment('demo')) {
+        if ($panel->getId() === 'user' && is_demo_environment()) {
             return false;
         }
 

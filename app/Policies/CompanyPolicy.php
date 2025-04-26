@@ -31,7 +31,7 @@ class CompanyPolicy
      */
     public function create(User $user): bool
     {
-        if (app()->environment('demo')) {
+        if (is_demo_environment()) {
             return false;
         }
 
@@ -43,7 +43,7 @@ class CompanyPolicy
      */
     public function update(User $user, Company $company): bool
     {
-        if (app()->environment('demo')) {
+        if (is_demo_environment()) {
             return false;
         }
 
@@ -55,7 +55,7 @@ class CompanyPolicy
      */
     public function addCompanyEmployee(User $user, Company $company): bool
     {
-        if (app()->environment('demo')) {
+        if (is_demo_environment()) {
             return false;
         }
 
@@ -67,7 +67,7 @@ class CompanyPolicy
      */
     public function updateCompanyEmployee(User $user, Company $company): bool
     {
-        if (app()->environment('demo')) {
+        if (is_demo_environment()) {
             return false;
         }
 
@@ -79,7 +79,7 @@ class CompanyPolicy
      */
     public function removeCompanyEmployee(User $user, Company $company): bool
     {
-        if (app()->environment('demo')) {
+        if (is_demo_environment()) {
             return false;
         }
 
@@ -91,7 +91,7 @@ class CompanyPolicy
      */
     public function delete(User $user, Company $company): bool
     {
-        if (app()->environment('demo')) {
+        if (is_demo_environment()) {
             return false;
         }
 

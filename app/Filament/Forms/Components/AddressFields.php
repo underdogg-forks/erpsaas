@@ -2,6 +2,7 @@
 
 namespace App\Filament\Forms\Components;
 
+use Closure;
 use Filament\Forms\Components\Field;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\TextInput;
@@ -9,6 +10,8 @@ use Filament\Forms\Components\TextInput;
 class AddressFields extends Grid
 {
     protected bool $isSoftRequired = false;
+
+    protected bool | Closure $isCountryDisabled = false;
 
     protected function setUp(): void
     {
@@ -23,6 +26,7 @@ class AddressFields extends Grid
                 ->label('Address line 2')
                 ->maxLength(255),
             CountrySelect::make('country_code')
+                ->disabled(fn () => $this->isCountryDisabled())
                 ->clearStateField()
                 ->required(),
             StateSelect::make('state_id'),
@@ -54,5 +58,17 @@ class AddressFields extends Grid
                 $component->markAsRequired(! $condition);
             }
         }
+    }
+
+    public function disabledCountry(bool | Closure $condition = true): static
+    {
+        $this->isCountryDisabled = $condition;
+
+        return $this;
+    }
+
+    public function isCountryDisabled(): bool
+    {
+        return $this->evaluate($this->isCountryDisabled);
     }
 }
