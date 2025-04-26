@@ -17,11 +17,35 @@
 
 A Laravel and Filament-powered accounting platform, crafting a modern and automated solution for financial management.
 
+# Demo
+
+**[Try the Demo](https://erpsaas-3-x-mrxixt.laravel.cloud)**
+
+The demo environment provides a complete experience of the application with the following setup:
+
+- **Login Credentials**: Pre-filled for convenience (email: admin@erpsaas.com, password: password)
+- **Multi-Company Setup**: 5 pre-configured companies with different currencies:
+    - ERPSAAS (USD)
+    - European Retail GmbH (EUR)
+    - UK Services Ltd (GBP)
+    - Canadian Manufacturing Inc (CAD)
+    - Australian Hospitality Pty (AUD)
+- **Feature Access**: Full accounting functionality with simplified user management
+- **Limitations**: Plaid, Live Currency, Profile customization, password reset, and registration are disabled
+
+This demo is ideal for evaluating the application's multi-currency capabilities and core features without any
+installation required.
+
+**Note**: As this is a public demo environment, please do not enter any sensitive or personal information.
+
 ## Sponsorship
 
-While **ERPSAAS** is open-source, maintaining it requires significant time and resources. Your sponsorship directly supports ongoing development, bug fixes, and improved documentation.
+While **ERPSAAS** is open-source, maintaining it requires significant time and resources. Your sponsorship directly
+supports ongoing development, bug fixes, and improved documentation.
 
-As a solo developer, I can only provide limited free support. Sponsors receive priority assistance, input on feature priorities, and early access to updates. Even a small monthly contribution makes a significant difference in keeping this project actively maintained.
+As a solo developer, I can only provide limited free support. Sponsors receive priority assistance, input on feature
+priorities, and early access to updates. Even a small monthly contribution makes a significant difference in keeping
+this project actively maintained.
 
 **Become a sponsor:** [GitHub Sponsors](https://github.com/sponsors/andrewdwallo)
 
