@@ -189,9 +189,18 @@
     "Estimate Header": "Cabeçalho do Orçamento",
     "Estimate Details": "Detalhes do Orçamento",
     "Estimate Footer": "Rodapé do Orçamento",
-    "Scheduling": "Scheduling",
-    "Scheduling Form": "Scheduling Form",
-    "Approve": "Approve",
-    "Frequency": "Frequency",
-    "Dates & Time": "Dates & Time"
+    "Scheduling": "Agendamento",
+    "account": "conta",
+    "Custom": "Personalizado",
+    "Frequency": "Frequência",
+    "currency": "moeda",
+    "Approve": "Aprovar",
+    "Estimate": "Estimativa",
+    "Budget Details": "Detalhes do orçamento",
+    "Account Selection": "Seleção de conta",
+    "Budget Items": "Itens orçamentários",
+    "Column Labels": "Rótulos de coluna",
+    "Scheduling Form": "Formulário de agendamento",
+    "Budget Allocations": "Alocações orçamentárias",
+    "Dates & Time": "Datas e horários"
 }
