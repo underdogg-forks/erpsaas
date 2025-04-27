@@ -26,10 +26,13 @@ The demo environment provides a complete experience of the application with the 
 - **Login Credentials**: Pre-filled for convenience (email: admin@erpsaas.com, password: password)
 - **Multi-Company Setup**: 5 pre-configured companies with different currencies:
     - ERPSAAS (USD)
-    - European Retail GmbH (EUR)
-    - UK Services Ltd (GBP)
-    - Canadian Manufacturing Inc (CAD)
-    - Australian Hospitality Pty (AUD)
+    - British Crown Analytics (GBP)
+    - Swiss Precision Group (CHF)
+    - Tokyo Future Technologies (JPY)
+    - Sydney Harbor Systems (AUD)
+    - Mumbai Software Services (INR)
+    - Singapore Digital Hub (SGD)
+    - Dubai Business Consulting (AED)
 - **Feature Access**: Full accounting functionality with simplified user management
 - **Limitations**: Plaid, Live Currency, Profile customization, password reset, and registration are disabled
 
