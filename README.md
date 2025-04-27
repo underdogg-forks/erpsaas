@@ -24,7 +24,7 @@ A Laravel and Filament-powered accounting platform, crafting a modern and automa
 The demo environment provides a complete experience of the application with the following setup:
 
 - **Login Credentials**: Pre-filled for convenience (email: admin@erpsaas.com, password: password)
-- **Multi-Company Setup**: 5 pre-configured companies with different currencies:
+- **Multi-Company Setup**: 8 pre-configured companies with different currencies:
     - ERPSAAS (USD)
     - British Crown Analytics (GBP)
     - Swiss Precision Group (CHF)
