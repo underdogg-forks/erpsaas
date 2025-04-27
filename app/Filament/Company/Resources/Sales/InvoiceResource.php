@@ -15,6 +15,7 @@ use App\Filament\Company\Resources\Sales\ClientResource\RelationManagers\Invoice
 use App\Filament\Company\Resources\Sales\InvoiceResource\Pages;
 use App\Filament\Company\Resources\Sales\InvoiceResource\Widgets;
 use App\Filament\Forms\Components\CreateAdjustmentSelect;
+use App\Filament\Forms\Components\CreateClientSelect;
 use App\Filament\Forms\Components\CreateCurrencySelect;
 use App\Filament\Forms\Components\DocumentFooterSection;
 use App\Filament\Forms\Components\DocumentHeaderSection;
@@ -67,10 +68,8 @@ class InvoiceResource extends Resource
                     ->schema([
                         Forms\Components\Split::make([
                             Forms\Components\Group::make([
-                                Forms\Components\Select::make('client_id')
-                                    ->relationship('client', 'name')
-                                    ->preload()
-                                    ->searchable()
+                                CreateClientSelect::make('client_id')
+                                    ->label('Client')
                                     ->required()
                                     ->live()
                                     ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {

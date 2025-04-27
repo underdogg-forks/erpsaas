@@ -13,6 +13,8 @@ class AddressFields extends Grid
 
     protected bool | Closure $isCountryDisabled = false;
 
+    protected bool | Closure $isRequired = false;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -20,7 +22,7 @@ class AddressFields extends Grid
         $this->schema([
             TextInput::make('address_line_1')
                 ->label('Address line 1')
-                ->required()
+                ->required(fn () => $this->isRequired())
                 ->maxLength(255),
             TextInput::make('address_line_2')
                 ->label('Address line 2')
@@ -28,11 +30,11 @@ class AddressFields extends Grid
             CountrySelect::make('country_code')
                 ->disabled(fn () => $this->isCountryDisabled())
                 ->clearStateField()
-                ->required(),
+                ->required(fn () => $this->isRequired()),
             StateSelect::make('state_id'),
             TextInput::make('city')
                 ->label('City')
-                ->required()
+                ->required(fn () => $this->isRequired())
                 ->maxLength(255),
             TextInput::make('postal_code')
                 ->label('Postal code')
@@ -58,6 +60,18 @@ class AddressFields extends Grid
                 $component->markAsRequired(! $condition);
             }
         }
+    }
+
+    public function required(bool | Closure $condition = true): static
+    {
+        $this->isRequired = $condition;
+
+        return $this;
+    }
+
+    public function isRequired(): bool
+    {
+        return (bool) $this->evaluate($this->isRequired);
     }
 
     public function disabledCountry(bool | Closure $condition = true): static

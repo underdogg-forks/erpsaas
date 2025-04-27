@@ -80,21 +80,21 @@ class VendorResource extends Resource
                             ]),
                         CustomSection::make('Primary Contact')
                             ->relationship('contact')
+                            ->saveRelationshipsUsing(null)
+                            ->saveRelationshipsBeforeChildrenUsing(null)
+                            ->dehydrated(true)
                             ->contained(false)
                             ->schema([
                                 Forms\Components\Hidden::make('is_primary')
                                     ->default(true),
                                 Forms\Components\TextInput::make('first_name')
                                     ->label('First name')
-                                    ->required()
                                     ->maxLength(255),
                                 Forms\Components\TextInput::make('last_name')
                                     ->label('Last name')
-                                    ->required()
                                     ->maxLength(255),
                                 Forms\Components\TextInput::make('email')
                                     ->label('Email')
-                                    ->required()
                                     ->email()
                                     ->columnSpanFull()
                                     ->maxLength(255),
@@ -110,21 +110,18 @@ class VendorResource extends Resource
                                             ->schema([
                                                 Forms\Components\TextInput::make('number')
                                                     ->label('Phone')
-                                                    ->required()
                                                     ->maxLength(15),
                                             ])->maxItems(1),
                                         Forms\Components\Builder\Block::make('mobile')
                                             ->schema([
                                                 Forms\Components\TextInput::make('number')
                                                     ->label('Mobile')
-                                                    ->required()
                                                     ->maxLength(15),
                                             ])->maxItems(1),
                                         Forms\Components\Builder\Block::make('toll_free')
                                             ->schema([
                                                 Forms\Components\TextInput::make('number')
                                                     ->label('Toll free')
-                                                    ->required()
                                                     ->maxLength(15),
                                             ])->maxItems(1),
                                         Forms\Components\Builder\Block::make('fax')
@@ -143,6 +140,9 @@ class VendorResource extends Resource
                     ])->columns(1),
                 Forms\Components\Section::make('Address Information')
                     ->relationship('address')
+                    ->saveRelationshipsUsing(null)
+                    ->saveRelationshipsBeforeChildrenUsing(null)
+                    ->dehydrated(true)
                     ->schema([
                         Forms\Components\Hidden::make('type')
                             ->default('general'),

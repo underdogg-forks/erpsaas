@@ -47,21 +47,21 @@ class ClientResource extends Resource
                             ]),
                         CustomSection::make('Primary Contact')
                             ->relationship('primaryContact')
+                            ->saveRelationshipsUsing(null)
+                            ->saveRelationshipsBeforeChildrenUsing(null)
+                            ->dehydrated(true)
                             ->contained(false)
                             ->schema([
                                 Forms\Components\Hidden::make('is_primary')
                                     ->default(true),
                                 Forms\Components\TextInput::make('first_name')
                                     ->label('First name')
-                                    ->required()
                                     ->maxLength(255),
                                 Forms\Components\TextInput::make('last_name')
                                     ->label('Last name')
-                                    ->required()
                                     ->maxLength(255),
                                 Forms\Components\TextInput::make('email')
                                     ->label('Email')
-                                    ->required()
                                     ->email()
                                     ->columnSpanFull()
                                     ->maxLength(255),
@@ -77,21 +77,18 @@ class ClientResource extends Resource
                                             ->schema([
                                                 Forms\Components\TextInput::make('number')
                                                     ->label('Phone')
-                                                    ->required()
                                                     ->maxLength(15),
                                             ])->maxItems(1),
                                         Forms\Components\Builder\Block::make('mobile')
                                             ->schema([
                                                 Forms\Components\TextInput::make('number')
                                                     ->label('Mobile')
-                                                    ->required()
                                                     ->maxLength(15),
                                             ])->maxItems(1),
                                         Forms\Components\Builder\Block::make('toll_free')
                                             ->schema([
                                                 Forms\Components\TextInput::make('number')
                                                     ->label('Toll free')
-                                                    ->required()
                                                     ->maxLength(15),
                                             ])->maxItems(1),
                                         Forms\Components\Builder\Block::make('fax')
@@ -109,6 +106,9 @@ class ClientResource extends Resource
                             ])->columns(),
                         Forms\Components\Repeater::make('secondaryContacts')
                             ->relationship()
+                            ->saveRelationshipsUsing(null)
+                            ->saveRelationshipsBeforeChildrenUsing(null)
+                            ->dehydrated(true)
                             ->hiddenLabel()
                             ->extraAttributes([
                                 'class' => 'uncontained',
@@ -138,17 +138,14 @@ class ClientResource extends Resource
                             ->schema([
                                 Forms\Components\TextInput::make('first_name')
                                     ->label('First name')
-                                    ->required()
                                     ->live(onBlur: true)
                                     ->maxLength(255),
                                 Forms\Components\TextInput::make('last_name')
                                     ->label('Last name')
-                                    ->required()
                                     ->live(onBlur: true)
                                     ->maxLength(255),
                                 Forms\Components\TextInput::make('email')
                                     ->label('Email')
-                                    ->required()
                                     ->email()
                                     ->maxLength(255),
                                 PhoneBuilder::make('phones')
@@ -162,7 +159,6 @@ class ClientResource extends Resource
                                             ->schema([
                                                 Forms\Components\TextInput::make('number')
                                                     ->label('Phone')
-                                                    ->required()
                                                     ->maxLength(255),
                                             ])->maxItems(1),
                                     ])
@@ -174,10 +170,13 @@ class ClientResource extends Resource
                     ])->columns(1),
                 Forms\Components\Section::make('Billing')
                     ->schema([
-                        CreateCurrencySelect::make('currency_code'),
+                        CreateCurrencySelect::make('currency_code')
+                            ->required(false)
+                            ->selectablePlaceholder(false),
                         CustomSection::make('Billing Address')
                             ->relationship('billingAddress')
                             ->saveRelationshipsUsing(null)
+                            ->saveRelationshipsBeforeChildrenUsing(null)
                             ->dehydrated(true)
                             ->contained(false)
                             ->schema([
@@ -190,17 +189,16 @@ class ClientResource extends Resource
                 Forms\Components\Section::make('Shipping')
                     ->relationship('shippingAddress')
                     ->saveRelationshipsUsing(null)
+                    ->saveRelationshipsBeforeChildrenUsing(null)
                     ->dehydrated(true)
                     ->schema([
                         Forms\Components\Hidden::make('type')
                             ->default('shipping'),
                         Forms\Components\TextInput::make('recipient')
                             ->label('Recipient')
-                            ->required()
                             ->maxLength(255),
                         Forms\Components\TextInput::make('phone')
                             ->label('Phone')
-                            ->required()
                             ->maxLength(255),
                         CustomSection::make('Shipping Address')
                             ->contained(false)
