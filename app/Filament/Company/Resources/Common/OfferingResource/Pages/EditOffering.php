@@ -2,7 +2,7 @@
 
 namespace App\Filament\Company\Resources\Common\OfferingResource\Pages;
 
-use App\Concerns\RedirectToListPage;
+use App\Concerns\HandlePageRedirect;
 use App\Filament\Company\Resources\Common\OfferingResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class EditOffering extends EditRecord
 {
-    use RedirectToListPage;
+    use HandlePageRedirect;
 
     protected static string $resource = OfferingResource::class;
 

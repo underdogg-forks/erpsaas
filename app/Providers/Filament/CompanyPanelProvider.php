@@ -79,7 +79,7 @@ class CompanyPanelProvider extends PanelProvider
      */
     public function panel(Panel $panel): Panel
     {
-        $isDemoEnvironment = app()->environment('demo');
+        $isDemoEnvironment = is_demo_environment();
 
         return $panel
             ->default()

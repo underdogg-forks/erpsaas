@@ -20,7 +20,7 @@ class Account extends Cluster
 
     public static function canAccess(): bool
     {
-        return ! app()->environment('demo');
+        return ! is_demo_environment();
     }
 
     /**

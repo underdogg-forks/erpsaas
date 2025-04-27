@@ -21,7 +21,7 @@ class CurrencyService implements CurrencyHandler
      */
     public function isEnabled(): bool
     {
-        if (app()->environment('demo')) {
+        if (is_demo_environment()) {
             return false;
         }
 

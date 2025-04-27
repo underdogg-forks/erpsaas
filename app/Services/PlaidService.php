@@ -63,7 +63,7 @@ class PlaidService
      */
     public function isEnabled(): bool
     {
-        if (app()->environment('demo') || empty($this->clientId) || empty($this->clientSecret)) {
+        if (is_demo_environment() || empty($this->clientId) || empty($this->clientSecret)) {
             return false;
         }
 

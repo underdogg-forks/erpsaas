@@ -2,8 +2,8 @@
 
 namespace App\Filament\Company\Resources\Sales\InvoiceResource\Pages;
 
+use App\Concerns\HandlePageRedirect;
 use App\Concerns\ManagesLineItems;
-use App\Concerns\RedirectToViewPage;
 use App\Filament\Company\Resources\Sales\InvoiceResource;
 use App\Models\Accounting\Invoice;
 use Filament\Actions;
@@ -13,8 +13,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class EditInvoice extends EditRecord
 {
+    use HandlePageRedirect;
     use ManagesLineItems;
-    use RedirectToViewPage;
 
     protected static string $resource = InvoiceResource::class;
 

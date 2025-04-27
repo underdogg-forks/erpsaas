@@ -162,7 +162,7 @@ class BillFactory extends Factory
                     'posted_at' => $postedAt,
                     'amount' => CurrencyConverter::convertCentsToFormatSimple($amount, $bill->currency_code),
                     'payment_method' => $this->faker->randomElement(PaymentMethod::class),
-                    'bank_account_id' => BankAccount::inRandomOrder()->value('id'),
+                    'bank_account_id' => BankAccount::where('company_id', $bill->company_id)->inRandomOrder()->value('id'),
                     'notes' => $this->faker->sentence,
                 ];
 
@@ -224,16 +224,18 @@ class BillFactory extends Factory
             return;
         }
 
-        $subtotal = $bill->lineItems()->sum('subtotal') / 100;
-        $taxTotal = $bill->lineItems()->sum('tax_total') / 100;
-        $discountTotal = $bill->lineItems()->sum('discount_total') / 100;
-        $grandTotal = $subtotal + $taxTotal - $discountTotal;
+        $subtotalCents = $bill->lineItems()->sum('subtotal');
+        $taxTotalCents = $bill->lineItems()->sum('tax_total');
+        $discountTotalCents = $bill->lineItems()->sum('discount_total');
+
+        $grandTotalCents = $subtotalCents + $taxTotalCents - $discountTotalCents;
+        $currencyCode = $bill->currency_code;
 
         $bill->update([
-            'subtotal' => $subtotal,
-            'tax_total' => $taxTotal,
-            'discount_total' => $discountTotal,
-            'total' => $grandTotal,
+            'subtotal' => CurrencyConverter::convertCentsToFormatSimple($subtotalCents, $currencyCode),
+            'tax_total' => CurrencyConverter::convertCentsToFormatSimple($taxTotalCents, $currencyCode),
+            'discount_total' => CurrencyConverter::convertCentsToFormatSimple($discountTotalCents, $currencyCode),
+            'total' => CurrencyConverter::convertCentsToFormatSimple($grandTotalCents, $currencyCode),
         ]);
     }
 }

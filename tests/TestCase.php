@@ -51,9 +51,7 @@ abstract class TestCase extends BaseTestCase
     {
         Offering::factory()
             ->for($this->testCompany)
-            ->sellable()
             ->withSalesAdjustments()
-            ->purchasable()
             ->withPurchaseAdjustments()
             ->create();
 

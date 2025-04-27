@@ -10,7 +10,7 @@ class Login extends BaseLogin
     {
         parent::mount();
 
-        if (app()->environment('demo')) {
+        if (is_demo_environment()) {
             $this->form->fill([
                 'email' => 'admin@erpsaas.com',
                 'password' => 'password',

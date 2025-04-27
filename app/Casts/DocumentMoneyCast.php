@@ -33,14 +33,12 @@ class DocumentMoneyCast implements CastsAttributes
      */
     public function set(Model $model, string $key, mixed $value, array $attributes): mixed
     {
-        $currency_code = $attributes['currency_code'] ?? CurrencyAccessor::getDefaultCurrency();
-
         if (is_numeric($value)) {
             $value = (string) $value;
         } elseif (! is_string($value)) {
             throw new UnexpectedValueException('Expected string or numeric value for money cast');
         }
 
-        return CurrencyConverter::prepareForAccessor($value, $currency_code);
+        return CurrencyConverter::prepareForAccessor($value, 'USD');
     }
 }

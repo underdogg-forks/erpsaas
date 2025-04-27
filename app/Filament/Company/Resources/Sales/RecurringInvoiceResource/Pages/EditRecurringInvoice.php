@@ -2,8 +2,8 @@
 
 namespace App\Filament\Company\Resources\Sales\RecurringInvoiceResource\Pages;
 
+use App\Concerns\HandlePageRedirect;
 use App\Concerns\ManagesLineItems;
-use App\Concerns\RedirectToViewPage;
 use App\Filament\Company\Resources\Sales\RecurringInvoiceResource;
 use App\Models\Accounting\Estimate;
 use Filament\Actions;
@@ -13,8 +13,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class EditRecurringInvoice extends EditRecord
 {
+    use HandlePageRedirect;
     use ManagesLineItems;
-    use RedirectToViewPage;
 
     protected static string $resource = RecurringInvoiceResource::class;
 
