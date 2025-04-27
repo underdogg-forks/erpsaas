@@ -21,14 +21,14 @@ class DatabaseSeeder extends Seeder
                     ->state([
                         'name' => 'ERPSAAS',
                     ])
-                    ->withTransactions()
+                    ->withTransactions(250)
                     ->withOfferings()
                     ->withClients()
                     ->withVendors()
-                    ->withInvoices(50)
+                    ->withInvoices(30)
                     ->withRecurringInvoices()
-                    ->withEstimates(50)
-                    ->withBills(50);
+                    ->withEstimates(30)
+                    ->withBills(30);
             })
             ->create([
                 'name' => 'Admin',
@@ -37,11 +37,15 @@ class DatabaseSeeder extends Seeder
                 'current_company_id' => 1,  // Assuming this will be the ID of the created company
             ]);
 
+        // Only use en locale for now
         $additionalCompanies = [
-            ['name' => 'European Retail GmbH', 'country' => 'DE', 'currency' => 'EUR', 'locale' => 'en'],
-            ['name' => 'UK Services Ltd', 'country' => 'GB', 'currency' => 'GBP', 'locale' => 'en'],
-            ['name' => 'Canadian Manufacturing Inc', 'country' => 'CA', 'currency' => 'CAD', 'locale' => 'en'],
-            ['name' => 'Australian Hospitality Pty', 'country' => 'AU', 'currency' => 'AUD', 'locale' => 'en'],
+            ['name' => 'British Crown Analytics', 'country' => 'GB', 'currency' => 'GBP', 'locale' => 'en'],
+            ['name' => 'Swiss Precision Group', 'country' => 'CH', 'currency' => 'CHF', 'locale' => 'en'],
+            ['name' => 'Tokyo Future Technologies', 'country' => 'JP', 'currency' => 'JPY', 'locale' => 'en'],
+            ['name' => 'Sydney Harbor Systems', 'country' => 'AU', 'currency' => 'AUD', 'locale' => 'en'],
+            ['name' => 'Mumbai Software Services', 'country' => 'IN', 'currency' => 'INR', 'locale' => 'en'],
+            ['name' => 'Singapore Digital Hub', 'country' => 'SG', 'currency' => 'SGD', 'locale' => 'en'],
+            ['name' => 'Dubai Business Consulting', 'country' => 'AE', 'currency' => 'AED', 'locale' => 'en'],
         ];
 
         foreach ($additionalCompanies as $companyData) {
@@ -57,7 +61,7 @@ class DatabaseSeeder extends Seeder
                 ->withOfferings()
                 ->withClients()
                 ->withVendors()
-                ->withInvoices(20)
+                ->withInvoices(15)
                 ->withRecurringInvoices()
                 ->withEstimates(15)
                 ->withBills(15)
