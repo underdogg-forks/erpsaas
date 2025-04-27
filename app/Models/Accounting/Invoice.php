@@ -337,7 +337,7 @@ class Invoice extends Document
             'amount' => $formattedAmountForBankCurrency,
             'payment_method' => $data['payment_method'],
             'bank_account_id' => $data['bank_account_id'],
-            'account_id' => Account::getAccountsReceivableAccount()->id,
+            'account_id' => Account::getAccountsReceivableAccount($this->company_id)->id,
             'description' => $transactionDescription,
             'notes' => $data['notes'] ?? null,
             'meta' => [
@@ -380,7 +380,7 @@ class Invoice extends Document
         $transaction->journalEntries()->create([
             'company_id' => $this->company_id,
             'type' => JournalEntryType::Debit,
-            'account_id' => Account::getAccountsReceivableAccount()->id,
+            'account_id' => Account::getAccountsReceivableAccount($this->company_id)->id,
             'amount' => $total,
             'description' => $baseDescription,
         ]);
@@ -430,7 +430,7 @@ class Invoice extends Document
                     $transaction->journalEntries()->create([
                         'company_id' => $this->company_id,
                         'type' => JournalEntryType::Debit,
-                        'account_id' => Account::getSalesDiscountAccount()->id,
+                        'account_id' => Account::getSalesDiscountAccount($this->company_id)->id,
                         'amount' => CurrencyConverter::convertCentsToFormatSimple($lineItemDiscount),
                         'description' => "{$lineItemDescription} (Proportional Discount)",
                     ]);

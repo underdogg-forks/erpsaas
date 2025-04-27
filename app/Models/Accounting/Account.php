@@ -147,24 +147,40 @@ class Account extends Model
         return $this->hasMany(JournalEntry::class, 'account_id');
     }
 
-    public static function getAccountsReceivableAccount(): self
+    public static function getAccountsReceivableAccount(?int $companyId = null): self
     {
-        return self::where('name', 'Accounts Receivable')->firstOrFail();
+        return self::where('name', 'Accounts Receivable')
+            ->when($companyId, function (Builder $query) use ($companyId) {
+                $query->where('company_id', $companyId);
+            })
+            ->firstOrFail();
     }
 
-    public static function getAccountsPayableAccount(): self
+    public static function getAccountsPayableAccount(?int $companyId = null): self
     {
-        return self::where('name', 'Accounts Payable')->firstOrFail();
+        return self::where('name', 'Accounts Payable')
+            ->when($companyId, function (Builder $query) use ($companyId) {
+                $query->where('company_id', $companyId);
+            })
+            ->firstOrFail();
     }
 
-    public static function getSalesDiscountAccount(): self
+    public static function getSalesDiscountAccount(?int $companyId = null): self
     {
-        return self::where('name', 'Sales Discount')->firstOrFail();
+        return self::where('name', 'Sales Discount')
+            ->when($companyId, function (Builder $query) use ($companyId) {
+                $query->where('company_id', $companyId);
+            })
+            ->firstOrFail();
     }
 
-    public static function getPurchaseDiscountAccount(): self
+    public static function getPurchaseDiscountAccount(?int $companyId = null): self
     {
-        return self::where('name', 'Purchase Discount')->firstOrFail();
+        return self::where('name', 'Purchase Discount')
+            ->when($companyId, function (Builder $query) use ($companyId) {
+                $query->where('company_id', $companyId);
+            })
+            ->firstOrFail();
     }
 
     protected static function newFactory(): Factory

@@ -253,7 +253,7 @@ class Bill extends Document
             'amount' => $formattedAmountForBankCurrency,
             'payment_method' => $data['payment_method'],
             'bank_account_id' => $data['bank_account_id'],
-            'account_id' => Account::getAccountsPayableAccount()->id,
+            'account_id' => Account::getAccountsPayableAccount($this->company_id)->id,
             'description' => $transactionDescription,
             'notes' => $data['notes'] ?? null,
             'meta' => [
@@ -282,7 +282,7 @@ class Bill extends Document
         $transaction->journalEntries()->create([
             'company_id' => $this->company_id,
             'type' => JournalEntryType::Credit,
-            'account_id' => Account::getAccountsPayableAccount()->id,
+            'account_id' => Account::getAccountsPayableAccount($this->company_id)->id,
             'amount' => $total,
             'description' => $baseDescription,
         ]);
@@ -342,7 +342,7 @@ class Bill extends Document
                     $transaction->journalEntries()->create([
                         'company_id' => $this->company_id,
                         'type' => JournalEntryType::Credit,
-                        'account_id' => Account::getPurchaseDiscountAccount()->id,
+                        'account_id' => Account::getPurchaseDiscountAccount($this->company_id)->id,
                         'amount' => CurrencyConverter::convertCentsToFormatSimple($lineItemDiscount),
                         'description' => "{$lineItemDescription} (Proportional Discount)",
                     ]);
