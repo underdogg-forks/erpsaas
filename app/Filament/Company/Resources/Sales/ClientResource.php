@@ -171,8 +171,7 @@ class ClientResource extends Resource
                 Forms\Components\Section::make('Billing')
                     ->schema([
                         CreateCurrencySelect::make('currency_code')
-                            ->required(false)
-                            ->selectablePlaceholder(false),
+                            ->softRequired(),
                         CustomSection::make('Billing Address')
                             ->relationship('billingAddress')
                             ->saveRelationshipsUsing(null)
