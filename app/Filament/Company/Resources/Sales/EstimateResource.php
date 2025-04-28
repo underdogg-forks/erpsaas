@@ -15,6 +15,7 @@ use App\Filament\Company\Resources\Sales\EstimateResource\Widgets;
 use App\Filament\Forms\Components\CreateAdjustmentSelect;
 use App\Filament\Forms\Components\CreateClientSelect;
 use App\Filament\Forms\Components\CreateCurrencySelect;
+use App\Filament\Forms\Components\CreateOfferingSelect;
 use App\Filament\Forms\Components\DocumentFooterSection;
 use App\Filament\Forms\Components\DocumentHeaderSection;
 use App\Filament\Forms\Components\DocumentTotals;
@@ -206,12 +207,11 @@ class EstimateResource extends Resource
                                 return $headers;
                             })
                             ->schema([
-                                Forms\Components\Select::make('offering_id')
-                                    ->relationship('sellableOffering', 'name')
-                                    ->preload()
-                                    ->searchable()
+                                CreateOfferingSelect::make('offering_id')
+                                    ->label('Item')
                                     ->required()
                                     ->live()
+                                    ->sellable()
                                     ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state, ?DocumentLineItem $record) {
                                         $offeringId = $state;
                                         $discountMethod = DocumentDiscountMethod::parse($get('../../discount_method'));

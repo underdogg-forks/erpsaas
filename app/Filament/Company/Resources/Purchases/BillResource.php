@@ -14,6 +14,7 @@ use App\Filament\Company\Resources\Purchases\BillResource\Pages;
 use App\Filament\Company\Resources\Purchases\VendorResource\RelationManagers\BillsRelationManager;
 use App\Filament\Forms\Components\CreateAdjustmentSelect;
 use App\Filament\Forms\Components\CreateCurrencySelect;
+use App\Filament\Forms\Components\CreateOfferingSelect;
 use App\Filament\Forms\Components\CreateVendorSelect;
 use App\Filament\Forms\Components\DocumentTotals;
 use App\Filament\Tables\Actions\ReplicateBulkAction;
@@ -208,13 +209,11 @@ class BillResource extends Resource
                                 return $headers;
                             })
                             ->schema([
-                                Forms\Components\Select::make('offering_id')
+                                CreateOfferingSelect::make('offering_id')
                                     ->label('Item')
-                                    ->relationship('purchasableOffering', 'name')
-                                    ->preload()
-                                    ->searchable()
                                     ->required()
                                     ->live()
+                                    ->purchasable()
                                     ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state, ?DocumentLineItem $record) {
                                         $offeringId = $state;
                                         $discountMethod = DocumentDiscountMethod::parse($get('../../discount_method'));
