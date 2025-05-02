@@ -26,40 +26,7 @@ class CreateVendorSelect extends Select
 
         $this->createOptionUsing(static function (array $data) {
             return DB::transaction(static function () use ($data) {
-                /** @var Vendor $vendor */
-                $vendor = Vendor::create([
-                    'name' => $data['name'],
-                    'type' => $data['type'],
-                    'currency_code' => $data['currency_code'] ?? null,
-                    'contractor_type' => $data['contractor_type'] ?? null,
-                    'ssn' => $data['ssn'] ?? null,
-                    'ein' => $data['ein'] ?? null,
-                    'account_number' => $data['account_number'] ?? null,
-                    'website' => $data['website'] ?? null,
-                    'notes' => $data['notes'] ?? null,
-                ]);
-
-                if (isset($data['contact'], $data['contact']['first_name'])) {
-                    $vendor->contact()->create([
-                        'is_primary' => true,
-                        'first_name' => $data['contact']['first_name'],
-                        'last_name' => $data['contact']['last_name'],
-                        'email' => $data['contact']['email'],
-                        'phones' => $data['contact']['phones'] ?? [],
-                    ]);
-                }
-
-                if (isset($data['address'], $data['address']['type'], $data['address']['address_line_1'])) {
-                    $vendor->address()->create([
-                        'type' => $data['address']['type'],
-                        'address_line_1' => $data['address']['address_line_1'],
-                        'address_line_2' => $data['address']['address_line_2'] ?? null,
-                        'country_code' => $data['address']['country_code'] ?? null,
-                        'state_id' => $data['address']['state_id'] ?? null,
-                        'city' => $data['address']['city'] ?? null,
-                        'postal_code' => $data['address']['postal_code'] ?? null,
-                    ]);
-                }
+                $vendor = Vendor::createWithRelations($data);
 
                 return $vendor->getKey();
             });
@@ -74,8 +41,9 @@ class CreateVendorSelect extends Select
     protected function createVendorAction(Action $action): Action
     {
         return $action
-            ->label('Add vendor')
+            ->label('Create vendor')
             ->slideOver()
-            ->modalWidth(MaxWidth::ThreeExtraLarge);
+            ->modalWidth(MaxWidth::ThreeExtraLarge)
+            ->modalHeading('Create a new vendor');
     }
 }

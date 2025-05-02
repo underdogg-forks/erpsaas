@@ -43,15 +43,16 @@ class CreateOfferingSelect extends Select
             ->createOptionAction(fn (Action $action) => $this->createOfferingAction($action));
 
         $this->relationship(
-            $this->isPurchasable() && ! $this->isSellable() ? 'purchasableOffering' :
-            ($this->isSellable() && ! $this->isPurchasable() ? 'sellableOffering' : 'offering'),
-            'name'
+            name: fn () => $this->isPurchasable() && ! $this->isSellable() ? 'purchasableOffering' : ($this->isSellable() && ! $this->isPurchasable() ? 'sellableOffering' : 'offering'),
+            titleAttribute: 'name'
         );
 
-        $this->createOptionUsing(function (array $data) {
+        $this->createOptionUsing(function (array $data, Form $form) {
             if ($this->isSellableAndPurchasable()) {
-                $data['sellable'] = isset($data['attributes']) && in_array('Sellable', $data['attributes'], true);
-                $data['purchasable'] = isset($data['attributes']) && in_array('Purchasable', $data['attributes'], true);
+                $attributes = array_flip($data['attributes'] ?? []);
+
+                $data['sellable'] = isset($attributes['Sellable']);
+                $data['purchasable'] = isset($attributes['Purchasable']);
             } else {
                 $data['sellable'] = $this->isSellable;
                 $data['purchasable'] = $this->isPurchasable;
@@ -60,6 +61,8 @@ class CreateOfferingSelect extends Select
             unset($data['attributes']);
 
             $offering = Offering::create($data);
+
+            $form->model($offering)->saveRelationships();
 
             return $offering->getKey();
         });
@@ -85,9 +88,10 @@ class CreateOfferingSelect extends Select
     protected function createOfferingAction(Action $action): Action
     {
         return $action
-            ->label('Add offering')
+            ->label('Create offering')
             ->slideOver()
-            ->modalWidth(MaxWidth::ThreeExtraLarge);
+            ->modalWidth(MaxWidth::ThreeExtraLarge)
+            ->modalHeading('Create a new offering');
     }
 
     public function isSellable(): bool
