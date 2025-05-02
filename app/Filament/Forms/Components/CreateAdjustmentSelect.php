@@ -211,12 +211,12 @@ class CreateAdjustmentSelect extends Select
     {
         $categoryLabel = $this->getCategory()?->getLabel() ?? 'Adjustment';
         $typeLabel = $this->getType()?->getLabel() ?? '';
-        $label = trim($typeLabel . ' ' . $categoryLabel);
+        $label = strtolower(trim($typeLabel . ' ' . $categoryLabel));
 
         return $action
             ->label('Create ' . $label)
             ->slideOver()
             ->modalWidth(MaxWidth::ExtraLarge)
-            ->modalHeading('Create a new ' . strtolower($label));
+            ->modalHeading('Create a new ' . $label);
     }
 }

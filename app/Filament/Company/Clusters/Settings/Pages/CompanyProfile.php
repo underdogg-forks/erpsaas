@@ -201,6 +201,7 @@ class CompanyProfile extends Page
                 Hidden::make('type')
                     ->default('general'),
                 AddressFields::make()
+                    ->required()
                     ->softRequired()
                     ->disabledCountry(is_demo_environment()),
             ])
