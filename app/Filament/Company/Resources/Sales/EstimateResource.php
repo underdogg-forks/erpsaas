@@ -165,7 +165,7 @@ class EstimateResource extends Resource
                                     ->label('Discount method')
                                     ->options(DocumentDiscountMethod::class)
                                     ->selectablePlaceholder(false)
-                                    ->default(DocumentDiscountMethod::PerLineItem)
+                                    ->default($settings->discount_method)
                                     ->afterStateUpdated(function ($state, Forms\Set $set) {
                                         $discountMethod = DocumentDiscountMethod::parse($state);
 
