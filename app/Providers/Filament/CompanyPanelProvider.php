@@ -298,18 +298,9 @@ class CompanyPanelProvider extends PanelProvider
     protected function configureSelect(): void
     {
         Select::configureUsing(function (Select $select): void {
-            $isSelectable = fn (): bool => ! $this->hasRequiredRule($select);
-
             $select
                 ->native(false)
-                ->selectablePlaceholder($isSelectable);
+                ->selectablePlaceholder(fn (Select $component) => ! $component->isRequired());
         });
-    }
-
-    protected function hasRequiredRule(Select $component): bool
-    {
-        $rules = $component->getValidationRules();
-
-        return in_array('required', $rules, true);
     }
 }

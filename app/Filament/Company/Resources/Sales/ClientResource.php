@@ -252,7 +252,7 @@ class ClientResource extends Resource
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
                     ->sortable()
-                    ->description(static fn (Client $client) => $client->primaryContact->full_name),
+                    ->description(static fn (Client $client) => $client->primaryContact?->full_name),
                 Tables\Columns\TextColumn::make('primaryContact.email')
                     ->label('Email')
                     ->searchable()
@@ -260,7 +260,7 @@ class ClientResource extends Resource
                 Tables\Columns\TextColumn::make('primaryContact.phones')
                     ->label('Phone')
                     ->toggleable()
-                    ->state(static fn (Client $client) => $client->primaryContact->first_available_phone),
+                    ->state(static fn (Client $client) => $client->primaryContact?->first_available_phone),
                 Tables\Columns\TextColumn::make('billingAddress.address_string')
                     ->label('Billing address')
                     ->searchable()

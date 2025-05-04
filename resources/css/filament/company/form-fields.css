@@ -44,39 +44,43 @@
 /* Table Repeater Styles */
 :not(.is-spreadsheet) {
     .table-repeater-container {
-        @apply rounded-none ring-0;
+        @apply border border-gray-300 dark:border-gray-600 rounded-sm;
     }
 
-    .table-repeater-component {
-        @apply space-y-10;
+    .table-repeater-row {
+        @apply hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors;
     }
 
-    .table-repeater-component ul {
-        @apply justify-start;
+    .table-repeater-column {
+        @apply p-3 text-sm text-gray-900 dark:text-gray-100;
+    }
+
+    .table-repeater-header {
+        @apply bg-gray-50 dark:bg-gray-700/50 border-b border-gray-300 dark:border-gray-600;
     }
 
     .table-repeater-row {
         @apply divide-x-0 !important;
     }
 
-    .table-repeater-column {
-        @apply py-2 !important;
-    }
-
-    .table-repeater-header {
-        @apply rounded-t-none !important;
-    }
-
-    .table-repeater-rows-wrapper {
-        @apply divide-gray-300 last:border-b last:border-gray-300 dark:divide-white/20 dark:last:border-white/20;
-    }
-
     .table-repeater-header tr {
-        @apply divide-x-0 text-base sm:text-sm sm:leading-6 !important;
+        @apply divide-x-0 text-sm;
     }
 
     .table-repeater-header-column {
-        @apply ps-3 pe-3 font-semibold bg-gray-200 dark:bg-gray-800 rounded-none !important;
+        @apply p-3 font-semibold bg-gray-50 dark:bg-gray-700/50;
+    }
+
+    /* Chrome, Safari, Edge, Opera */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* Firefox */
+    input[type=number] {
+        -moz-appearance: textfield;
     }
 }
 
@@ -162,37 +166,6 @@
 
     .fi-fo-field-wrp:has(.fi-fo-toggle) {
         @apply inline-block mt-1 !important;
-    }
-}
-
-/* Responsive behavior */
-@media (max-width: theme('screens.sm')) {
-    .table-repeater-component.break-point-sm .table-repeater-container {
-        overflow-x: visible;
-    }
-}
-
-@media (max-width: theme('screens.md')) {
-    .table-repeater-component.break-point-md .table-repeater-container {
-        overflow-x: visible;
-    }
-}
-
-@media (max-width: theme('screens.lg')) {
-    .table-repeater-component.break-point-lg .table-repeater-container {
-        overflow-x: visible;
-    }
-}
-
-@media (max-width: theme('screens.xl')) {
-    .table-repeater-component.break-point-xl .table-repeater-container {
-        overflow-x: visible;
-    }
-}
-
-@media (max-width: theme('screens.2xl')) {
-    .table-repeater-component.break-point-2xl .table-repeater-container {
-        overflow-x: visible;
     }
 }
 

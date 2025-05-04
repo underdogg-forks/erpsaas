@@ -4,10 +4,13 @@ namespace App\Filament\Forms\Components;
 
 use Awcodes\TableRepeater\Components\TableRepeater;
 use Closure;
+use Filament\Forms\Components\Actions\Action;
 
 class CustomTableRepeater extends TableRepeater
 {
-    protected bool | Closure | null $spreadsheet = null;
+    protected bool | Closure $spreadsheet = false;
+
+    protected bool | Closure $reorderAtStart = false;
 
     public function spreadsheet(bool | Closure $condition = true): static
     {
@@ -18,7 +21,19 @@ class CustomTableRepeater extends TableRepeater
 
     public function isSpreadsheet(): bool
     {
-        return $this->evaluate($this->spreadsheet) ?? false;
+        return (bool) $this->evaluate($this->spreadsheet);
+    }
+
+    public function reorderAtStart(bool | Closure $condition = true): static
+    {
+        $this->reorderAtStart = $condition;
+
+        return $this;
+    }
+
+    public function isReorderAtStart(): bool
+    {
+        return $this->evaluate($this->reorderAtStart) && $this->isReorderable();
     }
 
     protected function setUp(): void
@@ -34,5 +49,18 @@ class CustomTableRepeater extends TableRepeater
 
             return $attributes;
         });
+
+        $this->reorderAction(function (Action $action) {
+            if ($this->isReorderAtStart()) {
+                $action->icon('heroicon-m-bars-3');
+            }
+
+            return $action;
+        });
+    }
+
+    public function getView(): string
+    {
+        return 'filament.forms.components.custom-table-repeater';
     }
 }

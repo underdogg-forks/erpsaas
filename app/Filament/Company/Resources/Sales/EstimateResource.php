@@ -16,6 +16,7 @@ use App\Filament\Forms\Components\CreateAdjustmentSelect;
 use App\Filament\Forms\Components\CreateClientSelect;
 use App\Filament\Forms\Components\CreateCurrencySelect;
 use App\Filament\Forms\Components\CreateOfferingSelect;
+use App\Filament\Forms\Components\CustomTableRepeater;
 use App\Filament\Forms\Components\DocumentFooterSection;
 use App\Filament\Forms\Components\DocumentHeaderSection;
 use App\Filament\Forms\Components\DocumentTotals;
@@ -30,7 +31,6 @@ use App\Models\Common\Offering;
 use App\Utilities\Currency\CurrencyAccessor;
 use App\Utilities\Currency\CurrencyConverter;
 use App\Utilities\RateCalculator;
-use Awcodes\TableRepeater\Components\TableRepeater;
 use Awcodes\TableRepeater\Header;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -176,10 +176,14 @@ class EstimateResource extends Resource
                                     ->live(),
                             ])->grow(true),
                         ])->from('md'),
-                        TableRepeater::make('lineItems')
+                        CustomTableRepeater::make('lineItems')
+                            ->hiddenLabel()
                             ->relationship()
                             ->saveRelationshipsUsing(null)
                             ->dehydrated(true)
+                            ->reorderable()
+                            ->reorderAtStart()
+                            ->cloneable()
                             ->headers(function (Forms\Get $get) use ($settings) {
                                 $hasDiscounts = DocumentDiscountMethod::parse($get('discount_method'))->isPerLineItem();
 
