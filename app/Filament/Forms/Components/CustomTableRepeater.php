@@ -40,6 +40,8 @@ class CustomTableRepeater extends TableRepeater
     {
         parent::setUp();
 
+        $this->minItems(1);
+
         $this->extraAttributes(function (): array {
             $attributes = [];
 
