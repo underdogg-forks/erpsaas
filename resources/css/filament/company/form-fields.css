@@ -42,7 +42,7 @@
 }
 
 /* Table Repeater Styles */
-:not(.is-spreadsheet) {
+.table-repeater-component:not(.is-spreadsheet) {
     .table-repeater-row {
         @apply hover:bg-gray-50 dark:hover:bg-white/5 transition-colors;
     }
@@ -81,7 +81,7 @@
 }
 
 /* Excel/Spreadsheet styling */
-.is-spreadsheet {
+.table-repeater-component.is-spreadsheet {
     .table-repeater-container {
         overflow-x: auto;
         max-width: 100%;
