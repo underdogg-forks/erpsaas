@@ -107,10 +107,12 @@
             <div class="w-[40%]">
                 <table class="w-full table-fixed whitespace-nowrap">
                     <tbody class="text-sm">
-                    <tr>
-                        <td class="text-right font-semibold py-2">Subtotal:</td>
-                        <td class="text-right py-2">{{ $document->subtotal }}</td>
-                    </tr>
+                    @if($document->subtotal)
+                        <tr>
+                            <td class="text-right font-semibold py-2">Subtotal:</td>
+                            <td class="text-right py-2">{{ $document->subtotal }}</td>
+                        </tr>
+                    @endif
                     @if($document->discount)
                         <tr class="text-success-800 dark:text-success-600">
                             <td class="text-right py-2">Discount:</td>
@@ -144,7 +146,7 @@
     </x-company.document-template.line-items>
 
     <!-- Footer -->
-    <x-company.document-template.footer class="classic-template-footer min-h-48 p-6 text-sm">
+    <x-company.document-template.footer class="default-template-footer min-h-48 p-6 text-sm">
         <h4 class="font-semibold mb-2">Terms & Conditions</h4>
         <p class="break-words line-clamp-4">{{ $document->terms }}</p>
     </x-company.document-template.footer>

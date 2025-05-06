@@ -2,7 +2,9 @@
 
 namespace Database\Factories\Accounting;
 
+use App\Enums\Accounting\AdjustmentComputation;
 use App\Enums\Accounting\BillStatus;
+use App\Enums\Accounting\DocumentDiscountMethod;
 use App\Enums\Accounting\PaymentMethod;
 use App\Models\Accounting\Bill;
 use App\Models\Accounting\DocumentLineItem;
@@ -11,6 +13,7 @@ use App\Models\Common\Vendor;
 use App\Models\Company;
 use App\Models\Setting\DocumentDefault;
 use App\Utilities\Currency\CurrencyConverter;
+use App\Utilities\RateCalculator;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Carbon;
 
@@ -49,6 +52,17 @@ class BillFactory extends Factory
             'date' => $billDate,
             'due_date' => Carbon::parse($billDate)->addDays($dueDays),
             'status' => BillStatus::Open,
+            'discount_method' => $this->faker->randomElement(DocumentDiscountMethod::class),
+            'discount_computation' => AdjustmentComputation::Percentage,
+            'discount_rate' => function (array $attributes) {
+                $discountMethod = DocumentDiscountMethod::parse($attributes['discount_method']);
+
+                if ($discountMethod?->isPerDocument()) {
+                    return $this->faker->numberBetween(50000, 200000); // 5% - 20%
+                }
+
+                return 0;
+            },
             'currency_code' => function (array $attributes) {
                 $vendor = Vendor::find($attributes['vendor_id']);
 
@@ -226,7 +240,19 @@ class BillFactory extends Factory
 
         $subtotalCents = $bill->lineItems()->sum('subtotal');
         $taxTotalCents = $bill->lineItems()->sum('tax_total');
-        $discountTotalCents = $bill->lineItems()->sum('discount_total');
+
+        $discountTotalCents = 0;
+
+        if ($bill->discount_method?->isPerLineItem()) {
+            $discountTotalCents = $bill->lineItems()->sum('discount_total');
+        } elseif ($bill->discount_method?->isPerDocument() && $bill->discount_rate) {
+            if ($bill->discount_computation?->isPercentage()) {
+                $scaledRate = RateCalculator::parseLocalizedRate($bill->discount_rate);
+                $discountTotalCents = RateCalculator::calculatePercentage($subtotalCents, $scaledRate);
+            } else {
+                $discountTotalCents = CurrencyConverter::convertToCents($bill->discount_rate, $bill->currency_code);
+            }
+        }
 
         $grandTotalCents = $subtotalCents + $taxTotalCents - $discountTotalCents;
         $currencyCode = $bill->currency_code;

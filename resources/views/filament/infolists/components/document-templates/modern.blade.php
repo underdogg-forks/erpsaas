@@ -92,11 +92,13 @@
             @endforeach
             </tbody>
             <tfoot class="text-sm summary-section">
-            <tr>
-                <td class="pl-6 py-2" colspan="2"></td>
-                <td class="text-right font-semibold py-2">Subtotal:</td>
-                <td class="text-right pr-6 py-2">{{ $document->subtotal }}</td>
-            </tr>
+            @if($document->subtotal)
+                <tr>
+                    <td class="pl-6 py-2" colspan="2"></td>
+                    <td class="text-right font-semibold py-2">Subtotal:</td>
+                    <td class="text-right pr-6 py-2">{{ $document->subtotal }}</td>
+                </tr>
+            @endif
             @if($document->discount)
                 <tr class="text-success-800 dark:text-success-600">
                     <td class="pl-6 py-2" colspan="2"></td>

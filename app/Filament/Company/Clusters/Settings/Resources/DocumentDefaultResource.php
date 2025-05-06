@@ -2,6 +2,7 @@
 
 namespace App\Filament\Company\Clusters\Settings\Resources;
 
+use App\Enums\Accounting\DocumentDiscountMethod;
 use App\Enums\Accounting\DocumentType;
 use App\Enums\Setting\Font;
 use App\Enums\Setting\PaymentTerms;
@@ -51,6 +52,9 @@ class DocumentDefaultResource extends Resource
                     ->softRequired()
                     ->localizeLabel()
                     ->options(PaymentTerms::class),
+                Forms\Components\Select::make('discount_method')
+                    ->softRequired()
+                    ->options(DocumentDiscountMethod::class),
             ])->columns();
     }
 

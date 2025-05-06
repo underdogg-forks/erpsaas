@@ -4,6 +4,7 @@ namespace App\Models\Setting;
 
 use App\Concerns\Blamable;
 use App\Concerns\CompanyOwned;
+use App\Enums\Accounting\DocumentDiscountMethod;
 use App\Enums\Accounting\DocumentType;
 use App\Enums\Setting\Font;
 use App\Enums\Setting\PaymentTerms;
@@ -32,6 +33,7 @@ class DocumentDefault extends Model
         'show_logo',
         'number_prefix',
         'payment_terms',
+        'discount_method',
         'header',
         'subheader',
         'terms',
@@ -51,6 +53,7 @@ class DocumentDefault extends Model
         'type' => DocumentType::class,
         'show_logo' => 'boolean',
         'payment_terms' => PaymentTerms::class,
+        'discount_method' => DocumentDiscountMethod::class,
         'font' => Font::class,
         'template' => Template::class,
         'item_name' => AsArrayObject::class,

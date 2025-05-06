@@ -26,7 +26,7 @@ readonly class DocumentDTO
         public string $date,
         public string $dueDate,
         public string $currencyCode,
-        public string $subtotal,
+        public ?string $subtotal,
         public ?string $discount,
         public ?string $tax,
         public string $total,
@@ -50,6 +50,15 @@ readonly class DocumentDTO
 
         $currencyCode = $document->currency_code ?? CurrencyAccessor::getDefaultCurrency();
 
+        $discount = $document->discount_total > 0 ? self::formatToMoney($document->discount_total, $currencyCode) : null;
+        $tax = $document->tax_total > 0 ? self::formatToMoney($document->tax_total, $currencyCode) : null;
+
+        if (! $discount && ! $tax) {
+            $subtotal = null;
+        } else {
+            $subtotal = self::formatToMoney($document->subtotal, $currencyCode);
+        }
+
         return new self(
             header: $document->header,
             subheader: $document->subheader,
@@ -61,9 +70,9 @@ readonly class DocumentDTO
             date: $document->documentDate(),
             dueDate: $document->dueDate(),
             currencyCode: $currencyCode,
-            subtotal: self::formatToMoney($document->subtotal, $currencyCode),
-            discount: self::formatToMoney($document->discount_total, $currencyCode),
-            tax: self::formatToMoney($document->tax_total, $currencyCode),
+            subtotal: $subtotal,
+            discount: $discount,
+            tax: $tax,
             total: self::formatToMoney($document->total, $currencyCode),
             amountDue: self::formatToMoney($document->amountDue(), $currencyCode),
             company: CompanyDTO::fromModel($document->company),

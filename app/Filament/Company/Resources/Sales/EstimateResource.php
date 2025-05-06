@@ -16,6 +16,7 @@ use App\Filament\Forms\Components\CreateAdjustmentSelect;
 use App\Filament\Forms\Components\CreateClientSelect;
 use App\Filament\Forms\Components\CreateCurrencySelect;
 use App\Filament\Forms\Components\CreateOfferingSelect;
+use App\Filament\Forms\Components\CustomTableRepeater;
 use App\Filament\Forms\Components\DocumentFooterSection;
 use App\Filament\Forms\Components\DocumentHeaderSection;
 use App\Filament\Forms\Components\DocumentTotals;
@@ -30,7 +31,6 @@ use App\Models\Common\Offering;
 use App\Utilities\Currency\CurrencyAccessor;
 use App\Utilities\Currency\CurrencyConverter;
 use App\Utilities\RateCalculator;
-use Awcodes\TableRepeater\Components\TableRepeater;
 use Awcodes\TableRepeater\Header;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -164,8 +164,8 @@ class EstimateResource extends Resource
                                 Forms\Components\Select::make('discount_method')
                                     ->label('Discount method')
                                     ->options(DocumentDiscountMethod::class)
-                                    ->selectablePlaceholder(false)
-                                    ->default(DocumentDiscountMethod::PerLineItem)
+                                    ->softRequired()
+                                    ->default($settings->discount_method)
                                     ->afterStateUpdated(function ($state, Forms\Set $set) {
                                         $discountMethod = DocumentDiscountMethod::parse($state);
 
@@ -176,28 +176,32 @@ class EstimateResource extends Resource
                                     ->live(),
                             ])->grow(true),
                         ])->from('md'),
-                        TableRepeater::make('lineItems')
+                        CustomTableRepeater::make('lineItems')
+                            ->hiddenLabel()
                             ->relationship()
                             ->saveRelationshipsUsing(null)
                             ->dehydrated(true)
+                            ->reorderable()
+                            ->orderColumn('line_number')
+                            ->reorderAtStart()
+                            ->cloneable()
+                            ->addActionLabel('Add an item')
                             ->headers(function (Forms\Get $get) use ($settings) {
                                 $hasDiscounts = DocumentDiscountMethod::parse($get('discount_method'))->isPerLineItem();
 
                                 $headers = [
                                     Header::make($settings->resolveColumnLabel('item_name', 'Items'))
-                                        ->width($hasDiscounts ? '15%' : '20%'),
-                                    Header::make('Description')
-                                        ->width($hasDiscounts ? '15%' : '20%'),
+                                        ->width('30%'),
                                     Header::make($settings->resolveColumnLabel('unit_name', 'Quantity'))
                                         ->width('10%'),
                                     Header::make($settings->resolveColumnLabel('price_name', 'Price'))
                                         ->width('10%'),
-                                    Header::make('Taxes')
-                                        ->width($hasDiscounts ? '20%' : '30%'),
                                 ];
 
                                 if ($hasDiscounts) {
-                                    $headers[] = Header::make('Discounts')->width('20%');
+                                    $headers[] = Header::make('Adjustments')->width('30%');
+                                } else {
+                                    $headers[] = Header::make('Taxes')->width('30%');
                                 }
 
                                 $headers[] = Header::make($settings->resolveColumnLabel('amount_name', 'Amount'))
@@ -207,61 +211,68 @@ class EstimateResource extends Resource
                                 return $headers;
                             })
                             ->schema([
-                                CreateOfferingSelect::make('offering_id')
-                                    ->label('Item')
-                                    ->required()
-                                    ->live()
-                                    ->sellable()
-                                    ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state, ?DocumentLineItem $record) {
-                                        $offeringId = $state;
-                                        $discountMethod = DocumentDiscountMethod::parse($get('../../discount_method'));
-                                        $isPerLineItem = $discountMethod->isPerLineItem();
+                                Forms\Components\Group::make([
+                                    CreateOfferingSelect::make('offering_id')
+                                        ->label('Item')
+                                        ->hiddenLabel()
+                                        ->placeholder('Select item')
+                                        ->required()
+                                        ->live()
+                                        ->inlineSuffix()
+                                        ->sellable()
+                                        ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state, ?DocumentLineItem $record) {
+                                            $offeringId = $state;
+                                            $discountMethod = DocumentDiscountMethod::parse($get('../../discount_method'));
+                                            $isPerLineItem = $discountMethod->isPerLineItem();
 
-                                        $existingTaxIds = [];
-                                        $existingDiscountIds = [];
+                                            $existingTaxIds = [];
+                                            $existingDiscountIds = [];
 
-                                        if ($record) {
-                                            $existingTaxIds = $record->salesTaxes()->pluck('adjustments.id')->toArray();
-                                            if ($isPerLineItem) {
-                                                $existingDiscountIds = $record->salesDiscounts()->pluck('adjustments.id')->toArray();
+                                            if ($record) {
+                                                $existingTaxIds = $record->salesTaxes()->pluck('adjustments.id')->toArray();
+                                                if ($isPerLineItem) {
+                                                    $existingDiscountIds = $record->salesDiscounts()->pluck('adjustments.id')->toArray();
+                                                }
                                             }
-                                        }
 
-                                        $with = [
-                                            'salesTaxes' => static function ($query) use ($existingTaxIds) {
-                                                $query->where(static function ($query) use ($existingTaxIds) {
-                                                    $query->where('status', AdjustmentStatus::Active)
-                                                        ->orWhereIn('adjustments.id', $existingTaxIds);
-                                                });
-                                            },
-                                        ];
+                                            $with = [
+                                                'salesTaxes' => static function ($query) use ($existingTaxIds) {
+                                                    $query->where(static function ($query) use ($existingTaxIds) {
+                                                        $query->where('status', AdjustmentStatus::Active)
+                                                            ->orWhereIn('adjustments.id', $existingTaxIds);
+                                                    });
+                                                },
+                                            ];
 
-                                        if ($isPerLineItem) {
-                                            $with['salesDiscounts'] = static function ($query) use ($existingDiscountIds) {
-                                                $query->where(static function ($query) use ($existingDiscountIds) {
-                                                    $query->where('status', AdjustmentStatus::Active)
-                                                        ->orWhereIn('adjustments.id', $existingDiscountIds);
-                                                });
-                                            };
-                                        }
+                                            if ($isPerLineItem) {
+                                                $with['salesDiscounts'] = static function ($query) use ($existingDiscountIds) {
+                                                    $query->where(static function ($query) use ($existingDiscountIds) {
+                                                        $query->where('status', AdjustmentStatus::Active)
+                                                            ->orWhereIn('adjustments.id', $existingDiscountIds);
+                                                    });
+                                                };
+                                            }
 
-                                        $offeringRecord = Offering::with($with)->find($offeringId);
+                                            $offeringRecord = Offering::with($with)->find($offeringId);
 
-                                        if (! $offeringRecord) {
-                                            return;
-                                        }
+                                            if (! $offeringRecord) {
+                                                return;
+                                            }
 
-                                        $unitPrice = CurrencyConverter::convertToFloat($offeringRecord->price, $get('../../currency_code') ?? CurrencyAccessor::getDefaultCurrency());
+                                            $unitPrice = CurrencyConverter::convertToFloat($offeringRecord->price, $get('../../currency_code') ?? CurrencyAccessor::getDefaultCurrency());
 
-                                        $set('description', $offeringRecord->description);
-                                        $set('unit_price', $unitPrice);
-                                        $set('salesTaxes', $offeringRecord->salesTaxes->pluck('id')->toArray());
+                                            $set('description', $offeringRecord->description);
+                                            $set('unit_price', $unitPrice);
+                                            $set('salesTaxes', $offeringRecord->salesTaxes->pluck('id')->toArray());
 
-                                        if ($isPerLineItem) {
-                                            $set('salesDiscounts', $offeringRecord->salesDiscounts->pluck('id')->toArray());
-                                        }
-                                    }),
-                                Forms\Components\TextInput::make('description'),
+                                            if ($isPerLineItem) {
+                                                $set('salesDiscounts', $offeringRecord->salesDiscounts->pluck('id')->toArray());
+                                            }
+                                        }),
+                                    Forms\Components\TextInput::make('description')
+                                        ->placeholder('Enter item description')
+                                        ->hiddenLabel(),
+                                ])->columnSpan(1),
                                 Forms\Components\TextInput::make('quantity')
                                     ->required()
                                     ->numeric()
@@ -274,32 +285,40 @@ class EstimateResource extends Resource
                                     ->live()
                                     ->maxValue(9999999999.99)
                                     ->default(0),
-                                CreateAdjustmentSelect::make('salesTaxes')
-                                    ->label('Taxes')
-                                    ->category(AdjustmentCategory::Tax)
-                                    ->type(AdjustmentType::Sales)
-                                    ->adjustmentsRelationship('salesTaxes')
-                                    ->saveRelationshipsUsing(null)
-                                    ->dehydrated(true)
-                                    ->preload()
-                                    ->multiple()
-                                    ->live()
-                                    ->searchable(),
-                                CreateAdjustmentSelect::make('salesDiscounts')
-                                    ->label('Discounts')
-                                    ->category(AdjustmentCategory::Discount)
-                                    ->type(AdjustmentType::Sales)
-                                    ->adjustmentsRelationship('salesDiscounts')
-                                    ->saveRelationshipsUsing(null)
-                                    ->dehydrated(true)
-                                    ->multiple()
-                                    ->live()
-                                    ->hidden(function (Forms\Get $get) {
-                                        $discountMethod = DocumentDiscountMethod::parse($get('../../discount_method'));
+                                Forms\Components\Group::make([
+                                    CreateAdjustmentSelect::make('salesTaxes')
+                                        ->label('Taxes')
+                                        ->hiddenLabel()
+                                        ->placeholder('Select taxes')
+                                        ->category(AdjustmentCategory::Tax)
+                                        ->type(AdjustmentType::Sales)
+                                        ->adjustmentsRelationship('salesTaxes')
+                                        ->saveRelationshipsUsing(null)
+                                        ->dehydrated(true)
+                                        ->inlineSuffix()
+                                        ->preload()
+                                        ->multiple()
+                                        ->live()
+                                        ->searchable(),
+                                    CreateAdjustmentSelect::make('salesDiscounts')
+                                        ->label('Discounts')
+                                        ->hiddenLabel()
+                                        ->placeholder('Select discounts')
+                                        ->category(AdjustmentCategory::Discount)
+                                        ->type(AdjustmentType::Sales)
+                                        ->adjustmentsRelationship('salesDiscounts')
+                                        ->saveRelationshipsUsing(null)
+                                        ->dehydrated(true)
+                                        ->inlineSuffix()
+                                        ->multiple()
+                                        ->live()
+                                        ->hidden(function (Forms\Get $get) {
+                                            $discountMethod = DocumentDiscountMethod::parse($get('../../discount_method'));
 
-                                        return $discountMethod->isPerDocument();
-                                    })
-                                    ->searchable(),
+                                            return $discountMethod->isPerDocument();
+                                        })
+                                        ->searchable(),
+                                ])->columnSpan(1),
                                 Forms\Components\Placeholder::make('total')
                                     ->hiddenLabel()
                                     ->extraAttributes(['class' => 'text-left sm:text-right'])

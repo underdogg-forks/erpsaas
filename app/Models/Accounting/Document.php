@@ -27,7 +27,7 @@ abstract class Document extends Model
 
     public function lineItems(): MorphMany
     {
-        return $this->morphMany(DocumentLineItem::class, 'documentable');
+        return $this->morphMany(DocumentLineItem::class, 'documentable')->orderBy('line_number');
     }
 
     public function hasLineItems(): bool

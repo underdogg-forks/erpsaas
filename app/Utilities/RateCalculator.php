@@ -28,8 +28,12 @@ class RateCalculator
         return (int) round($decimalRate * self::PERCENTAGE_SCALING_FACTOR);
     }
 
-    public static function parseLocalizedRate(string $value): int
+    public static function parseLocalizedRate(?string $value): int
     {
+        if (! $value) {
+            return 0;
+        }
+
         $format = Localization::firstOrFail()->number_format->value;
         [$decimalMark, $thousandsSeparator] = NumberFormat::from($format)->getFormattingParameters();
 

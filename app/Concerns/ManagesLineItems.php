@@ -16,7 +16,7 @@ trait ManagesLineItems
 {
     protected function handleLineItems(Model $record, Collection $lineItems): void
     {
-        foreach ($lineItems as $itemData) {
+        foreach ($lineItems as $index => $itemData) {
             $lineItem = isset($itemData['id'])
                 ? $record->lineItems->find($itemData['id'])
                 : $record->lineItems()->make();
@@ -26,6 +26,7 @@ trait ManagesLineItems
                 'description' => $itemData['description'],
                 'quantity' => $itemData['quantity'],
                 'unit_price' => $itemData['unit_price'],
+                'line_number' => $index + 1,
             ]);
 
             if (! $lineItem->exists) {
