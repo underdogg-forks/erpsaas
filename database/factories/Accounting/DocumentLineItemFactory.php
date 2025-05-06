@@ -56,7 +56,11 @@ class DocumentLineItemFactory extends Factory
                 ]);
 
                 $lineItem->salesTaxes()->syncWithoutDetaching($offering->salesTaxes->pluck('id')->toArray());
-                $lineItem->salesDiscounts()->syncWithoutDetaching($offering->salesDiscounts->pluck('id')->toArray());
+
+                // Only sync discounts if the discount method is per_line_item
+                if ($lineItem->documentable->discount_method?->isPerLineItem() ?? true) {
+                    $lineItem->salesDiscounts()->syncWithoutDetaching($offering->salesDiscounts->pluck('id')->toArray());
+                }
 
                 $lineItem->refresh();
 
@@ -88,7 +92,11 @@ class DocumentLineItemFactory extends Factory
                 ]);
 
                 $lineItem->salesTaxes()->syncWithoutDetaching($offering->salesTaxes->pluck('id')->toArray());
-                $lineItem->salesDiscounts()->syncWithoutDetaching($offering->salesDiscounts->pluck('id')->toArray());
+
+                // Only sync discounts if the discount method is per_line_item
+                if ($lineItem->documentable->discount_method?->isPerLineItem() ?? true) {
+                    $lineItem->salesDiscounts()->syncWithoutDetaching($offering->salesDiscounts->pluck('id')->toArray());
+                }
 
                 $lineItem->refresh();
 
@@ -120,7 +128,11 @@ class DocumentLineItemFactory extends Factory
                 ]);
 
                 $lineItem->purchaseTaxes()->syncWithoutDetaching($offering->purchaseTaxes->pluck('id')->toArray());
-                $lineItem->purchaseDiscounts()->syncWithoutDetaching($offering->purchaseDiscounts->pluck('id')->toArray());
+
+                // Only sync discounts if the discount method is per_line_item
+                if ($lineItem->documentable->discount_method?->isPerLineItem() ?? true) {
+                    $lineItem->purchaseDiscounts()->syncWithoutDetaching($offering->purchaseDiscounts->pluck('id')->toArray());
+                }
 
                 $lineItem->refresh();
 

@@ -2,6 +2,8 @@
 
 namespace Database\Factories\Accounting;
 
+use App\Enums\Accounting\AdjustmentComputation;
+use App\Enums\Accounting\DocumentDiscountMethod;
 use App\Enums\Accounting\EstimateStatus;
 use App\Models\Accounting\DocumentLineItem;
 use App\Models\Accounting\Estimate;
@@ -9,6 +11,7 @@ use App\Models\Common\Client;
 use App\Models\Company;
 use App\Models\Setting\DocumentDefault;
 use App\Utilities\Currency\CurrencyConverter;
+use App\Utilities\RateCalculator;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Carbon;
 
@@ -41,6 +44,17 @@ class EstimateFactory extends Factory
             'date' => $estimateDate,
             'expiration_date' => Carbon::parse($estimateDate)->addDays($this->faker->numberBetween(14, 30)),
             'status' => EstimateStatus::Draft,
+            'discount_method' => $this->faker->randomElement(DocumentDiscountMethod::class),
+            'discount_computation' => AdjustmentComputation::Percentage,
+            'discount_rate' => function (array $attributes) {
+                $discountMethod = DocumentDiscountMethod::parse($attributes['discount_method']);
+
+                if ($discountMethod?->isPerDocument()) {
+                    return $this->faker->numberBetween(50000, 200000); // 5% - 20%
+                }
+
+                return 0;
+            },
             'currency_code' => function (array $attributes) {
                 $client = Client::find($attributes['client_id']);
 
@@ -207,7 +221,19 @@ class EstimateFactory extends Factory
 
         $subtotalCents = $estimate->lineItems()->sum('subtotal');
         $taxTotalCents = $estimate->lineItems()->sum('tax_total');
-        $discountTotalCents = $estimate->lineItems()->sum('discount_total');
+
+        $discountTotalCents = 0;
+
+        if ($estimate->discount_method?->isPerLineItem()) {
+            $discountTotalCents = $estimate->lineItems()->sum('discount_total');
+        } elseif ($estimate->discount_method?->isPerDocument() && $estimate->discount_rate) {
+            if ($estimate->discount_computation?->isPercentage()) {
+                $scaledRate = RateCalculator::parseLocalizedRate($estimate->discount_rate);
+                $discountTotalCents = RateCalculator::calculatePercentage($subtotalCents, $scaledRate);
+            } else {
+                $discountTotalCents = CurrencyConverter::convertToCents($estimate->discount_rate, $estimate->currency_code);
+            }
+        }
 
         $grandTotalCents = $subtotalCents + $taxTotalCents - $discountTotalCents;
         $currencyCode = $estimate->currency_code;
