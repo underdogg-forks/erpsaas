@@ -12,6 +12,18 @@ class CustomTableRepeater extends TableRepeater
 
     protected bool | Closure $reorderAtStart = false;
 
+    /**
+     * @var array<string> | Closure | null
+     */
+    protected array | Closure | null $excludedAttributesForCloning = [
+        'id',
+        'line_number',
+        'created_by',
+        'updated_by',
+        'created_at',
+        'updated_at',
+    ];
+
     public function spreadsheet(bool | Closure $condition = true): static
     {
         $this->spreadsheet = $condition;
@@ -36,6 +48,24 @@ class CustomTableRepeater extends TableRepeater
         return $this->evaluate($this->reorderAtStart) && $this->isReorderable();
     }
 
+    /**
+     * @param  array<string> | Closure | null  $attributes
+     */
+    public function excludeAttributesForCloning(array | Closure | null $attributes): static
+    {
+        $this->excludedAttributesForCloning = $attributes;
+
+        return $this;
+    }
+
+    /**
+     * @return array<string> | null
+     */
+    public function getExcludedAttributesForCloning(): ?array
+    {
+        return $this->evaluate($this->excludedAttributesForCloning);
+    }
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -58,6 +88,30 @@ class CustomTableRepeater extends TableRepeater
             }
 
             return $action;
+        });
+
+        $this->cloneAction(function (Action $action) {
+            return $action
+                ->action(function (array $arguments, CustomTableRepeater $component): void {
+                    $newUuid = $component->generateUuid();
+                    $items = $component->getState();
+
+                    $clone = $items[$arguments['item']];
+
+                    foreach ($component->getExcludedAttributesForCloning() as $attribute) {
+                        unset($clone[$attribute]);
+                    }
+
+                    if ($newUuid) {
+                        $items[$newUuid] = $clone;
+                    } else {
+                        $items[] = $clone;
+                    }
+
+                    $component->state($items);
+                    $component->collapsed(false, shouldMakeComponentCollapsible: false);
+                    $component->callAfterStateUpdated();
+                });
         });
     }
 

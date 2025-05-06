@@ -195,6 +195,7 @@ class InvoiceResource extends Resource
                             ->saveRelationshipsUsing(null)
                             ->dehydrated(true)
                             ->reorderable()
+                            ->orderColumn('line_number')
                             ->reorderAtStart()
                             ->cloneable()
                             ->addActionLabel('Add an item')

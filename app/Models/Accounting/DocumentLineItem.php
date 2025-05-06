@@ -36,6 +36,7 @@ class DocumentLineItem extends Model
         'unit_price',
         'tax_total',
         'discount_total',
+        'line_number',
         'created_by',
         'updated_by',
     ];
