@@ -18,12 +18,12 @@
         <!-- Logo -->
         <div class="w-2/3">
             @if($document->logo && $document->showLogo)
-                <x-company.document-template.logo class="ml-6" :src="$document->logo"/>
+                <x-company.document-template.logo class="ml-8" :src="$document->logo"/>
             @endif
         </div>
 
         <!-- Ribbon Container -->
-        <div class="w-1/3 absolute right-0 top-0 p-2 h-28 flex flex-col justify-end rounded-bl-sm"
+        <div class="w-1/3 absolute right-0 top-0 p-3 h-28 flex flex-col justify-end rounded-bl-sm"
              style="background: {{ $document->accentColor }};">
             @if($document->header)
                 <h1 class="text-3xl font-bold text-white text-center uppercase">{{ $document->header }}</h1>
@@ -32,9 +32,9 @@
     </x-company.document-template.header>
 
     <!-- Company Details -->
-    <x-company.document-template.metadata class="modern-template-metadata space-y-6">
+    <x-company.document-template.metadata class="modern-template-metadata space-y-8">
         <div class="text-xs">
-            <h2 class="text-xs font-semibold">{{ $document->company->name }}</h2>
+            <h2 class="text-base font-semibold">{{ $document->company->name }}</h2>
             @if($formattedAddress = $document->company->getFormattedAddressHtml())
                 {!! $formattedAddress !!}
             @endif
@@ -82,63 +82,65 @@
     <!-- Line Items Table -->
     <x-company.document-template.line-items class="modern-template-line-items">
         <table class="w-full text-left table-fixed">
-            <thead class="text-xs leading-8">
+            <thead class="text-xs leading-relaxed">
             <tr class="text-gray-600">
-                <th class="text-left pl-6 w-[50%]">{{ $document->columnLabel->items }}</th>
-                <th class="text-center w-[10%]">{{ $document->columnLabel->units }}</th>
-                <th class="text-right w-[20%]">{{ $document->columnLabel->price }}</th>
-                <th class="text-right pr-6 w-[20%]">{{ $document->columnLabel->amount }}</th>
+                <th class="text-left pl-6 w-[50%] py-4">{{ $document->columnLabel->items }}</th>
+                <th class="text-center w-[10%] py-4">{{ $document->columnLabel->units }}</th>
+                <th class="text-right w-[20%] py-4">{{ $document->columnLabel->price }}</th>
+                <th class="text-right pr-6 w-[20%] py-4">{{ $document->columnLabel->amount }}</th>
             </tr>
             </thead>
             <tbody class="text-xs border-y-2">
             @foreach($document->lineItems as $index => $item)
                 <tr @class(['bg-gray-100' => $index % 2 === 0])>
-                    <td class="text-left pl-6 font-semibold py-2">
+                    <td class="text-left pl-6 font-semibold py-3">
                         {{ $item->name }}
                         @if($item->description)
-                            <div class="text-gray-600 font-normal line-clamp-2">{{ $item->description }}</div>
+                            <div class="text-gray-600 font-normal line-clamp-2 mt-1">{{ $item->description }}</div>
                         @endif
                     </td>
-                    <td class="text-center">{{ $item->quantity }}</td>
-                    <td class="text-right">{{ $item->unitPrice }}</td>
-                    <td class="text-right pr-6">{{ $item->subtotal }}</td>
+                    <td class="text-center py-3">{{ $item->quantity }}</td>
+                    <td class="text-right py-3">{{ $item->unitPrice }}</td>
+                    <td class="text-right pr-6 py-3">{{ $item->subtotal }}</td>
                 </tr>
             @endforeach
             </tbody>
-            <tfoot class="text-xs">
-            <tr>
-                <td class="pl-6 py-1" colspan="2"></td>
-                <td class="text-right font-semibold py-1">Subtotal:</td>
-                <td class="text-right pr-6 py-1">{{ $document->subtotal }}</td>
-            </tr>
+            <tfoot class="text-xs summary-section">
+            @if($document->subtotal)
+                <tr>
+                    <td class="pl-6 py-2" colspan="2"></td>
+                    <td class="text-right font-semibold py-2">Subtotal:</td>
+                    <td class="text-right pr-6 py-2">{{ $document->subtotal }}</td>
+                </tr>
+            @endif
             @if($document->discount)
                 <tr class="text-success-800">
-                    <td class="pl-6 py-1" colspan="2"></td>
-                    <td class="text-right py-1">Discount:</td>
-                    <td class="text-right pr-6 py-1">
+                    <td class="pl-6 py-2" colspan="2"></td>
+                    <td class="text-right py-2">Discount:</td>
+                    <td class="text-right pr-6 py-2">
                         ({{ $document->discount }})
                     </td>
                 </tr>
             @endif
             @if($document->tax)
                 <tr>
-                    <td class="pl-6 py-1" colspan="2"></td>
-                    <td class="text-right py-1">Tax:</td>
-                    <td class="text-right pr-6 py-1">{{ $document->tax }}</td>
+                    <td class="pl-6 py-2" colspan="2"></td>
+                    <td class="text-right py-2">Tax:</td>
+                    <td class="text-right pr-6 py-2">{{ $document->tax }}</td>
                 </tr>
             @endif
             <tr>
-                <td class="pl-6 py-1" colspan="2"></td>
-                <td class="text-right font-semibold border-t py-1">Total:</td>
-                <td class="text-right border-t pr-6 py-1">{{ $document->total }}</td>
+                <td class="pl-6 py-2" colspan="2"></td>
+                <td class="text-right font-semibold border-t py-2">Total:</td>
+                <td class="text-right border-t pr-6 py-2">{{ $document->total }}</td>
             </tr>
             @if($document->amountDue)
                 <tr>
-                    <td class="pl-6 py-1" colspan="2"></td>
-                    <td class="text-right font-semibold border-t-4 border-double py-1">{{ $document->label->amountDue }}
+                    <td class="pl-6 py-2" colspan="2"></td>
+                    <td class="text-right font-semibold border-t-4 border-double py-2">{{ $document->label->amountDue }}
                         ({{ $document->currencyCode }}):
                     </td>
-                    <td class="text-right border-t-4 border-double pr-6 py-1">{{ $document->amountDue }}</td>
+                    <td class="text-right border-t-4 border-double pr-6 py-2">{{ $document->amountDue }}</td>
                 </tr>
             @endif
             </tfoot>
@@ -146,10 +148,12 @@
     </x-company.document-template.line-items>
 
     <!-- Footer Notes -->
-    <x-company.document-template.footer class="modern-template-footer text-xs">
-        <h4 class="font-semibold px-6" style="color: {{ $document->accentColor }}">Terms & Conditions</h4>
+    <x-company.document-template.footer class="modern-template-footer">
+        <h4 class="font-semibold px-6 text-xs" style="color: {{ $document->accentColor }}">
+            Terms & Conditions
+        </h4>
         <span class="border-t-2 my-2 border-gray-300 block w-full"></span>
-        <div class="flex justify-between space-x-4 px-6">
+        <div class="flex justify-between space-x-4 px-6 text-xs">
             <p class="w-1/2 break-words line-clamp-4">{{ $document->terms }}</p>
             <p class="w-1/2 break-words line-clamp-4">{{ $document->footer }}</p>
         </div>

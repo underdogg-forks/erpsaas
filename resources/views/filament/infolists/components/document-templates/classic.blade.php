@@ -146,7 +146,7 @@
     </x-company.document-template.line-items>
 
     <!-- Footer -->
-    <x-company.document-template.footer class="default-template-footer min-h-48 p-6 text-sm">
+    <x-company.document-template.footer class="classic-template-footer min-h-48 p-6 text-sm">
         <h4 class="font-semibold mb-2">Terms & Conditions</h4>
         <p class="break-words line-clamp-4">{{ $document->terms }}</p>
     </x-company.document-template.footer>

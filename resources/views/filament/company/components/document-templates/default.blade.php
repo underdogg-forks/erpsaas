@@ -38,7 +38,7 @@
         </div>
     </x-company.document-template.header>
 
-    <x-company.document-template.metadata class="default-template-metadata space-y-2">
+    <x-company.document-template.metadata class="default-template-metadata space-y-4">
         <div class="flex justify-between items-end">
             <!-- Billing Details -->
             <div class="text-xs">
@@ -56,10 +56,12 @@
                         <td class="font-semibold text-right pr-2">{{ $document->label->number }}:</td>
                         <td class="text-left pl-2">{{ $document->number }}</td>
                     </tr>
-                    <tr>
-                        <td class="font-semibold text-right pr-2">{{ $document->label->referenceNumber }}:</td>
-                        <td class="text-left pl-2">{{ $document->referenceNumber }}</td>
-                    </tr>
+                    @if($document->referenceNumber)
+                        <tr>
+                            <td class="font-semibold text-right pr-2">{{ $document->label->referenceNumber }}:</td>
+                            <td class="text-left pl-2">{{ $document->referenceNumber }}</td>
+                        </tr>
+                    @endif
                     <tr>
                         <td class="font-semibold text-right pr-2">{{ $document->label->date }}:</td>
                         <td class="text-left pl-2">{{ $document->date }}</td>
@@ -77,58 +79,73 @@
     <!-- Line Items Table -->
     <x-company.document-template.line-items class="default-template-line-items">
         <table class="w-full text-left table-fixed">
-            <thead class="text-xs leading-8" style="background: {{ $document->accentColor }}">
+            <thead class="text-xs leading-relaxed" style="background: {{ $document->accentColor }}">
             <tr class="text-white">
-                <th class="text-left pl-6">{{ $document->columnLabel->items }}</th>
-                <th class="text-center">{{ $document->columnLabel->units }}</th>
-                <th class="text-right">{{ $document->columnLabel->price }}</th>
-                <th class="text-right pr-6">{{ $document->columnLabel->amount }}</th>
+                <th class="text-left pl-6 w-[50%] py-2">{{ $document->columnLabel->items }}</th>
+                <th class="text-center w-[10%] py-2">{{ $document->columnLabel->units }}</th>
+                <th class="text-right w-[20%] py-2">{{ $document->columnLabel->price }}</th>
+                <th class="text-right pr-6 w-[20%] py-2">{{ $document->columnLabel->amount }}</th>
             </tr>
             </thead>
-            <tbody class="text-xs border-b-2 border-gray-300 leading-8">
+            <tbody class="text-xs border-b-2 border-gray-300">
             @foreach($document->lineItems as $item)
                 <tr>
-                    <td class="text-left pl-6 font-semibold">{{ $item->name }}</td>
-                    <td class="text-center">{{ $item->quantity }}</td>
-                    <td class="text-right">{{ $item->unitPrice }}</td>
-                    <td class="text-right pr-6">{{ $item->subtotal }}</td>
+                    <td class="text-left pl-6 font-semibold py-3">
+                        {{ $item->name }}
+                        @if($item->description)
+                            <div class="text-gray-600 font-normal line-clamp-2 mt-1">{{ $item->description }}</div>
+                        @endif
+                    </td>
+                    <td class="text-center py-3">{{ $item->quantity }}</td>
+                    <td class="text-right py-3">{{ $item->unitPrice }}</td>
+                    <td class="text-right pr-6 py-3">{{ $item->subtotal }}</td>
                 </tr>
             @endforeach
             </tbody>
-            <tfoot class="text-xs leading-loose">
+            <tfoot class="text-xs summary-section">
+            @if($document->subtotal)
+                <tr>
+                    <td class="pl-6 py-2" colspan="2"></td>
+                    <td class="text-right font-semibold py-2">Subtotal:</td>
+                    <td class="text-right pr-6 py-2">{{ $document->subtotal }}</td>
+                </tr>
+            @endif
+            @if($document->discount)
+                <tr class="text-success-800">
+                    <td class="pl-6 py-2" colspan="2"></td>
+                    <td class="text-right py-2">Discount:</td>
+                    <td class="text-right pr-6 py-2">
+                        ({{ $document->discount }})
+                    </td>
+                </tr>
+            @endif
+            @if($document->tax)
+                <tr>
+                    <td class="pl-6 py-2" colspan="2"></td>
+                    <td class="text-right py-2">Tax:</td>
+                    <td class="text-right pr-6 py-2">{{ $document->tax }}</td>
+                </tr>
+            @endif
             <tr>
-                <td class="pl-6" colspan="2"></td>
-                <td class="text-right font-semibold">Subtotal:</td>
-                <td class="text-right pr-6">{{ $document->subtotal }}</td>
+                <td class="pl-6 py-2" colspan="2"></td>
+                <td class="text-right font-semibold border-t py-2">Total:</td>
+                <td class="text-right border-t pr-6 py-2">{{ $document->total }}</td>
             </tr>
-            <tr class="text-success-800">
-                <td class="pl-6" colspan="2"></td>
-                <td class="text-right">Discount (5%):</td>
-                <td class="text-right pr-6">({{ $document->discount }})</td>
-            </tr>
-            <tr>
-                <td class="pl-6" colspan="2"></td>
-                <td class="text-right">Tax:</td>
-                <td class="text-right pr-6">{{ $document->tax }}</td>
-            </tr>
-            <tr>
-                <td class="pl-6" colspan="2"></td>
-                <td class="text-right font-semibold border-t">Total:</td>
-                <td class="text-right border-t pr-6">{{ $document->total }}</td>
-            </tr>
-            <tr>
-                <td class="pl-6" colspan="2"></td>
-                <td class="text-right font-semibold border-t-4 border-double">{{ $document->label->amountDue }}
-                    ({{ $document->currencyCode }}):
-                </td>
-                <td class="text-right border-t-4 border-double pr-6">{{ $document->amountDue }}</td>
-            </tr>
+            @if($document->amountDue)
+                <tr>
+                    <td class="pl-6 py-2" colspan="2"></td>
+                    <td class="text-right font-semibold border-t-4 border-double py-2">{{ $document->label->amountDue }}
+                        ({{ $document->currencyCode }}):
+                    </td>
+                    <td class="text-right border-t-4 border-double pr-6 py-2">{{ $document->amountDue }}</td>
+                </tr>
+            @endif
             </tfoot>
         </table>
     </x-company.document-template.line-items>
 
     <!-- Footer Notes -->
-    <x-company.document-template.footer class="default-template-footer min-h-48 flex flex-col text-xs p-6">
+    <x-company.document-template.footer class="classic-template-footer flex flex-col text-xs p-6">
         <div>
             <h4 class="font-semibold mb-2">Terms & Conditions</h4>
             <p class="break-words line-clamp-4">{{ $document->terms }}</p>
