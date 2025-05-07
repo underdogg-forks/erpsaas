@@ -41,13 +41,13 @@
             <hr class="grow-[2] py-0.5 border-solid border-y-2" style="border-color: {{ $document->accentColor }};">
         </div>
         @if ($document->subheader)
-            <p class="text-xs text-center text-gray-600 dark:text-gray-400">{{ $document->subheader }}</p>
+            <p class="text-xs text-center text-gray-600">{{ $document->subheader }}</p>
         @endif
 
         <div class="flex justify-between items-end">
             <!-- Billing Details -->
             <div class="text-xs">
-                <h3 class="text-gray-600 dark:text-gray-400 font-medium mb-1">BILL TO</h3>
+                <h3 class="text-gray-600 font-medium mb-1">BILL TO</h3>
                 <p class="text-xs font-bold">{{ $document->client->name }}</p>
                 @if($formattedAddress = $document->client->getFormattedAddressHtml())
                     {!! $formattedAddress !!}
@@ -118,7 +118,7 @@
                         <td class="text-right py-2">{{ $document->subtotal }}</td>
                     </tr>
                     @if($document->discount)
-                        <tr class="text-success-800 dark:text-success-600">
+                        <tr class="text-success-800">
                             <td class="text-right py-2">Discount:</td>
                             <td class="text-right py-2">
                                 ({{ $document->discount }})

@@ -101,3 +101,7 @@
         box-shadow: none !important;
     }
 }
+
+.doc-template-container {
+    color: initial;
+}

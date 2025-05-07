@@ -29,7 +29,7 @@
         <div class="flex justify-between items-end">
             <!-- Billing Details -->
             <div class="text-sm">
-                <h3 class="text-gray-600 dark:text-gray-400 font-medium mb-1">BILL TO</h3>
+                <h3 class="text-gray-600 font-medium mb-1">BILL TO</h3>
                 <p class="text-sm font-bold"
                    style="color: {{ $document->accentColor }}">{{ $document->client->name }}</p>
 
@@ -69,7 +69,7 @@
     <x-company.document-template.line-items class="modern-template-line-items">
         <table class="w-full text-left table-fixed">
             <thead class="text-sm leading-relaxed">
-            <tr class="text-gray-600 dark:text-gray-400">
+            <tr class="text-gray-600">
                 <th class="text-left pl-6 w-[50%] py-4">{{ $document->columnLabel->items }}</th>
                 <th class="text-center w-[10%] py-4">{{ $document->columnLabel->units }}</th>
                 <th class="text-right w-[20%] py-4">{{ $document->columnLabel->price }}</th>
@@ -78,7 +78,7 @@
             </thead>
             <tbody class="text-sm border-y-2">
             @foreach($document->lineItems as $index => $item)
-                <tr @class(['bg-gray-100 dark:bg-gray-800' => $index % 2 === 0])>
+                <tr @class(['bg-gray-100' => $index % 2 === 0])>
                     <td class="text-left pl-6 font-semibold py-3">
                         {{ $item->name }}
                         @if($item->description)
@@ -100,7 +100,7 @@
                 </tr>
             @endif
             @if($document->discount)
-                <tr class="text-success-800 dark:text-success-600">
+                <tr class="text-success-800">
                     <td class="pl-6 py-2" colspan="2"></td>
                     <td class="text-right py-2">Discount:</td>
                     <td class="text-right pr-6 py-2">

@@ -25,7 +25,7 @@
                 <div>
                     <h1 class="text-3xl font-light uppercase">{{ $document->header }}</h1>
                     @if ($document->subheader)
-                        <p class="text-xs text-gray-600 dark:text-gray-400">{{ $document->subheader }}</p>
+                        <p class="text-xs text-gray-600">{{ $document->subheader }}</p>
                     @endif
                 </div>
                 <div class="text-xs">
@@ -42,7 +42,7 @@
         <div class="flex justify-between items-end">
             <!-- Billing Details -->
             <div class="text-xs">
-                <h3 class="text-gray-600 dark:text-gray-400 font-medium mb-1">BILL TO</h3>
+                <h3 class="text-gray-600 font-medium mb-1">BILL TO</h3>
                 <p class="text-xs font-bold">{{ $document->client->name }}</p>
                 @if($formattedAddress = $document->client->getFormattedAddressHtml())
                     {!! $formattedAddress !!}
@@ -101,7 +101,7 @@
                 <td class="text-right font-semibold">Subtotal:</td>
                 <td class="text-right pr-6">{{ $document->subtotal }}</td>
             </tr>
-            <tr class="text-success-800 dark:text-success-600">
+            <tr class="text-success-800">
                 <td class="pl-6" colspan="2"></td>
                 <td class="text-right">Discount (5%):</td>
                 <td class="text-right pr-6">({{ $document->discount }})</td>

@@ -12,7 +12,7 @@
                 <div>
                     <h1 class="text-3xl font-light uppercase">{{ $document->header }}</h1>
                     @if ($document->subheader)
-                        <p class="text-sm text-gray-600 dark:text-gray-400">{{ $document->subheader }}</p>
+                        <p class="text-sm text-gray-600">{{ $document->subheader }}</p>
                     @endif
                 </div>
                 <div class="text-sm">
@@ -29,7 +29,7 @@
         <div class="flex justify-between items-end">
             <!-- Billing Details -->
             <div class="text-sm">
-                <h3 class="text-gray-600 dark:text-gray-400 font-medium mb-1">BILL TO</h3>
+                <h3 class="text-gray-600 font-medium mb-1">BILL TO</h3>
                 <p class="text-sm font-bold">{{ $document->client->name }}</p>
                 @if($formattedAddress = $document->client->getFormattedAddressHtml())
                     {!! $formattedAddress !!}
@@ -98,7 +98,7 @@
                 </tr>
             @endif
             @if($document->discount)
-                <tr class="text-success-800 dark:text-success-600">
+                <tr class="text-success-800">
                     <td class="pl-6 py-2" colspan="2"></td>
                     <td class="text-right py-2">Discount:</td>
                     <td class="text-right pr-6 py-2">
