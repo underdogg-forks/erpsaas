@@ -8,8 +8,8 @@ use App\Enums\Accounting\JournalEntryType;
 use App\Enums\Accounting\TransactionType;
 use App\Facades\Accounting;
 use App\Filament\Company\Pages\Service\ConnectedAccount;
+use App\Filament\Forms\Components\CustomTableRepeater;
 use App\Filament\Forms\Components\DateRangeSelect;
-use App\Filament\Forms\Components\JournalEntryRepeater;
 use App\Filament\Tables\Actions\ReplicateBulkAction;
 use App\Models\Accounting\Account;
 use App\Models\Accounting\JournalEntry;
@@ -538,19 +538,18 @@ class Transactions extends Page implements HasTable
             ]);
     }
 
-    protected function getJournalEntriesTableRepeater(): JournalEntryRepeater
+    protected function getJournalEntriesTableRepeater(): CustomTableRepeater
     {
-        return JournalEntryRepeater::make('journalEntries')
+        return CustomTableRepeater::make('journalEntries')
             ->relationship('journalEntries')
             ->hiddenLabel()
             ->columns(4)
             ->headers($this->getJournalEntriesTableRepeaterHeaders())
             ->schema($this->getJournalEntriesTableRepeaterSchema())
-            ->streamlined()
-            ->deletable(fn (JournalEntryRepeater $repeater) => $repeater->getItemsCount() > 2)
+            ->deletable(fn (CustomTableRepeater $repeater) => $repeater->getItemsCount() > 2)
             ->deleteAction(function (Forms\Components\Actions\Action $action) {
                 return $action
-                    ->action(function (array $arguments, JournalEntryRepeater $component): void {
+                    ->action(function (array $arguments, CustomTableRepeater $component): void {
                         $items = $component->getState();
 
                         $amount = $items[$arguments['item']]['amount'];
@@ -565,6 +564,44 @@ class Transactions extends Page implements HasTable
                         $component->callAfterStateUpdated();
                     });
             })
+            ->rules([
+                function () {
+                    return function (string $attribute, $value, \Closure $fail) {
+                        if (empty($value) || ! is_array($value)) {
+                            $fail('Journal entries are required.');
+
+                            return;
+                        }
+
+                        $hasDebit = false;
+                        $hasCredit = false;
+
+                        foreach ($value as $entry) {
+                            if (! isset($entry['type'])) {
+                                continue;
+                            }
+
+                            if (JournalEntryType::parse($entry['type'])->isDebit()) {
+                                $hasDebit = true;
+                            } elseif (JournalEntryType::parse($entry['type'])->isCredit()) {
+                                $hasCredit = true;
+                            }
+
+                            if ($hasDebit && $hasCredit) {
+                                break;
+                            }
+                        }
+
+                        if (! $hasDebit) {
+                            $fail('At least one debit entry is required.');
+                        }
+
+                        if (! $hasCredit) {
+                            $fail('At least one credit entry is required.');
+                        }
+                    };
+                },
+            ])
             ->minItems(2)
             ->defaultItems(2)
             ->addable(false)
@@ -634,7 +671,7 @@ class Transactions extends Page implements HasTable
             ->color($type->isDebit() ? 'primary' : 'gray')
             ->iconSize(IconSize::Small)
             ->iconPosition(IconPosition::Before)
-            ->action(function (JournalEntryRepeater $component) use ($type) {
+            ->action(function (CustomTableRepeater $component) use ($type) {
                 $state = $component->getState();
                 $newUuid = (string) Str::uuid();
                 $state[$newUuid] = $this->defaultEntry($type);

@@ -5,12 +5,16 @@ namespace App\Filament\Forms\Components;
 use Awcodes\TableRepeater\Components\TableRepeater;
 use Closure;
 use Filament\Forms\Components\Actions\Action;
+use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Contracts\View\View;
 
 class CustomTableRepeater extends TableRepeater
 {
     protected bool | Closure $spreadsheet = false;
 
     protected bool | Closure $reorderAtStart = false;
+
+    protected View | Htmlable | Closure | null $footerItem = null;
 
     /**
      * @var array<string> | Closure | null
@@ -46,6 +50,23 @@ class CustomTableRepeater extends TableRepeater
     public function isReorderAtStart(): bool
     {
         return $this->evaluate($this->reorderAtStart) && $this->isReorderable();
+    }
+
+    public function footerItem(View | Htmlable | Closure | null $footer = null): static
+    {
+        $this->footerItem = $footer;
+
+        return $this;
+    }
+
+    public function getFooterItem(): View | Htmlable | null
+    {
+        return $this->evaluate($this->footerItem);
+    }
+
+    public function hasFooterItem(): bool
+    {
+        return $this->footerItem !== null;
     }
 
     /**
