@@ -383,6 +383,9 @@ class Transactions extends Page implements HasTable
                             ->label('Edit journal transaction')
                             ->modalHeading('Journal Entry')
                             ->modalWidth(MaxWidth::Screen)
+                            ->extraModalWindowAttributes([
+                                'class' => 'journal-transaction-modal',
+                            ])
                             ->form(fn (Form $form) => $this->journalTransactionForm($form))
                             ->afterFormFilled(function (Transaction $transaction) {
                                 $debitAmounts = $transaction->journalEntries->sumDebits()->getAmount();
