@@ -32,6 +32,9 @@ class DocumentTotalViewModel
 
         $grandTotalInCents = $subtotalInCents + ($taxTotalInCents - $discountTotalInCents);
 
+        // Amount Due is the same as Grand Total for now, but can be modified later to account for payments
+        $amountDueInCents = $grandTotalInCents;
+
         $conversionMessage = $this->buildConversionMessage($grandTotalInCents, $currencyCode, $defaultCurrencyCode);
 
         return [
@@ -39,6 +42,8 @@ class DocumentTotalViewModel
             'taxTotal' => CurrencyConverter::formatCentsToMoney($taxTotalInCents, $currencyCode),
             'discountTotal' => CurrencyConverter::formatCentsToMoney($discountTotalInCents, $currencyCode),
             'grandTotal' => CurrencyConverter::formatCentsToMoney($grandTotalInCents, $currencyCode),
+            'amountDue' => CurrencyConverter::formatCentsToMoney($amountDueInCents, $currencyCode),
+            'currencyCode' => $currencyCode,
             'conversionMessage' => $conversionMessage,
         ];
     }
