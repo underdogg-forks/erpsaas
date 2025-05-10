@@ -20,7 +20,7 @@
                     <div class="es-table__header-ctn"></div>
                     <div class="es-table__content overflow-x-auto">
                         <table
-                            class="es-table table-fixed w-full divide-y divide-gray-200 text-start text-sm dark:divide-white/5">
+                            class="es-table w-full min-w-[80rem] divide-y divide-gray-200 text-start text-sm dark:divide-white/5">
                             <colgroup>
                                 <col span="1" style="width: 12.5%;">
                                 <col span="1" style="width: 20%;">
