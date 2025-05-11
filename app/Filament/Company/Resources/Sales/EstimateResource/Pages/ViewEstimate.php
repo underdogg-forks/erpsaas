@@ -17,7 +17,6 @@ use Filament\Resources\Pages\ViewRecord;
 use Filament\Support\Enums\FontWeight;
 use Filament\Support\Enums\IconPosition;
 use Filament\Support\Enums\IconSize;
-use Filament\Support\Enums\MaxWidth;
 use Illuminate\Support\HtmlString;
 
 class ViewEstimate extends ViewRecord
@@ -27,11 +26,6 @@ class ViewEstimate extends ViewRecord
     protected $listeners = [
         'refresh' => '$refresh',
     ];
-
-    public function getMaxContentWidth(): MaxWidth | string | null
-    {
-        return MaxWidth::SixExtraLarge;
-    }
 
     protected function getHeaderActions(): array
     {

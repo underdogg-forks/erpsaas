@@ -19,18 +19,12 @@ use Filament\Resources\Pages\ViewRecord;
 use Filament\Support\Enums\FontWeight;
 use Filament\Support\Enums\IconPosition;
 use Filament\Support\Enums\IconSize;
-use Filament\Support\Enums\MaxWidth;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 
 class ViewRecurringInvoice extends ViewRecord
 {
     protected static string $resource = RecurringInvoiceResource::class;
-
-    public function getMaxContentWidth(): MaxWidth | string | null
-    {
-        return MaxWidth::SixExtraLarge;
-    }
 
     protected function getHeaderActions(): array
     {
