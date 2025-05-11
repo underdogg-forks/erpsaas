@@ -12,9 +12,8 @@
 </style>
 
 <x-company.document-template.container class="modern-template-container" preview>
-
     <!-- Colored Header with Logo -->
-    <x-company.document-template.header class="bg-gray-800 h-20">
+    <x-company.document-template.header class="bg-gray-800 h-24">
         <!-- Logo -->
         <div class="w-2/3">
             @if($document->logo && $document->showLogo)
@@ -23,18 +22,18 @@
         </div>
 
         <!-- Ribbon Container -->
-        <div class="w-1/3 absolute right-0 top-0 p-3 h-28 flex flex-col justify-end rounded-bl-sm"
+        <div class="w-1/3 absolute right-0 top-0 p-3 h-32 flex flex-col justify-end rounded-bl-sm"
              style="background: {{ $document->accentColor }};">
             @if($document->header)
-                <h1 class="text-3xl font-bold text-white text-center uppercase">{{ $document->header }}</h1>
+                <h1 class="text-4xl font-bold text-white text-center uppercase">{{ $document->header }}</h1>
             @endif
         </div>
     </x-company.document-template.header>
 
     <!-- Company Details -->
     <x-company.document-template.metadata class="modern-template-metadata space-y-8">
-        <div class="text-xs">
-            <h2 class="text-base font-semibold">{{ $document->company->name }}</h2>
+        <div class="text-sm">
+            <h2 class="text-lg font-semibold">{{ $document->company->name }}</h2>
             @if($formattedAddress = $document->company->getFormattedAddressHtml())
                 {!! $formattedAddress !!}
             @endif
@@ -42,9 +41,9 @@
 
         <div class="flex justify-between items-end">
             <!-- Billing Details -->
-            <div class="text-xs">
+            <div class="text-sm">
                 <h3 class="text-gray-600 font-medium mb-1">BILL TO</h3>
-                <p class="text-xs font-bold"
+                <p class="text-sm font-bold"
                    style="color: {{ $document->accentColor }}">{{ $document->client->name }}</p>
 
                 @if($formattedAddress = $document->client->getFormattedAddressHtml())
@@ -52,7 +51,7 @@
                 @endif
             </div>
 
-            <div class="text-xs">
+            <div class="text-sm">
                 <table class="min-w-full">
                     <tbody>
                     <tr>
@@ -82,7 +81,7 @@
     <!-- Line Items Table -->
     <x-company.document-template.line-items class="modern-template-line-items">
         <table class="w-full text-left table-fixed">
-            <thead class="text-xs leading-relaxed">
+            <thead class="text-sm leading-relaxed">
             <tr class="text-gray-600">
                 <th class="text-left pl-6 w-[50%] py-4">{{ $document->columnLabel->items }}</th>
                 <th class="text-center w-[10%] py-4">{{ $document->columnLabel->units }}</th>
@@ -90,7 +89,7 @@
                 <th class="text-right pr-6 w-[20%] py-4">{{ $document->columnLabel->amount }}</th>
             </tr>
             </thead>
-            <tbody class="text-xs border-y-2">
+            <tbody class="text-sm border-y-2">
             @foreach($document->lineItems as $index => $item)
                 <tr @class(['bg-gray-100' => $index % 2 === 0])>
                     <td class="text-left pl-6 font-semibold py-3">
@@ -105,7 +104,7 @@
                 </tr>
             @endforeach
             </tbody>
-            <tfoot class="text-xs summary-section">
+            <tfoot class="text-sm summary-section">
             @if($document->subtotal)
                 <tr>
                     <td class="pl-6 py-2" colspan="2"></td>
@@ -149,11 +148,11 @@
 
     <!-- Footer Notes -->
     <x-company.document-template.footer class="modern-template-footer">
-        <h4 class="font-semibold px-6 text-xs" style="color: {{ $document->accentColor }}">
+        <h4 class="font-semibold px-6 text-sm" style="color: {{ $document->accentColor }}">
             Terms & Conditions
         </h4>
         <span class="border-t-2 my-2 border-gray-300 block w-full"></span>
-        <div class="flex justify-between space-x-4 px-6 text-xs">
+        <div class="flex justify-between space-x-4 px-6 text-sm">
             <p class="w-1/2 break-words line-clamp-4">{{ $document->terms }}</p>
             <p class="w-1/2 break-words line-clamp-4">{{ $document->footer }}</p>
         </div>

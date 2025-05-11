@@ -1,3 +1,3 @@
-<footer {{ $attributes->class(['doc-template-footer min-h-60']) }}>
+<footer {{ $attributes->class(['doc-template-footer']) }}>
     {{ $slot }}
 </footer>

@@ -145,7 +145,9 @@ class DocumentDefaultResource extends Resource
                             ->hiddenLabel()
                             ->visible(static fn (Get $get) => $get('template') === 'classic')
                             ->view('filament.company.components.document-templates.classic'),
-                    ])->columnSpan(2),
+                    ])->columnSpan([
+                        'lg' => 2,
+                    ]),
             ])->columns(3);
     }
 
