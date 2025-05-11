@@ -32,8 +32,7 @@ class DocumentTotalViewModel
 
         $grandTotalInCents = $subtotalInCents + ($taxTotalInCents - $discountTotalInCents);
 
-        // Amount Due is the same as Grand Total for now, but can be modified later to account for payments
-        $amountDueInCents = $grandTotalInCents;
+        $amountDueInCents = $this->calculateAmountDueInCents($grandTotalInCents, $currencyCode);
 
         $conversionMessage = $this->buildConversionMessage($grandTotalInCents, $currencyCode, $defaultCurrencyCode);
 
@@ -127,5 +126,13 @@ class DocumentTotalViewModel
             $formattedRate,
             $defaultCurrencyCode
         );
+    }
+
+    private function calculateAmountDueInCents(int $grandTotalInCents, string $currencyCode): int
+    {
+        $amountPaid = $this->data['amount_paid'] ?? '0.00';
+        $amountPaidInCents = CurrencyConverter::convertToCents($amountPaid, $currencyCode);
+
+        return $grandTotalInCents - $amountPaidInCents;
     }
 }
