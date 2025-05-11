@@ -5,18 +5,14 @@
 <div
     @class([
         'doc-template-container flex justify-center',
-        'scale-[0.85] origin-top' => $preview === true,
     ])
 >
-    <div class="overflow-auto">
+    <div class="max-w-full overflow-x-auto shadow-xl ring-1 ring-gray-950/5 dark:ring-white/10">
         <div
             @class([
-                'doc-template-paper bg-[#ffffff] shadow-xl ring-1 ring-gray-950/5 dark:ring-white/10',
-                'w-[51.25rem] h-[64rem]' => $preview === false,
-                'w-[48rem] h-[61.75rem]' => $preview === true,
-            ])
-            @style([
-                'scrollbar-width: thin;' => $preview === false,
+                'doc-template-paper bg-[#ffffff] overflow-y-auto',
+                'w-[51.25rem] h-[64rem]' => ! $preview,
+                'w-[48rem] min-h-[61.75rem] preview' => $preview,
             ])
         >
             {{ $slot }}

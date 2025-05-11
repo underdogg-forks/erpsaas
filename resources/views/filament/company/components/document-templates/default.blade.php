@@ -1,17 +1,4 @@
-@php
-    $data = $this->form->getRawState();
-    $document = \App\DTO\DocumentPreviewDTO::fromSettings($this->record, $data);
-@endphp
-
-{!! $document->getFontHtml() !!}
-
-<style>
-    .doc-template-paper {
-        font-family: '{{ $document->font->getLabel() }}', sans-serif;
-    }
-</style>
-
-<x-company.document-template.container class="default-template-container" preview>
+<x-company.document-template.container class="default-template-container" :preview="$preview">
 
     <x-company.document-template.header class="default-template-header border-b">
         <div class="w-1/3">
@@ -25,11 +12,11 @@
                 <div>
                     <h1 class="text-3xl font-light uppercase">{{ $document->header }}</h1>
                     @if ($document->subheader)
-                        <p class="text-xs text-gray-600">{{ $document->subheader }}</p>
+                        <p class="text-sm text-gray-600">{{ $document->subheader }}</p>
                     @endif
                 </div>
-                <div class="text-xs">
-                    <strong class="text-xs block">{{ $document->company->name }}</strong>
+                <div class="text-sm">
+                    <strong class="text-sm block">{{ $document->company->name }}</strong>
                     @if($formattedAddress = $document->company->getFormattedAddressHtml())
                         {!! $formattedAddress !!}
                     @endif
@@ -41,15 +28,15 @@
     <x-company.document-template.metadata class="default-template-metadata space-y-4">
         <div class="flex justify-between items-end">
             <!-- Billing Details -->
-            <div class="text-xs">
+            <div class="text-sm">
                 <h3 class="text-gray-600 font-medium mb-1">BILL TO</h3>
-                <p class="text-xs font-bold">{{ $document->client->name }}</p>
+                <p class="text-sm font-bold">{{ $document->client->name }}</p>
                 @if($formattedAddress = $document->client->getFormattedAddressHtml())
                     {!! $formattedAddress !!}
                 @endif
             </div>
 
-            <div class="text-xs">
+            <div class="text-sm">
                 <table class="min-w-full">
                     <tbody>
                     <tr>
@@ -79,7 +66,7 @@
     <!-- Line Items Table -->
     <x-company.document-template.line-items class="default-template-line-items">
         <table class="w-full text-left table-fixed">
-            <thead class="text-xs leading-relaxed" style="background: {{ $document->accentColor }}">
+            <thead class="text-sm leading-relaxed" style="background: {{ $document->accentColor }}">
             <tr class="text-white">
                 <th class="text-left pl-6 w-[50%] py-2">{{ $document->columnLabel->items }}</th>
                 <th class="text-center w-[10%] py-2">{{ $document->columnLabel->units }}</th>
@@ -87,7 +74,7 @@
                 <th class="text-right pr-6 w-[20%] py-2">{{ $document->columnLabel->amount }}</th>
             </tr>
             </thead>
-            <tbody class="text-xs border-b-2 border-gray-300">
+            <tbody class="text-sm border-b-2 border-gray-300">
             @foreach($document->lineItems as $item)
                 <tr>
                     <td class="text-left pl-6 font-semibold py-3">
@@ -102,7 +89,7 @@
                 </tr>
             @endforeach
             </tbody>
-            <tfoot class="text-xs summary-section">
+            <tfoot class="text-sm summary-section">
             @if($document->subtotal)
                 <tr>
                     <td class="pl-6 py-2" colspan="2"></td>
@@ -145,7 +132,7 @@
     </x-company.document-template.line-items>
 
     <!-- Footer Notes -->
-    <x-company.document-template.footer class="classic-template-footer flex flex-col text-xs p-6">
+    <x-company.document-template.footer class="default-template-footer flex flex-col text-sm p-6">
         <div>
             <h4 class="font-semibold mb-2">Terms & Conditions</h4>
             <p class="break-words line-clamp-4">{{ $document->terms }}</p>

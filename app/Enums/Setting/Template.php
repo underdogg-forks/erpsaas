@@ -2,10 +2,13 @@
 
 namespace App\Enums\Setting;
 
+use App\Enums\Concerns\ParsesEnum;
 use Filament\Support\Contracts\HasLabel;
 
 enum Template: string implements HasLabel
 {
+    use ParsesEnum;
+
     case Default = 'default';
     case Modern = 'modern';
     case Classic = 'classic';

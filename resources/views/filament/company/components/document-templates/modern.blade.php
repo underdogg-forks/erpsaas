@@ -1,17 +1,4 @@
-@php
-    $data = $this->form->getRawState();
-    $document = \App\DTO\DocumentPreviewDTO::fromSettings($this->record, $data);
-@endphp
-
-{!! $document->getFontHtml() !!}
-
-<style>
-    .doc-template-paper {
-        font-family: '{{ $document->font->getLabel() }}', sans-serif;
-    }
-</style>
-
-<x-company.document-template.container class="modern-template-container" preview>
+<x-company.document-template.container class="modern-template-container" :preview="$preview">
     <!-- Colored Header with Logo -->
     <x-company.document-template.header class="bg-gray-800 h-24">
         <!-- Logo -->
@@ -33,7 +20,7 @@
     <!-- Company Details -->
     <x-company.document-template.metadata class="modern-template-metadata space-y-8">
         <div class="text-sm">
-            <h2 class="text-lg font-semibold">{{ $document->company->name }}</h2>
+            <strong class="text-sm block">{{ $document->company->name }}</strong>
             @if($formattedAddress = $document->company->getFormattedAddressHtml())
                 {!! $formattedAddress !!}
             @endif

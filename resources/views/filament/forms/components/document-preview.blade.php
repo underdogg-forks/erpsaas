@@ -1,5 +1,6 @@
 @php
-    $document = \App\DTO\DocumentDTO::fromModel($getRecord());
+    $data = $this->form->getRawState();
+    $document = \App\DTO\DocumentPreviewDTO::fromSettings($this->record, $data);
     $template = $getTemplate();
     $preview = $isPreview();
 @endphp

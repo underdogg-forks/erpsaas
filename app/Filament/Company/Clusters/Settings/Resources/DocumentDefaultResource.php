@@ -9,6 +9,7 @@ use App\Enums\Setting\PaymentTerms;
 use App\Enums\Setting\Template;
 use App\Filament\Company\Clusters\Settings;
 use App\Filament\Company\Clusters\Settings\Resources\DocumentDefaultResource\Pages;
+use App\Filament\Forms\Components\DocumentPreview;
 use App\Models\Setting\DocumentDefault;
 use Filament\Forms;
 use Filament\Forms\Components\Component;
@@ -128,24 +129,10 @@ class DocumentDefaultResource extends Resource
                             ->options(Template::class),
                         ...static::getColumnLabelsSchema(),
                     ])->columnSpan(1),
-                Forms\Components\Grid::make()
-                    ->schema([
-                        Forms\Components\ViewField::make('preview.default')
-                            ->columnSpan(2)
-                            ->hiddenLabel()
-                            ->visible(static fn (Get $get) => $get('template') === 'default')
-                            ->view('filament.company.components.document-templates.default'),
-                        Forms\Components\ViewField::make('preview.modern')
-                            ->columnSpan(2)
-                            ->hiddenLabel()
-                            ->visible(static fn (Get $get) => $get('template') === 'modern')
-                            ->view('filament.company.components.document-templates.modern'),
-                        Forms\Components\ViewField::make('preview.classic')
-                            ->columnSpan(2)
-                            ->hiddenLabel()
-                            ->visible(static fn (Get $get) => $get('template') === 'classic')
-                            ->view('filament.company.components.document-templates.classic'),
-                    ])->columnSpan([
+                DocumentPreview::make()
+                    ->template(static fn (Get $get) => Template::parse($get('template')))
+                    ->preview()
+                    ->columnSpan([
                         'lg' => 2,
                     ]),
             ])->columns(3);

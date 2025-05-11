@@ -5,6 +5,7 @@ namespace App\Filament\Infolists\Components;
 use App\Enums\Accounting\DocumentType;
 use App\Enums\Setting\Template;
 use App\Models\Setting\DocumentDefault;
+use Closure;
 use Filament\Infolists\Components\Grid;
 
 class DocumentPreview extends Grid
@@ -12,6 +13,8 @@ class DocumentPreview extends Grid
     protected string $view = 'filament.infolists.components.document-preview';
 
     protected DocumentType $documentType = DocumentType::Invoice;
+
+    protected bool | Closure $isPreview = false;
 
     protected function setUp(): void
     {
@@ -31,9 +34,21 @@ class DocumentPreview extends Grid
         return $this;
     }
 
+    public function preview(bool | Closure $condition = true): static
+    {
+        $this->isPreview = $condition;
+
+        return $this;
+    }
+
     public function getType(): DocumentType
     {
         return $this->documentType;
+    }
+
+    public function isPreview(): bool
+    {
+        return (bool) $this->evaluate($this->isPreview);
     }
 
     public function getTemplate(): Template
