@@ -36,14 +36,36 @@ class DocumentTotalViewModel
 
         $conversionMessage = $this->buildConversionMessage($grandTotalInCents, $currencyCode, $defaultCurrencyCode);
 
+        $discountMethod = DocumentDiscountMethod::parse($this->data['discount_method']);
+        $isPerDocumentDiscount = $discountMethod->isPerDocument();
+
+        $taxTotal = $taxTotalInCents > 0
+            ? CurrencyConverter::formatCentsToMoney($taxTotalInCents, $currencyCode)
+            : null;
+
+        $discountTotal = ($isPerDocumentDiscount || $discountTotalInCents > 0)
+            ? CurrencyConverter::formatCentsToMoney($discountTotalInCents, $currencyCode)
+            : null;
+
+        $subtotal = ($taxTotal || $discountTotal)
+            ? CurrencyConverter::formatCentsToMoney($subtotalInCents, $currencyCode)
+            : null;
+
+        $grandTotal = CurrencyConverter::formatCentsToMoney($grandTotalInCents, $currencyCode);
+
+        $amountDue = $this->documentType !== DocumentType::Estimate
+            ? CurrencyConverter::formatCentsToMoney($amountDueInCents, $currencyCode)
+            : null;
+
         return [
-            'subtotal' => CurrencyConverter::formatCentsToMoney($subtotalInCents, $currencyCode),
-            'taxTotal' => CurrencyConverter::formatCentsToMoney($taxTotalInCents, $currencyCode),
-            'discountTotal' => CurrencyConverter::formatCentsToMoney($discountTotalInCents, $currencyCode),
-            'grandTotal' => CurrencyConverter::formatCentsToMoney($grandTotalInCents, $currencyCode),
-            'amountDue' => CurrencyConverter::formatCentsToMoney($amountDueInCents, $currencyCode),
+            'subtotal' => $subtotal,
+            'taxTotal' => $taxTotal,
+            'discountTotal' => $discountTotal,
+            'grandTotal' => $grandTotal,
+            'amountDue' => $amountDue,
             'currencyCode' => $currencyCode,
             'conversionMessage' => $conversionMessage,
+            'isPerDocumentDiscount' => $isPerDocumentDiscount,
         ];
     }
 

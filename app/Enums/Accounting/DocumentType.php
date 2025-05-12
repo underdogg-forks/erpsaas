@@ -79,7 +79,7 @@ enum DocumentType: string implements HasIcon, HasLabel
                 referenceNumber: 'Reference Number',
                 date: 'Estimate Date',
                 dueDate: 'Expiration Date',
-                amountDue: 'Grand Total',
+                amountDue: null,
             ),
             self::Bill => new DocumentLabelDTO(
                 title: self::Bill->getLabel(),

@@ -128,7 +128,7 @@
                         </tr>
                     @endif
                     <tr>
-                        <td class="text-right font-semibold border-t py-2">Total:</td>
+                        <td class="text-right font-semibold border-t py-2">{{ $document->amountDue ? 'Total' : 'Grand Total' }}:</td>
                         <td class="text-right border-t py-2">{{ $document->total }}</td>
                     </tr>
                     @if($document->amountDue)
