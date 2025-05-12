@@ -40,13 +40,22 @@
             .doc-template-container {
                 padding: 0 !important;
                 margin: 0 !important;
+
+                > div {
+                    overflow: hidden !important;
+                    max-height: none !important;
+                    max-width: none !important;
+                    box-shadow: none !important;
+                    border-radius: 0 !important;
+                }
             }
 
             .doc-template-paper {
-                box-shadow: none !important;
-                border-radius: 0 !important;
                 overflow: hidden !important;
                 max-height: none !important;
+                max-width: none !important;
+                height: auto !important;
+                width: auto !important;
             }
 
             .doc-template-line-items .summary-section {
@@ -67,7 +76,7 @@
     </style>
 </head>
 <body>
-    @include("filament.infolists.components.document-templates.{$template->value}", [
+    @include("filament.company.components.document-templates.{$template->value}", [
         'document' => $document,
         'preview' => false,
     ])
