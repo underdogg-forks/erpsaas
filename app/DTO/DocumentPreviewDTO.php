@@ -2,6 +2,7 @@
 
 namespace App\DTO;
 
+use App\Enums\Accounting\DocumentType;
 use App\Enums\Setting\Font;
 use App\Enums\Setting\PaymentTerms;
 use App\Models\Setting\DocumentDefault;
@@ -14,6 +15,10 @@ readonly class DocumentPreviewDTO extends DocumentDTO
         $company = $settings->company;
 
         $paymentTerms = PaymentTerms::parse($data['payment_terms']) ?? $settings->payment_terms;
+
+        $amountDue = $settings->type !== DocumentType::Estimate ?
+            self::formatToMoney('950', null) :
+            null;
 
         return new self(
             header: $data['header'] ?? $settings->header ?? 'Invoice',
@@ -30,7 +35,7 @@ readonly class DocumentPreviewDTO extends DocumentDTO
             discount: self::formatToMoney('100', null),
             tax: self::formatToMoney('50', null),
             total: self::formatToMoney('950', null),
-            amountDue: self::formatToMoney('950', null),
+            amountDue: $amountDue,
             company: CompanyDTO::fromModel($company),
             client: ClientPreviewDTO::fake(),
             lineItems: LineItemPreviewDTO::fakeItems(),

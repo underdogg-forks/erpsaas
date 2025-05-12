@@ -222,30 +222,33 @@
             </div>
         @endif
 
-        @if ($addAction->isVisible() || filled($visibleExtraActions))
-            <ul
-                @class([
-                    'relative flex gap-4',
-                    match ($getAddActionAlignment()) {
-                        Alignment::Start, Alignment::Left => 'justify-start',
-                        Alignment::End, Alignment::Right => 'justify-end',
-                        default =>  'justify-center',
-                    },
-                ])
-            >
-                @if ($addAction->isVisible())
-                    <li>
-                        {{ $addAction }}
-                    </li>
+        @if ($addAction->isVisible() || filled($visibleExtraActions) || $hasFooterItem())
+            <div class="flex justify-between items-start">
+                <!-- Actions grouped to the left -->
+                @if ($addAction->isVisible() || filled($visibleExtraActions))
+                    <ul class="flex gap-4">
+                        @if ($addAction->isVisible())
+                            <li>
+                                {{ $addAction }}
+                            </li>
+                        @endif
+                        @if (filled($visibleExtraActions))
+                            @foreach ($visibleExtraActions as $extraAction)
+                                <li>
+                                    {{ $extraAction }}
+                                </li>
+                            @endforeach
+                        @endif
+                    </ul>
                 @endif
-                @if (filled($visibleExtraActions))
-                    @foreach ($visibleExtraActions as $extraAction)
-                        <li>
-                            {{ ($extraAction) }}
-                        </li>
-                    @endforeach
+
+                <!-- Container for Footer Item to the right -->
+                @if($hasFooterItem())
+                    <div>
+                        {{ $getFooterItem() }}
+                    </div>
                 @endif
-            </ul>
+            </div>
         @endif
     </div>
 </x-dynamic-component>

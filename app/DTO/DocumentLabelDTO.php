@@ -10,7 +10,7 @@ readonly class DocumentLabelDTO
         public string $referenceNumber,
         public string $date,
         public string $dueDate,
-        public string $amountDue,
+        public ?string $amountDue,
     ) {}
 
     public function toArray(): array

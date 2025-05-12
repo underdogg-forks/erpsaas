@@ -28,11 +28,6 @@ class ViewInvoice extends ViewRecord
         'refresh' => '$refresh',
     ];
 
-    public function getMaxContentWidth(): MaxWidth | string | null
-    {
-        return MaxWidth::SixExtraLarge;
-    }
-
     protected function getHeaderActions(): array
     {
         return [

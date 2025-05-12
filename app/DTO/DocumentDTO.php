@@ -2,6 +2,7 @@
 
 namespace App\DTO;
 
+use App\Enums\Accounting\DocumentType;
 use App\Enums\Setting\Font;
 use App\Models\Accounting\Document;
 use App\Models\Setting\DocumentDefault;
@@ -30,7 +31,7 @@ readonly class DocumentDTO
         public ?string $discount,
         public ?string $tax,
         public string $total,
-        public string $amountDue,
+        public ?string $amountDue,
         public CompanyDTO $company,
         public ClientDTO $client,
         public iterable $lineItems,
@@ -50,14 +51,21 @@ readonly class DocumentDTO
 
         $currencyCode = $document->currency_code ?? CurrencyAccessor::getDefaultCurrency();
 
-        $discount = $document->discount_total > 0 ? self::formatToMoney($document->discount_total, $currencyCode) : null;
-        $tax = $document->tax_total > 0 ? self::formatToMoney($document->tax_total, $currencyCode) : null;
+        $discount = $document->discount_total > 0
+            ? self::formatToMoney($document->discount_total, $currencyCode)
+            : null;
 
-        if (! $discount && ! $tax) {
-            $subtotal = null;
-        } else {
-            $subtotal = self::formatToMoney($document->subtotal, $currencyCode);
-        }
+        $tax = $document->tax_total > 0
+            ? self::formatToMoney($document->tax_total, $currencyCode)
+            : null;
+
+        $subtotal = ($discount || $tax)
+            ? self::formatToMoney($document->subtotal, $currencyCode)
+            : null;
+
+        $amountDue = $document::documentType() !== DocumentType::Estimate ?
+            self::formatToMoney($document->amountDue(), $currencyCode) :
+            null;
 
         return new self(
             header: $document->header,
@@ -74,7 +82,7 @@ readonly class DocumentDTO
             discount: $discount,
             tax: $tax,
             total: self::formatToMoney($document->total, $currencyCode),
-            amountDue: self::formatToMoney($document->amountDue(), $currencyCode),
+            amountDue: $amountDue,
             company: CompanyDTO::fromModel($document->company),
             client: ClientDTO::fromModel($document->client),
             lineItems: $document->lineItems->map(fn ($item) => LineItemDTO::fromModel($item)),

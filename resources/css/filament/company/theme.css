@@ -101,3 +101,32 @@
         box-shadow: none !important;
     }
 }
+
+.doc-template-container {
+    color: initial;
+}
+
+.doc-template-container .overflow-x-auto,
+.doc-template-paper {
+    scrollbar-width: thin;
+}
+
+.doc-template-paper.preview {
+    zoom: 0.5;
+}
+
+@media (min-width: 1024px) {
+    .doc-template-paper.preview {
+        zoom: 0.85;
+    }
+}
+
+.doc-template-paper:not(.preview) {
+    zoom: 0.65;
+}
+
+@media (min-width: 1024px) {
+    .doc-template-paper:not(.preview) {
+        zoom: 1;
+    }
+}

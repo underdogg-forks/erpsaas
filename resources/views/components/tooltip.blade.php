@@ -19,6 +19,26 @@
             theme: $store.theme,
             placement: '{{ $placement }}',
             maxWidth: {{ $maxWidth }},
+            popperOptions: {
+                strategy: 'fixed',
+                modifiers: [
+                    {
+                        name: 'flip',
+                        enabled: true,
+                        options: {
+                            fallbackPlacements: ['left', 'top', 'bottom'],
+                        }
+                    },
+                    {
+                        name: 'preventOverflow',
+                        enabled: true,
+                        options: {
+                            boundary: 'viewport',
+                            padding: 8
+                        }
+                    }
+                ]
+            }
         }">
         <x-filament::icon-button
             :icon="$icon"

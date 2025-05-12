@@ -2,14 +2,12 @@
 
 namespace App\Filament\Forms\Components;
 
-use App\DTO\CompanyDTO;
 use Closure;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Group;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Split;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\View;
 use Filament\Support\Enums\MaxWidth;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
@@ -41,8 +39,6 @@ class DocumentHeaderSection extends Section
         $this->collapsible();
         $this->collapsed();
 
-        $company = Auth::user()->currentCompany;
-
         $this->schema([
             Split::make([
                 Group::make([
@@ -72,10 +68,6 @@ class DocumentHeaderSection extends Section
                         ->default(fn () => $this->getDefaultHeader()),
                     TextInput::make('subheader')
                         ->default(fn () => $this->getDefaultSubheader()),
-                    View::make('filament.forms.components.company-info')
-                        ->viewData([
-                            'companyDTO' => CompanyDTO::fromModel($company),
-                        ]),
                 ])->grow(true),
             ])->from('md'),
         ]);
