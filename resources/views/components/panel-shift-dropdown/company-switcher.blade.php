@@ -29,7 +29,6 @@
         icon="heroicon-m-check"
         icon-color="primary"
         :url="filament()->getUrl($currentTenant)"
-        :image="filament()->getTenantAvatarUrl($currentTenant)"
         :label="$currentTenantName"
     />
 @endif
@@ -38,7 +37,6 @@
         <x-panel-shift-dropdown.item
             :url="filament()->getUrl($tenant)"
             :label="filament()->getTenantName($tenant)"
-            :image="filament()->getTenantAvatarUrl($tenant)"
         />
     @endforeach
 @endif
