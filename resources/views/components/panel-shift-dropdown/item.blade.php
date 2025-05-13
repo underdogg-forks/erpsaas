@@ -41,10 +41,10 @@
             >
                 @if($image)
                     <div class="{{ $imageClasses }}" style="background-image: url('{{ $image }}')"></div>
-                @else
+                @elseif($icon)
                     <div class="{{ $iconWrapperClasses }}">
                         <x-filament::icon
-                            :icon="$icon ?? 'heroicon-m-document-text'"
+                            :icon="$icon"
                             :class="$iconClasses"
                         />
                     </div>
@@ -65,10 +65,10 @@
         >
             @if($image)
                 <div class="{{ $imageClasses }}" style="background-image: url('{{ $image }}')"></div>
-            @else
+            @elseif($icon)
                 <div class="{{ $iconWrapperClasses }}">
                     <x-filament::icon
-                        :icon="$icon ?? 'heroicon-m-document-text'"
+                        :icon="$icon"
                         :class="$iconClasses"
                     />
                 </div>

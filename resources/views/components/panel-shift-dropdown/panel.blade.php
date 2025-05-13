@@ -16,7 +16,7 @@
 
 <ul
     x-ref="{{ $panelId }}"
-    class="w-full p-2.5 list-none flex flex-col space-y-2 hide transition-class"
+    class="w-full p-2.5 list-none flex flex-col space-y-2 hide transition-class max-h-[75vh] overflow-y-auto"
 >
     {{ $slot }}
 </ul>
