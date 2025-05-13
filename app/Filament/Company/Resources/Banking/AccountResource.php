@@ -61,7 +61,10 @@ class AccountResource extends Resource
                             })
                             ->required(),
                         Forms\Components\Group::make()
-                            ->columnStart(2)
+                            ->columnStart([
+                                'default' => 1,
+                                'lg' => 2,
+                            ])
                             ->relationship('account')
                             ->schema([
                                 Forms\Components\Select::make('subtype_id')
