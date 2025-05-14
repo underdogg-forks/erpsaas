@@ -257,9 +257,6 @@ class PaymentsRelationManager extends RelationManager
                     }),
             ])
             ->actions([
-                Tables\Actions\EditAction::make()
-                    ->modalWidth(MaxWidth::TwoExtraLarge)
-                    ->after(fn () => $this->dispatch('refresh')),
                 Tables\Actions\DeleteAction::make()
                     ->after(fn () => $this->dispatch('refresh')),
             ])

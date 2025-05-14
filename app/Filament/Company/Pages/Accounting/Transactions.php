@@ -35,6 +35,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
+use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\FontWeight;
@@ -372,7 +373,7 @@ class Transactions extends Page implements HasTable
                             ->modalHeading('Edit Transaction')
                             ->modalWidth(MaxWidth::ThreeExtraLarge)
                             ->form(fn (Form $form) => $this->transactionForm($form))
-                            ->visible(static fn (Transaction $transaction) => $transaction->type->isStandard()),
+                            ->visible(static fn (Transaction $transaction) => $transaction->type->isStandard() && ! $transaction->transactionable_id),
                         Tables\Actions\EditAction::make('editTransfer')
                             ->label('Edit transfer')
                             ->modalHeading('Edit Transfer')
@@ -396,13 +397,14 @@ class Transactions extends Page implements HasTable
                             })
                             ->modalSubmitAction(fn (Actions\StaticAction $action) => $action->disabled(! $this->isJournalEntryBalanced()))
                             ->after(fn (Transaction $transaction) => $transaction->updateAmountIfBalanced())
-                            ->visible(static fn (Transaction $transaction) => $transaction->type->isJournal()),
+                            ->visible(static fn (Transaction $transaction) => $transaction->type->isJournal() && ! $transaction->transactionable_id),
                         Tables\Actions\ReplicateAction::make()
                             ->excludeAttributes(['created_by', 'updated_by', 'created_at', 'updated_at'])
                             ->modal(false)
                             ->beforeReplicaSaved(static function (Transaction $replica) {
                                 $replica->description = '(Copy of) ' . $replica->description;
                             })
+                            ->hidden(static fn (Transaction $transaction) => $transaction->transactionable_id)
                             ->after(static function (Transaction $original, Transaction $replica) {
                                 $original->journalEntries->each(function (JournalEntry $entry) use ($replica) {
                                     $entry->replicate([
@@ -429,6 +431,20 @@ class Transactions extends Page implements HasTable
                         ->excludeAttributes(['created_by', 'updated_by', 'created_at', 'updated_at'])
                         ->beforeReplicaSaved(static function (Transaction $replica) {
                             $replica->description = '(Copy of) ' . $replica->description;
+                        })
+                        ->before(function (\Illuminate\Database\Eloquent\Collection $records, ReplicateBulkAction $action) {
+                            $isInvalid = $records->contains(fn (Transaction $record) => $record->transactionable_id);
+
+                            if ($isInvalid) {
+                                Notification::make()
+                                    ->title('Cannot replicate transactions')
+                                    ->body('You cannot replicate transactions associated with bills or invoices')
+                                    ->persistent()
+                                    ->danger()
+                                    ->send();
+
+                                $action->cancel(true);
+                            }
                         })
                         ->withReplicatedRelationships(['journalEntries']),
                 ]),
