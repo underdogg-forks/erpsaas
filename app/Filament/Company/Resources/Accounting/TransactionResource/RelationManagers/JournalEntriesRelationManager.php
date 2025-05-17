@@ -40,7 +40,6 @@ class JournalEntriesRelationManager extends RelationManager
                     ->label('Amount')
                     ->weight(FontWeight::SemiBold)
                     ->sortable()
-                    ->alignRight()
                     ->currency(CurrencyAccessor::getDefaultCurrency()),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Created at')
