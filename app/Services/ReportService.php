@@ -21,6 +21,7 @@ use App\Enums\Accounting\BillStatus;
 use App\Enums\Accounting\DocumentEntityType;
 use App\Enums\Accounting\InvoiceStatus;
 use App\Enums\Accounting\TransactionType;
+use App\Filament\Company\Resources\Accounting\TransactionResource\Pages\ViewTransaction;
 use App\Models\Accounting\Account;
 use App\Models\Accounting\Bill;
 use App\Models\Accounting\Invoice;
@@ -274,9 +275,10 @@ class ReportService
         return new ReportDTO(categories: $reportCategories, fields: $columns);
     }
 
+    // TODO: Refactor and potentially only use the url
     private function determineTableAction(Transaction $transaction): array
     {
-        if ($transaction->transactionable_type === null || $transaction->is_payment) {
+        if ($transaction->transactionable_type === null) {
             return [
                 'type' => 'transaction',
                 'action' => match ($transaction->type) {
@@ -286,13 +288,19 @@ class ReportService
                 },
                 'id' => $transaction->id,
             ];
+        } elseif ($transaction->is_payment) {
+            return [
+                'type' => 'view_transaction',
+                'url' => ViewTransaction::getUrl(['record' => $transaction->id]),
+                'id' => $transaction->id,
+            ];
+        } else {
+            return [
+                'type' => 'transactionable',
+                'model' => $transaction->transactionable_type,
+                'id' => $transaction->transactionable_id,
+            ];
         }
-
-        return [
-            'type' => 'transactionable',
-            'model' => $transaction->transactionable_type,
-            'id' => $transaction->transactionable_id,
-        ];
     }
 
     public function buildTrialBalanceReport(string $trialBalanceType, string $asOfDate, array $columns = []): ReportDTO

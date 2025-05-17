@@ -64,6 +64,17 @@
                                         >
                                             {{ $cell['description'] }}
                                         </x-filament::link>
+                                    @elseif($cell['tableAction']['type'] === 'view_transaction')
+                                        <x-filament::link
+                                            :href="$cell['tableAction']['url']"
+                                            target="_blank"
+                                            color="primary"
+                                            icon="heroicon-o-arrow-top-right-on-square"
+                                            :icon-position="$iconPosition"
+                                            icon-size="w-4 h-4 min-w-4 min-h-4"
+                                        >
+                                            {{ $cell['description'] }}
+                                        </x-filament::link>
                                     @else
                                         <x-filament::link
                                             :href="$cell['tableAction']['model'] === Bill::class
