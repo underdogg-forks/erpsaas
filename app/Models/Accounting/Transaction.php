@@ -160,6 +160,19 @@ class Transaction extends Model
             ->toArray();
     }
 
+    public static function getUncategorizedAccountByType(TransactionType $type): ?Account
+    {
+        [$category, $accountName] = match ($type) {
+            TransactionType::Deposit => [AccountCategory::Revenue, 'Uncategorized Income'],
+            TransactionType::Withdrawal => [AccountCategory::Expense, 'Uncategorized Expense'],
+            default => [null, null],
+        };
+
+        return Account::where('category', $category)
+            ->where('name', $accountName)
+            ->first();
+    }
+
     protected static function newFactory(): Factory
     {
         return TransactionFactory::new();

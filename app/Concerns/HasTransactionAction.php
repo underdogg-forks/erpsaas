@@ -2,11 +2,9 @@
 
 namespace App\Concerns;
 
-use App\Enums\Accounting\AccountCategory;
 use App\Enums\Accounting\JournalEntryType;
 use App\Enums\Accounting\TransactionType;
 use App\Filament\Forms\Components\CustomTableRepeater;
-use App\Models\Accounting\Account;
 use App\Models\Accounting\JournalEntry;
 use App\Models\Accounting\Transaction;
 use App\Models\Banking\BankAccount;
@@ -60,7 +58,7 @@ trait HasTransactionAction
     {
         return [
             'type' => $journalEntryType,
-            'account_id' => static::getUncategorizedAccountByType($journalEntryType->isDebit() ? TransactionType::Withdrawal : TransactionType::Deposit)?->id,
+            'account_id' => Transaction::getUncategorizedAccountByType($journalEntryType->isDebit() ? TransactionType::Withdrawal : TransactionType::Deposit)?->id,
             'amount' => '0.00',
         ];
     }
@@ -71,7 +69,7 @@ trait HasTransactionAction
             'type' => $type,
             'bank_account_id' => BankAccount::where('enabled', true)->first()?->id,
             'amount' => '0.00',
-            'account_id' => ! $type->isTransfer() ? static::getUncategorizedAccountByType($type)->id : null,
+            'account_id' => ! $type->isTransfer() ? Transaction::getUncategorizedAccountByType($type)->id : null,
         ];
     }
 
@@ -109,7 +107,7 @@ trait HasTransactionAction
                         TransactionType::Withdrawal->value => TransactionType::Withdrawal->getLabel(),
                     ])
                     ->required()
-                    ->afterStateUpdated(static fn (Forms\Set $set, $state) => $set('account_id', static::getUncategorizedAccountByType(TransactionType::parse($state))?->id)),
+                    ->afterStateUpdated(static fn (Forms\Set $set, $state) => $set('account_id', Transaction::getUncategorizedAccountByType(TransactionType::parse($state))?->id)),
                 Forms\Components\TextInput::make('amount')
                     ->label('Amount')
                     ->money(static fn (Forms\Get $get) => BankAccount::find($get('bank_account_id'))?->account?->currency_code ?? CurrencyAccessor::getDefaultCurrency())
@@ -388,18 +386,5 @@ trait HasTransactionAction
                 'isJournalBalanced' => $this->isJournalEntryBalanced(),
             ],
         );
-    }
-
-    public static function getUncategorizedAccountByType(TransactionType $type): ?Account
-    {
-        [$category, $accountName] = match ($type) {
-            TransactionType::Deposit => [AccountCategory::Revenue, 'Uncategorized Income'],
-            TransactionType::Withdrawal => [AccountCategory::Expense, 'Uncategorized Expense'],
-            default => [null, null],
-        };
-
-        return Account::where('category', $category)
-            ->where('name', $accountName)
-            ->first();
     }
 }

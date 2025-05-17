@@ -19,7 +19,6 @@ use App\Actions\FilamentCompanies\UpdateUserPassword;
 use App\Actions\FilamentCompanies\UpdateUserProfileInformation;
 use App\Filament\Company\Clusters\Settings;
 use App\Filament\Company\Pages\Accounting\AccountChart;
-use App\Filament\Company\Pages\Accounting\Transactions;
 use App\Filament\Company\Pages\CreateCompany;
 use App\Filament\Company\Pages\ManageCompany;
 use App\Filament\Company\Pages\Reports;
@@ -159,7 +158,6 @@ class CompanyPanelProvider extends PanelProvider
                             ->items([
                                 // ...BudgetResource::getNavigationItems(),
                                 ...AccountChart::getNavigationItems(),
-                                ...Transactions::getNavigationItems(),
                                 ...TransactionResource::getNavigationItems(),
                             ]),
                         NavigationGroup::make('Banking')

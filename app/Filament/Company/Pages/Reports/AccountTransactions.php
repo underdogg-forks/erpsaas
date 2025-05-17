@@ -4,7 +4,7 @@ namespace App\Filament\Company\Pages\Reports;
 
 use App\Contracts\ExportableReport;
 use App\DTO\ReportDTO;
-use App\Filament\Company\Pages\Accounting\Transactions;
+use App\Filament\Company\Resources\Accounting\TransactionResource;
 use App\Models\Accounting\Account;
 use App\Models\Common\Client;
 use App\Models\Common\Vendor;
@@ -194,7 +194,7 @@ class AccountTransactions extends BaseReportPage
         return [
             Action::make('createTransaction')
                 ->label('Create transaction')
-                ->url(Transactions::getUrl()),
+                ->url(TransactionResource::getUrl()),
         ];
     }
 

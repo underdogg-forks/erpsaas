@@ -1,6 +1,6 @@
 @php
-    use App\Filament\Company\Pages\Accounting\Transactions;
     use App\Models\Accounting\Bill;
+    use App\Filament\Company\Resources\Accounting\TransactionResource;
     use App\Filament\Company\Resources\Purchases\BillResource\Pages\ViewBill;
     use App\Filament\Company\Resources\Sales\InvoiceResource\Pages\ViewInvoice;
 
@@ -52,7 +52,7 @@
                                 @if(isset($cell['id']) && $cell['tableAction'])
                                     @if($cell['tableAction']['type'] === 'transaction')
                                         <x-filament::link
-                                            :href="Transactions::getUrl(parameters: [
+                                            :href="TransactionResource::getUrl(parameters: [
                                                 'tableAction' => $cell['tableAction']['action'],
                                                 'tableActionRecord' => $cell['tableAction']['id'],
                                             ])"
