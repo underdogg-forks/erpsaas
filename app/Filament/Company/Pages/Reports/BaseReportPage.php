@@ -17,7 +17,6 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Set;
 use Filament\Pages\Page;
 use Filament\Support\Enums\IconPosition;
-use Filament\Support\Enums\IconSize;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Livewire\Attributes\Computed;
@@ -236,7 +235,6 @@ abstract class BaseReportPage extends Page
                 ->dropdownWidth('max-w-[7rem]')
                 ->dropdownPlacement('bottom-end')
                 ->icon('heroicon-m-chevron-down')
-                ->iconSize(IconSize::Small)
                 ->iconPosition(IconPosition::After),
         ];
     }

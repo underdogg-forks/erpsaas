@@ -14,8 +14,6 @@ use Awcodes\TableRepeater\Header;
 use Filament\Forms;
 use Filament\Forms\Components\Actions\Action as FormAction;
 use Filament\Forms\Form;
-use Filament\Support\Enums\IconPosition;
-use Filament\Support\Enums\IconSize;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Str;
 
@@ -359,12 +357,9 @@ trait HasTransactionAction
         $typeLabel = $type->getLabel();
 
         return FormAction::make("add{$typeLabel}Entry")
-            ->label("Add {$typeLabel} entry")
             ->button()
             ->outlined()
             ->color($type->isDebit() ? 'primary' : 'gray')
-            ->iconSize(IconSize::Small)
-            ->iconPosition(IconPosition::Before)
             ->action(function (CustomTableRepeater $component) use ($type) {
                 $state = $component->getState();
                 $newUuid = (string) Str::uuid();

@@ -14,7 +14,6 @@ use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Support\Enums\IconPosition;
-use Filament\Support\Enums\IconSize;
 
 class ViewVendor extends ViewRecord
 {
@@ -52,7 +51,6 @@ class ViewVendor extends ViewRecord
                 ->outlined()
                 ->dropdownPlacement('bottom-end')
                 ->icon('heroicon-m-chevron-down')
-                ->iconSize(IconSize::Small)
                 ->iconPosition(IconPosition::After),
         ];
     }

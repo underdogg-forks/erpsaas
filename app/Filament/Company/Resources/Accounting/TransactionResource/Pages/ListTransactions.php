@@ -28,16 +28,20 @@ class ListTransactions extends ListRecords
     {
         return [
             Actions\ActionGroup::make([
-                CreateTransactionAction::make('addDeposit')
+                CreateTransactionAction::make('createDeposit')
+                    ->label('Deposit')
                     ->type(TransactionType::Deposit),
-                CreateTransactionAction::make('addWithdrawal')
+                CreateTransactionAction::make('createWithdrawal')
+                    ->label('Withdrawal')
                     ->type(TransactionType::Withdrawal),
-                CreateTransactionAction::make('addTransfer')
+                CreateTransactionAction::make('createTransfer')
+                    ->label('Transfer')
                     ->type(TransactionType::Transfer),
-                CreateTransactionAction::make('addJournalEntry')
+                CreateTransactionAction::make('createJournalEntry')
+                    ->label('Journal entry')
                     ->type(TransactionType::Journal),
             ])
-                ->label('Add transaction')
+                ->label('New transaction')
                 ->button()
                 ->dropdownPlacement('bottom-end')
                 ->icon('heroicon-m-chevron-down')

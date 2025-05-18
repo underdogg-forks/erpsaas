@@ -16,7 +16,6 @@ use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Support\Enums\IconPosition;
-use Filament\Support\Enums\IconSize;
 use Illuminate\Contracts\Support\Htmlable;
 
 class ViewClient extends ViewRecord
@@ -65,7 +64,6 @@ class ViewClient extends ViewRecord
                 ->outlined()
                 ->dropdownPlacement('bottom-end')
                 ->icon('heroicon-m-chevron-down')
-                ->iconSize(IconSize::Small)
                 ->iconPosition(IconPosition::After),
         ];
     }
