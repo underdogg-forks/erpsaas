@@ -2,6 +2,7 @@
 
 namespace App\Filament\Company\Resources\Accounting\TransactionResource\Pages;
 
+use App\Enums\Accounting\TransactionType;
 use App\Filament\Actions\EditTransactionAction;
 use App\Filament\Company\Resources\Accounting\TransactionResource;
 use App\Models\Accounting\JournalEntry;
@@ -13,7 +14,6 @@ use Filament\Infolists\Infolist;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Support\Enums\FontWeight;
 use Filament\Support\Enums\IconPosition;
-use Filament\Support\Enums\IconSize;
 
 class ViewTransaction extends ViewRecord
 {
@@ -23,7 +23,6 @@ class ViewTransaction extends ViewRecord
     {
         return [
             EditTransactionAction::make()
-                ->label('Edit transaction')
                 ->outlined(),
             Actions\ActionGroup::make([
                 Actions\ActionGroup::make([
@@ -56,7 +55,6 @@ class ViewTransaction extends ViewRecord
                 ->outlined()
                 ->dropdownPlacement('bottom-end')
                 ->icon('heroicon-m-chevron-down')
-                ->iconSize(IconSize::Small)
                 ->iconPosition(IconPosition::After),
         ];
     }
@@ -66,7 +64,7 @@ class ViewTransaction extends ViewRecord
         return $infolist
             ->schema([
                 Section::make('Transaction Details')
-                    ->columns(2)
+                    ->columns(3)
                     ->schema([
                         TextEntry::make('posted_at')
                             ->label('Date')
@@ -86,8 +84,8 @@ class ViewTransaction extends ViewRecord
                             ->weight(fn (Transaction $record) => $record->reviewed ? null : FontWeight::SemiBold)
                             ->color(
                                 fn (Transaction $record) => match ($record->type) {
-                                    \App\Enums\Accounting\TransactionType::Deposit => 'success',
-                                    \App\Enums\Accounting\TransactionType::Journal => 'primary',
+                                    TransactionType::Deposit => 'success',
+                                    TransactionType::Journal => 'primary',
                                     default => null,
                                 }
                             )

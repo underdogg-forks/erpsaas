@@ -20,6 +20,14 @@ class EditTransactionAction extends EditAction
 
         $this->transactionType = $this->getRecord()->type;
 
+        $this->label(function () {
+            return match ($this->transactionType) {
+                TransactionType::Transfer => 'Edit transfer',
+                TransactionType::Journal => 'Edit journal entry',
+                default => 'Edit transaction',
+            };
+        });
+
         $this->visible(static fn (Transaction $transaction) => ! $transaction->transactionable_id);
 
         $this->modalWidth(function (): MaxWidth {
