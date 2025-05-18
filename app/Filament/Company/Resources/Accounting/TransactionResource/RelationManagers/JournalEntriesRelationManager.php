@@ -41,16 +41,6 @@ class JournalEntriesRelationManager extends RelationManager
                     ->weight(FontWeight::SemiBold)
                     ->sortable()
                     ->currency(CurrencyAccessor::getDefaultCurrency()),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->label('Created at')
-                    ->dateTime()
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->label('Updated at')
-                    ->dateTime()
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->sortable(),
             ])
             ->filters([
                 //

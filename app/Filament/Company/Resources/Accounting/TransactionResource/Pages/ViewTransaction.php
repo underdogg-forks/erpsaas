@@ -2,7 +2,6 @@
 
 namespace App\Filament\Company\Resources\Accounting\TransactionResource\Pages;
 
-use App\Enums\Accounting\TransactionType;
 use App\Filament\Actions\EditTransactionAction;
 use App\Filament\Company\Resources\Accounting\TransactionResource;
 use App\Models\Accounting\JournalEntry;
@@ -12,7 +11,6 @@ use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Pages\ViewRecord;
-use Filament\Support\Enums\FontWeight;
 use Filament\Support\Enums\IconPosition;
 
 class ViewTransaction extends ViewRecord
@@ -71,25 +69,26 @@ class ViewTransaction extends ViewRecord
                             ->date(),
                         TextEntry::make('type')
                             ->badge(),
+                        TextEntry::make('is_payment')
+                            ->label('Payment')
+                            ->badge()
+                            ->formatStateUsing(fn (bool $state): string => $state ? 'Yes' : 'No')
+                            ->color(fn (bool $state): string => $state ? 'info' : 'gray')
+                            ->visible(fn (Transaction $record): bool => $record->isPayment()),
                         TextEntry::make('description')
                             ->label('Description'),
                         TextEntry::make('bankAccount.account.name')
-                            ->label('Account'),
+                            ->label('Bank Account')
+                            ->visible(fn (Transaction $record): bool => $record->bankAccount !== null),
+                        TextEntry::make('payeeable.name')
+                            ->label('Payee')
+                            ->visible(fn (Transaction $record): bool => $record->payeeable !== null),
                         TextEntry::make('account.name')
                             ->label('Category')
-                            ->prefix(fn (Transaction $record) => $record->type->isTransfer() ? 'Transfer to ' : null)
-                            ->state(fn (Transaction $record) => $record->account->name ?? 'Journal Entry'),
+                            ->visible(fn (Transaction $record): bool => $record->account !== null),
                         TextEntry::make('amount')
                             ->label('Amount')
-                            ->weight(fn (Transaction $record) => $record->reviewed ? null : FontWeight::SemiBold)
-                            ->color(
-                                fn (Transaction $record) => match ($record->type) {
-                                    TransactionType::Deposit => 'success',
-                                    TransactionType::Journal => 'primary',
-                                    default => null,
-                                }
-                            )
-                            ->currency(fn (Transaction $record) => $record->bankAccount?->account->currency_code),
+                            ->currency(fn (Transaction $record) => $record->bankAccount?->account->currency_code ?? 'USD'),
                         TextEntry::make('reviewed')
                             ->label('Status')
                             ->badge()
@@ -97,7 +96,8 @@ class ViewTransaction extends ViewRecord
                             ->color(fn (bool $state): string => $state ? 'success' : 'warning'),
                         TextEntry::make('notes')
                             ->label('Notes')
-                            ->columnSpanFull(),
+                            ->columnSpan(2)
+                            ->visible(fn (Transaction $record): bool => filled($record->notes)),
                     ]),
             ]);
     }

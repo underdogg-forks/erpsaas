@@ -99,6 +99,11 @@ class Transaction extends Model
         return $this->journalEntries->contains(fn (JournalEntry $entry) => $entry->account->isUncategorized());
     }
 
+    public function isPayment(): bool
+    {
+        return $this->is_payment;
+    }
+
     public function updateAmountIfBalanced(): void
     {
         if ($this->journalEntries->areBalanced() && $this->journalEntries->sumDebits()->formatSimple() !== $this->getAttributeValue('amount')) {

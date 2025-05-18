@@ -28,6 +28,8 @@ class EditTransactionAction extends EditAction
             };
         });
 
+        $this->slideOver();
+
         $this->visible(static fn (Transaction $transaction) => ! $transaction->transactionable_id);
 
         $this->modalWidth(function (): MaxWidth {
