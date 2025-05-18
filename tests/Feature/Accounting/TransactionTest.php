@@ -297,7 +297,7 @@ it('can add a journal transaction', function () {
     $undoRepeaterFake = JournalEntryRepeater::fake();
 
     livewire(ListTransactions::class)
-        ->mountAction('addJournalTransaction')
+        ->mountAction('addJournalEntry')
         ->assertActionDataSet([
             'posted_at' => today(),
             'journalEntries' => [
@@ -378,7 +378,7 @@ it('does not show Edit Transfer or Edit Journal Transaction for deposit or withd
 
     livewire(ListTransactions::class)
         ->assertTableActionHidden('editTransfer', $transaction)
-        ->assertTableActionHidden('editJournalTransaction', $transaction);
+        ->assertTableActionHidden('editJournalEntry', $transaction);
 })->with([
     TransactionType::Deposit,
     TransactionType::Withdrawal,
@@ -422,7 +422,7 @@ it('does not show Edit Transaction or Edit Journal Transaction for transfer tran
 
     livewire(ListTransactions::class)
         ->assertTableActionHidden('editTransaction', $transaction)
-        ->assertTableActionHidden('editJournalTransaction', $transaction);
+        ->assertTableActionHidden('editJournalEntry', $transaction);
 });
 
 it('replicates a transaction with correct journal entries', function () {

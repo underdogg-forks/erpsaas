@@ -8,6 +8,7 @@ use App\Enums\Common\AddressType;
 use App\Models\Accounting\Estimate;
 use App\Models\Accounting\Invoice;
 use App\Models\Accounting\RecurringInvoice;
+use App\Models\Accounting\Transaction;
 use App\Models\Setting\Currency;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -213,6 +214,11 @@ class Client extends Model
         }
 
         return $this;
+    }
+
+    public function transactions(): MorphMany
+    {
+        return $this->morphMany(Transaction::class, 'payeeable');
     }
 
     public function contacts(): MorphMany

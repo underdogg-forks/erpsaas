@@ -7,11 +7,13 @@ use App\Concerns\CompanyOwned;
 use App\Enums\Common\ContractorType;
 use App\Enums\Common\VendorType;
 use App\Models\Accounting\Bill;
+use App\Models\Accounting\Transaction;
 use App\Models\Setting\Currency;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 class Vendor extends Model
@@ -110,6 +112,11 @@ class Vendor extends Model
     public function bills(): HasMany
     {
         return $this->hasMany(Bill::class);
+    }
+
+    public function transactions(): MorphMany
+    {
+        return $this->morphMany(Transaction::class, 'payeeable');
     }
 
     public function currency(): BelongsTo

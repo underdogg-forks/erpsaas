@@ -282,7 +282,7 @@ class ReportService
             return [
                 'type' => 'transaction',
                 'action' => match ($transaction->type) {
-                    TransactionType::Journal => 'editJournalTransaction',
+                    TransactionType::Journal => 'editJournalEntry',
                     TransactionType::Transfer => 'editTransfer',
                     default => 'editTransaction',
                 },

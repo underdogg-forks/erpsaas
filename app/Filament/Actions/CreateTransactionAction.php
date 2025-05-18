@@ -18,6 +18,12 @@ class CreateTransactionAction extends CreateAction
     {
         parent::setUp();
 
+        $this->label(null);
+
+        $this->groupedIcon(null);
+
+        $this->slideOver();
+
         $this->modalWidth(function (): MaxWidth {
             return match ($this->transactionType) {
                 TransactionType::Journal => MaxWidth::Screen,

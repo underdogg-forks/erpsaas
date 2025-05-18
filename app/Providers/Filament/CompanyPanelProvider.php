@@ -92,7 +92,7 @@ class CompanyPanelProvider extends PanelProvider
                     ->passwordReset();
             })
             ->tenantMenu(false)
-            ->plugin(
+            ->plugins([
                 FilamentCompanies::make()
                     ->userPanel('user')
                     ->switchCurrentCompany()
@@ -114,8 +114,6 @@ class CompanyPanelProvider extends PanelProvider
                         providers: [Provider::Github],
                         features: [Feature::RememberSession, Feature::ProviderAvatars],
                     ),
-            )
-            ->plugin(
                 PanelShiftDropdown::make()
                     ->logoutItem()
                     ->companySettings()
@@ -123,7 +121,7 @@ class CompanyPanelProvider extends PanelProvider
                         return $builder
                             ->items(Account::getNavigationItems());
                     }),
-            )
+            ])
             ->colors([
                 'primary' => Color::Indigo,
             ])
@@ -173,6 +171,7 @@ class CompanyPanelProvider extends PanelProvider
                             ]),
                     ]);
             })
+            ->globalSearch(false)
             ->sidebarCollapsibleOnDesktop()
             ->viteTheme('resources/css/filament/company/theme.css')
             ->brandLogo(static fn () => view('components.icons.logo'))

@@ -9,6 +9,8 @@ use App\Filament\Tables\Actions\EditTransactionAction;
 use App\Filament\Tables\Actions\ReplicateBulkAction;
 use App\Models\Accounting\JournalEntry;
 use App\Models\Accounting\Transaction;
+use App\Models\Common\Client;
+use App\Models\Common\Vendor;
 use Exception;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Grid;
@@ -29,13 +31,7 @@ class TransactionResource extends Resource
 {
     protected static ?string $model = Transaction::class;
 
-    protected static ?string $navigationGroup = 'Accounting';
-
-    protected static ?string $navigationIcon = 'heroicon-o-banknotes';
-
     protected static ?string $recordTitleAttribute = 'description';
-
-    protected static bool $isGloballySearchable = false;
 
     public static function form(Form $form): Form
     {
@@ -51,6 +47,7 @@ class TransactionResource extends Resource
                     'account',
                     'bankAccount.account',
                     'journalEntries.account',
+                    'payeeable',
                 ])
                     ->where(function (Builder $query) {
                         $query->whereNull('transactionable_id')
@@ -69,13 +66,20 @@ class TransactionResource extends Resource
                 Tables\Columns\TextColumn::make('description')
                     ->label('Description')
                     ->limit(50)
+                    ->searchable()
                     ->toggleable(),
+                Tables\Columns\TextColumn::make('payeeable.name')
+                    ->label('Payee')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('bankAccount.account.name')
                     ->label('Account')
+                    ->searchable()
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('account.name')
                     ->label('Category')
                     ->prefix(static fn (Transaction $transaction) => $transaction->type->isTransfer() ? 'Transfer to ' : null)
+                    ->searchable()
                     ->toggleable()
                     ->state(static fn (Transaction $transaction) => $transaction->account->name ?? 'Journal Entry'),
                 Tables\Columns\TextColumn::make('amount')
@@ -91,26 +95,45 @@ class TransactionResource extends Resource
                     ->sortable()
                     ->currency(static fn (Transaction $transaction) => $transaction->bankAccount?->account->currency_code),
             ])
-            ->recordClasses(static fn (Transaction $transaction) => $transaction->reviewed ? 'bg-primary-300/10' : null)
             ->defaultSort('posted_at', 'desc')
             ->filters([
                 Tables\Filters\SelectFilter::make('bank_account_id')
                     ->label('Account')
                     ->searchable()
-                    ->options(fn () => Transaction::getBankAccountOptions(false)),
+                    ->options(static fn () => Transaction::getBankAccountOptions(false)),
                 Tables\Filters\SelectFilter::make('account_id')
                     ->label('Category')
                     ->multiple()
-                    ->options(fn () => Transaction::getChartAccountOptions(nominalAccountsOnly: false)),
+                    ->options(static fn () => Transaction::getChartAccountOptions()),
                 Tables\Filters\TernaryFilter::make('reviewed')
                     ->label('Status')
-                    ->native(false)
                     ->trueLabel('Reviewed')
                     ->falseLabel('Not Reviewed'),
                 Tables\Filters\SelectFilter::make('type')
                     ->label('Type')
-                    ->native(false)
                     ->options(TransactionType::class),
+                Tables\Filters\TernaryFilter::make('is_payment')
+                    ->label('Payment')
+                    ->default(false),
+                Tables\Filters\SelectFilter::make('payee')
+                    ->label('Payee')
+                    ->options(static fn () => Transaction::getPayeeOptions())
+                    ->searchable()
+                    ->query(function (Builder $query, array $data): Builder {
+                        if (empty($data['value'])) {
+                            return $query;
+                        }
+
+                        $id = (int) $data['value'];
+
+                        if ($id < 0) {
+                            return $query->where('payeeable_type', Vendor::class)
+                                ->where('payeeable_id', abs($id));
+                        } else {
+                            return $query->where('payeeable_type', Client::class)
+                                ->where('payeeable_id', $id);
+                        }
+                    }),
                 static::buildDateRangeFilter('posted_at', 'Posted', true),
                 static::buildDateRangeFilter('updated_at', 'Last modified'),
             ])
@@ -121,6 +144,8 @@ class TransactionResource extends Resource
                         $filters['account_id'],
                         $filters['reviewed'],
                         $filters['type'],
+                        $filters['is_payment'],
+                        $filters['payee'],
                     ])
                     ->columnSpanFull()
                     ->extraAttributes(['class' => 'border-b border-gray-200 dark:border-white/10 pb-8']),
@@ -148,14 +173,11 @@ class TransactionResource extends Resource
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\ActionGroup::make([
                         EditTransactionAction::make('editTransaction')
-                            ->label('Edit transaction')
                             ->visible(static fn (Transaction $transaction) => $transaction->type->isStandard() && ! $transaction->transactionable_id),
                         EditTransactionAction::make('editTransfer')
-                            ->label('Edit transfer')
                             ->type(TransactionType::Transfer)
                             ->visible(static fn (Transaction $transaction) => $transaction->type->isTransfer()),
-                        EditTransactionAction::make('editJournalTransaction')
-                            ->label('Edit journal transaction')
+                        EditTransactionAction::make('editJournalEntry')
                             ->type(TransactionType::Journal)
                             ->visible(static fn (Transaction $transaction) => $transaction->type->isJournal() && ! $transaction->transactionable_id),
                         Tables\Actions\ReplicateAction::make()

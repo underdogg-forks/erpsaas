@@ -7,6 +7,8 @@ use App\Enums\Accounting\InvoiceStatus;
 use App\Models\Accounting\Bill;
 use App\Models\Accounting\Invoice;
 use App\Models\Accounting\Transaction;
+use App\Models\Common\Client;
+use App\Models\Common\Vendor;
 use App\Services\TransactionService;
 use App\Utilities\Currency\CurrencyConverter;
 use Illuminate\Database\Eloquent\Builder;
@@ -25,6 +27,18 @@ class TransactionObserver
     {
         if ($transaction->type->isTransfer() && $transaction->description === null) {
             $transaction->description = 'Account Transfer';
+        }
+
+        if ($transaction->transactionable && ! $transaction->payeeable_id) {
+            $document = $transaction->transactionable;
+
+            if ($document instanceof Invoice) {
+                $transaction->payeeable_id = $document->client_id;
+                $transaction->payeeable_type = Client::class;
+            } elseif ($document instanceof Bill) {
+                $transaction->payeeable_id = $document->vendor_id;
+                $transaction->payeeable_type = Vendor::class;
+            }
         }
     }
 

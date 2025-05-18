@@ -17,7 +17,6 @@ use Filament\Resources\Pages\ViewRecord;
 use Filament\Support\Enums\FontWeight;
 use Filament\Support\Enums\IconPosition;
 use Filament\Support\Enums\IconSize;
-use Filament\Support\Enums\MaxWidth;
 use Illuminate\Support\HtmlString;
 
 class ViewInvoice extends ViewRecord
@@ -47,7 +46,7 @@ class ViewInvoice extends ViewRecord
                 ->button()
                 ->outlined()
                 ->dropdownPlacement('bottom-end')
-                ->icon('heroicon-c-chevron-down')
+                ->icon('heroicon-m-chevron-down')
                 ->iconSize(IconSize::Small)
                 ->iconPosition(IconPosition::After),
         ];

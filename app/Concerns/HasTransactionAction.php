@@ -114,9 +114,8 @@ trait HasTransactionAction
                     ->required(),
                 Forms\Components\Select::make('account_id')
                     ->label('Category')
-                    ->options(fn (Forms\Get $get, ?Transaction $transaction) => Transaction::getChartAccountOptions(type: TransactionType::parse($get('type')), nominalAccountsOnly: true, currentAccountId: $transaction?->account_id))
+                    ->options(fn (Forms\Get $get, ?Transaction $transaction) => Transaction::getTransactionAccountOptions(type: TransactionType::parse($get('type')), currentAccountId: $transaction?->account_id))
                     ->searchable()
-                    ->preload()
                     ->required(),
                 Forms\Components\Textarea::make('notes')
                     ->label('Notes')
@@ -341,7 +340,7 @@ trait HasTransactionAction
                 ->label('Description'),
             Forms\Components\Select::make('account_id')
                 ->label('Account')
-                ->options(fn (?JournalEntry $journalEntry): array => Transaction::getChartAccountOptions(currentAccountId: $journalEntry?->account_id))
+                ->options(fn (?JournalEntry $journalEntry): array => Transaction::getJournalAccountOptions(currentAccountId: $journalEntry?->account_id))
                 ->softRequired()
                 ->searchable(),
             Forms\Components\TextInput::make('amount')

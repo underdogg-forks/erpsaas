@@ -38,7 +38,7 @@ class ViewBill extends ViewRecord
                 ->button()
                 ->outlined()
                 ->dropdownPlacement('bottom-end')
-                ->icon('heroicon-c-chevron-down')
+                ->icon('heroicon-m-chevron-down')
                 ->iconSize(IconSize::Small)
                 ->iconPosition(IconPosition::After),
         ];

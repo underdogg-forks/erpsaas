@@ -7,8 +7,6 @@ use App\Filament\Company\Resources\Accounting\TransactionResource;
 use App\Models\Accounting\JournalEntry;
 use App\Models\Accounting\Transaction;
 use Filament\Actions;
-use Filament\Infolists\Components\Grid;
-use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Infolist;
@@ -57,7 +55,7 @@ class ViewTransaction extends ViewRecord
                 ->button()
                 ->outlined()
                 ->dropdownPlacement('bottom-end')
-                ->icon('heroicon-c-chevron-down')
+                ->icon('heroicon-m-chevron-down')
                 ->iconSize(IconSize::Small)
                 ->iconPosition(IconPosition::After),
         ];
@@ -102,28 +100,6 @@ class ViewTransaction extends ViewRecord
                         TextEntry::make('notes')
                             ->label('Notes')
                             ->columnSpanFull(),
-                    ]),
-                Section::make('Journal Entries')
-                    ->visible(fn (Transaction $record) => $record->type->isJournal())
-                    ->schema([
-                        RepeatableEntry::make('journalEntries')
-                            ->hiddenLabel()
-                            ->schema([
-                                Grid::make(4)
-                                    ->schema([
-                                        TextEntry::make('type')
-                                            ->label('Type')
-                                            ->badge(),
-                                        TextEntry::make('description')
-                                            ->label('Description'),
-                                        TextEntry::make('account.name')
-                                            ->label('Account'),
-                                        TextEntry::make('amount')
-                                            ->label('Amount')
-                                            ->currency(fn (JournalEntry $record) => $record->transaction->bankAccount?->account->currency_code)
-                                            ->alignEnd(),
-                                    ]),
-                            ]),
                     ]),
             ]);
     }

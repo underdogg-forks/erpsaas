@@ -18,6 +18,10 @@ class EditTransactionAction extends EditAction
     {
         parent::setUp();
 
+        $this->label(null);
+
+        $this->slideOver();
+
         $this->modalWidth(function (): MaxWidth {
             return match ($this->transactionType) {
                 TransactionType::Journal => MaxWidth::Screen,

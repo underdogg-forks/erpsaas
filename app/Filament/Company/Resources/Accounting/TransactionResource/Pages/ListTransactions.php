@@ -11,7 +11,6 @@ use App\Services\PlaidService;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Support\Enums\IconPosition;
-use Filament\Support\Enums\IconSize;
 use Filament\Support\Enums\MaxWidth;
 
 class ListTransactions extends ListRecords
@@ -28,20 +27,22 @@ class ListTransactions extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            CreateTransactionAction::make('addIncome')
-                ->label('Add income')
-                ->type(TransactionType::Deposit),
-            CreateTransactionAction::make('addExpense')
-                ->label('Add expense')
-                ->type(TransactionType::Withdrawal),
-            CreateTransactionAction::make('addTransfer')
-                ->label('Add transfer')
-                ->type(TransactionType::Transfer),
             Actions\ActionGroup::make([
-                CreateTransactionAction::make('addJournalTransaction')
-                    ->label('Add journal transaction')
-                    ->type(TransactionType::Journal)
-                    ->groupedIcon(null),
+                CreateTransactionAction::make('addDeposit')
+                    ->type(TransactionType::Deposit),
+                CreateTransactionAction::make('addWithdrawal')
+                    ->type(TransactionType::Withdrawal),
+                CreateTransactionAction::make('addTransfer')
+                    ->type(TransactionType::Transfer),
+                CreateTransactionAction::make('addJournalEntry')
+                    ->type(TransactionType::Journal),
+            ])
+                ->label('Add transaction')
+                ->button()
+                ->dropdownPlacement('bottom-end')
+                ->icon('heroicon-m-chevron-down')
+                ->iconPosition(IconPosition::After),
+            Actions\ActionGroup::make([
                 Actions\Action::make('connectBank')
                     ->label('Connect your bank')
                     ->visible(app(PlaidService::class)->isEnabled())
@@ -50,10 +51,8 @@ class ListTransactions extends ListRecords
                 ->label('More')
                 ->button()
                 ->outlined()
-                ->dropdownWidth('max-w-fit')
                 ->dropdownPlacement('bottom-end')
-                ->icon('heroicon-c-chevron-down')
-                ->iconSize(IconSize::Small)
+                ->icon('heroicon-m-chevron-down')
                 ->iconPosition(IconPosition::After),
         ];
     }
