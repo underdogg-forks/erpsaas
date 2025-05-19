@@ -25,14 +25,14 @@ class CreateTransactionAction extends CreateAction
         $this->slideOver();
 
         $this->modalWidth(function (): MaxWidth {
-            return match ($this->transactionType) {
+            return match ($this->getTransactionType()) {
                 TransactionType::Journal => MaxWidth::Screen,
                 default => MaxWidth::ThreeExtraLarge,
             };
         });
 
         $this->extraModalWindowAttributes(function (): array {
-            if ($this->transactionType === TransactionType::Journal) {
+            if ($this->getTransactionType() === TransactionType::Journal) {
                 return ['class' => 'journal-transaction-modal'];
             }
 
@@ -40,19 +40,16 @@ class CreateTransactionAction extends CreateAction
         });
 
         $this->modalHeading(function (): string {
-            return match ($this->transactionType) {
-                TransactionType::Journal => 'Journal Entry',
-                TransactionType::Deposit => 'Add Income',
-                TransactionType::Withdrawal => 'Add Expense',
-                TransactionType::Transfer => 'Add Transfer',
-                default => 'Add Transaction',
+            return match ($this->getTransactionType()) {
+                TransactionType::Journal => 'Create journal entry',
+                default => 'Create transaction',
             };
         });
 
-        $this->fillForm(fn (): array => $this->getFormDefaultsForType($this->transactionType));
+        $this->fillForm(fn (): array => $this->getFormDefaultsForType($this->getTransactionType()));
 
         $this->form(function (Form $form) {
-            return match ($this->transactionType) {
+            return match ($this->getTransactionType()) {
                 TransactionType::Transfer => $this->transferForm($form),
                 TransactionType::Journal => $this->journalTransactionForm($form),
                 default => $this->transactionForm($form),
@@ -60,13 +57,13 @@ class CreateTransactionAction extends CreateAction
         });
 
         $this->afterFormFilled(function () {
-            if ($this->transactionType === TransactionType::Journal) {
+            if ($this->getTransactionType() === TransactionType::Journal) {
                 $this->resetJournalEntryAmounts();
             }
         });
 
         $this->modalSubmitAction(function (StaticAction $action) {
-            if ($this->transactionType === TransactionType::Journal) {
+            if ($this->getTransactionType() === TransactionType::Journal) {
                 $action->disabled(! $this->isJournalEntryBalanced());
             }
 
@@ -74,13 +71,13 @@ class CreateTransactionAction extends CreateAction
         });
 
         $this->after(function (Transaction $transaction) {
-            if ($this->transactionType === TransactionType::Journal) {
+            if ($this->getTransactionType() === TransactionType::Journal) {
                 $transaction->updateAmountIfBalanced();
             }
         });
 
         $this->mutateFormDataUsing(function (array $data) {
-            if ($this->transactionType === TransactionType::Journal) {
+            if ($this->getTransactionType() === TransactionType::Journal) {
                 $data['type'] = TransactionType::Journal;
             }
 

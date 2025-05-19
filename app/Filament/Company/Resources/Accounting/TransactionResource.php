@@ -172,14 +172,7 @@ class TransactionResource extends Resource
                     ->action(fn (Transaction $transaction) => $transaction->update(['reviewed' => ! $transaction->reviewed])),
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\ActionGroup::make([
-                        EditTransactionAction::make('editTransaction')
-                            ->visible(static fn (Transaction $transaction) => $transaction->type->isStandard() && ! $transaction->transactionable_id),
-                        EditTransactionAction::make('editTransfer')
-                            ->type(TransactionType::Transfer)
-                            ->visible(static fn (Transaction $transaction) => $transaction->type->isTransfer()),
-                        EditTransactionAction::make('editJournalEntry')
-                            ->type(TransactionType::Journal)
-                            ->visible(static fn (Transaction $transaction) => $transaction->type->isJournal() && ! $transaction->transactionable_id),
+                        EditTransactionAction::make(),
                         Tables\Actions\ReplicateAction::make()
                             ->excludeAttributes(['created_by', 'updated_by', 'created_at', 'updated_at'])
                             ->modal(false)

@@ -18,11 +18,12 @@ class EditTransactionAction extends EditAction
     {
         parent::setUp();
 
-        $this->transactionType = $this->getRecord()->type;
+        $this->type(static function (Transaction $record) {
+            return $record->type;
+        });
 
         $this->label(function () {
-            return match ($this->transactionType) {
-                TransactionType::Transfer => 'Edit transfer',
+            return match ($this->getTransactionType()) {
                 TransactionType::Journal => 'Edit journal entry',
                 default => 'Edit transaction',
             };
@@ -30,33 +31,23 @@ class EditTransactionAction extends EditAction
 
         $this->slideOver();
 
-        $this->visible(static fn (Transaction $transaction) => ! $transaction->transactionable_id);
-
         $this->modalWidth(function (): MaxWidth {
-            return match ($this->transactionType) {
+            return match ($this->getTransactionType()) {
                 TransactionType::Journal => MaxWidth::Screen,
                 default => MaxWidth::ThreeExtraLarge,
             };
         });
 
         $this->extraModalWindowAttributes(function (): array {
-            if ($this->transactionType === TransactionType::Journal) {
+            if ($this->getTransactionType() === TransactionType::Journal) {
                 return ['class' => 'journal-transaction-modal'];
             }
 
             return [];
         });
 
-        $this->modalHeading(function (): string {
-            return match ($this->transactionType) {
-                TransactionType::Journal => 'Journal Entry',
-                TransactionType::Transfer => 'Edit Transfer',
-                default => 'Edit Transaction',
-            };
-        });
-
         $this->form(function (Form $form) {
-            return match ($this->transactionType) {
+            return match ($this->getTransactionType()) {
                 TransactionType::Transfer => $this->transferForm($form),
                 TransactionType::Journal => $this->journalTransactionForm($form),
                 default => $this->transactionForm($form),
@@ -64,7 +55,7 @@ class EditTransactionAction extends EditAction
         });
 
         $this->afterFormFilled(function (Transaction $record) {
-            if ($this->transactionType === TransactionType::Journal) {
+            if ($this->getTransactionType() === TransactionType::Journal) {
                 $debitAmounts = $record->journalEntries->sumDebits()->getAmount();
                 $creditAmounts = $record->journalEntries->sumCredits()->getAmount();
 
@@ -74,7 +65,7 @@ class EditTransactionAction extends EditAction
         });
 
         $this->modalSubmitAction(function (StaticAction $action) {
-            if ($this->transactionType === TransactionType::Journal) {
+            if ($this->getTransactionType() === TransactionType::Journal) {
                 $action->disabled(! $this->isJournalEntryBalanced());
             }
 
@@ -82,7 +73,7 @@ class EditTransactionAction extends EditAction
         });
 
         $this->after(function (Transaction $transaction) {
-            if ($this->transactionType === TransactionType::Journal) {
+            if ($this->getTransactionType() === TransactionType::Journal) {
                 $transaction->updateAmountIfBalanced();
             }
         });

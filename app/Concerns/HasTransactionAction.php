@@ -11,6 +11,7 @@ use App\Models\Banking\BankAccount;
 use App\Utilities\Currency\CurrencyAccessor;
 use App\Utilities\Currency\CurrencyConverter;
 use Awcodes\TableRepeater\Header;
+use Closure;
 use Filament\Forms;
 use Filament\Forms\Components\Actions\Action as FormAction;
 use Filament\Forms\Form;
@@ -21,13 +22,18 @@ trait HasTransactionAction
 {
     use HasJournalEntryActions;
 
-    protected ?TransactionType $transactionType = null;
+    protected TransactionType | Closure | null $transactionType = null;
 
-    public function type(TransactionType $type): static
+    public function type(TransactionType | Closure | null $type = null): static
     {
         $this->transactionType = $type;
 
         return $this;
+    }
+
+    public function getTransactionType(): ?TransactionType
+    {
+        return $this->evaluate($this->transactionType);
     }
 
     protected function getFormDefaultsForType(TransactionType $type): array
