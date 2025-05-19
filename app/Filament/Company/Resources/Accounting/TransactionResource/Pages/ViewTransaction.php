@@ -15,6 +15,7 @@ use App\Models\Accounting\JournalEntry;
 use App\Models\Accounting\Transaction;
 use App\Models\Common\Client;
 use App\Models\Common\Vendor;
+use App\Utilities\Currency\CurrencyAccessor;
 use Filament\Actions;
 use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\Section;
@@ -29,11 +30,16 @@ class ViewTransaction extends ViewRecord
 {
     protected static string $resource = TransactionResource::class;
 
+    protected $listeners = [
+        'refresh' => '$refresh',
+    ];
+
     protected function getHeaderActions(): array
     {
         return [
             EditTransactionAction::make()
-                ->outlined(),
+                ->outlined()
+                ->after(fn () => $this->dispatch('refresh')),
             Actions\ViewAction::make('viewAssociatedDocument')
                 ->outlined()
                 ->icon('heroicon-o-document-text')
@@ -94,7 +100,7 @@ class ViewTransaction extends ViewRecord
                 BannerEntry::make('transactionUncategorized')
                     ->warning()
                     ->title('Transaction uncategorized')
-                    ->description('This transaction is uncategorized. You must categorize it before you can approve it.')
+                    ->description('You must categorize this transaction before you can mark it as reviewed.')
                     ->visible(fn (Transaction $record) => $record->isUncategorized())
                     ->columnSpanFull(),
                 Section::make('Transaction Details')
@@ -133,7 +139,7 @@ class ViewTransaction extends ViewRecord
                             ->hidden(static fn (Transaction $record): bool => ! $record->account),
                         TextEntry::make('amount')
                             ->label('Amount')
-                            ->currency(static fn (Transaction $record) => $record->bankAccount?->account->currency_code ?? 'USD'),
+                            ->currency(static fn (Transaction $record) => $record->bankAccount?->account->currency_code ?? CurrencyAccessor::getDefaultCurrency()),
                         TextEntry::make('reviewed')
                             ->label('Status')
                             ->badge()

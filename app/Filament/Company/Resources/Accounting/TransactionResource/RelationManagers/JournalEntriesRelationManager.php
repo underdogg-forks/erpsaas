@@ -13,6 +13,10 @@ class JournalEntriesRelationManager extends RelationManager
 {
     protected static string $relationship = 'journalEntries';
 
+    protected $listeners = [
+        'refresh' => '$refresh',
+    ];
+
     public function form(Form $form): Form
     {
         return $form
