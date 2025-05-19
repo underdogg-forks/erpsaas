@@ -8,6 +8,7 @@ use App\Filament\Company\Resources\Purchases\BillResource\Pages\ViewBill;
 use App\Filament\Company\Resources\Purchases\VendorResource;
 use App\Filament\Company\Resources\Sales\ClientResource;
 use App\Filament\Company\Resources\Sales\InvoiceResource\Pages\ViewInvoice;
+use App\Filament\Infolists\Components\BannerEntry;
 use App\Models\Accounting\Bill;
 use App\Models\Accounting\Invoice;
 use App\Models\Accounting\JournalEntry;
@@ -56,7 +57,7 @@ class ViewTransaction extends ViewRecord
                     Actions\Action::make('markAsReviewed')
                         ->label(static fn (Transaction $record) => $record->reviewed ? 'Mark as unreviewed' : 'Mark as reviewed')
                         ->icon(static fn (Transaction $record) => $record->reviewed ? 'heroicon-s-check-circle' : 'heroicon-o-check-circle')
-                        ->disabled(fn (Transaction $record): bool => $record->isUncategorized())
+                        ->hidden(fn (Transaction $record): bool => $record->isUncategorized())
                         ->action(fn (Transaction $record) => $record->update(['reviewed' => ! $record->reviewed])),
                     Actions\ReplicateAction::make()
                         ->excludeAttributes(['created_by', 'updated_by', 'created_at', 'updated_at'])
@@ -90,6 +91,12 @@ class ViewTransaction extends ViewRecord
     {
         return $infolist
             ->schema([
+                BannerEntry::make('transactionUncategorized')
+                    ->warning()
+                    ->title('Transaction uncategorized')
+                    ->description('This transaction is uncategorized. You must categorize it before you can approve it.')
+                    ->visible(fn (Transaction $record) => $record->isUncategorized())
+                    ->columnSpanFull(),
                 Section::make('Transaction Details')
                     ->columns(3)
                     ->schema([

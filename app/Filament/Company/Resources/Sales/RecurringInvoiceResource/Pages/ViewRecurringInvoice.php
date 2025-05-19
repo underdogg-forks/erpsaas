@@ -89,7 +89,7 @@ class ViewRecurringInvoice extends ViewRecord
                     ]),
                 BannerEntry::make('readyToApprove')
                     ->info()
-                    ->title('Ready to Approve')
+                    ->title('Ready to approve')
                     ->description('This recurring invoice is ready for approval. Review the details, and approve it when you’re ready to start generating invoices.')
                     ->visible(fn (RecurringInvoice $record) => $record->canBeApproved() && ! $record->hasInactiveAdjustments())
                     ->columnSpanFull()
