@@ -4,14 +4,25 @@ namespace App\Filament\Company\Resources\Accounting\TransactionResource\Pages;
 
 use App\Filament\Actions\EditTransactionAction;
 use App\Filament\Company\Resources\Accounting\TransactionResource;
+use App\Filament\Company\Resources\Purchases\BillResource\Pages\ViewBill;
+use App\Filament\Company\Resources\Purchases\VendorResource;
+use App\Filament\Company\Resources\Sales\ClientResource;
+use App\Filament\Company\Resources\Sales\InvoiceResource\Pages\ViewInvoice;
+use App\Models\Accounting\Bill;
+use App\Models\Accounting\Invoice;
 use App\Models\Accounting\JournalEntry;
 use App\Models\Accounting\Transaction;
+use App\Models\Common\Client;
+use App\Models\Common\Vendor;
 use Filament\Actions;
+use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Support\Enums\IconPosition;
+
+use function Filament\Support\get_model_label;
 
 class ViewTransaction extends ViewRecord
 {
@@ -22,6 +33,24 @@ class ViewTransaction extends ViewRecord
         return [
             EditTransactionAction::make()
                 ->outlined(),
+            Actions\ViewAction::make('viewAssociatedDocument')
+                ->outlined()
+                ->icon('heroicon-o-document-text')
+                ->hidden(static fn (Transaction $record): bool => ! $record->transactionable_id)
+                ->label(static function (Transaction $record) {
+                    if (! $record->transactionable_type) {
+                        return 'View document';
+                    }
+
+                    return 'View ' . get_model_label($record->transactionable_type);
+                })
+                ->url(static function (Transaction $record) {
+                    return match ($record->transactionable_type) {
+                        Bill::class => ViewBill::getUrl(['record' => $record->transactionable_id]),
+                        Invoice::class => ViewInvoice::getUrl(['record' => $record->transactionable_id]),
+                        default => null,
+                    };
+                }),
             Actions\ActionGroup::make([
                 Actions\ActionGroup::make([
                     Actions\Action::make('markAsReviewed')
@@ -69,35 +98,44 @@ class ViewTransaction extends ViewRecord
                             ->date(),
                         TextEntry::make('type')
                             ->badge(),
-                        TextEntry::make('is_payment')
+                        IconEntry::make('is_payment')
                             ->label('Payment')
-                            ->badge()
-                            ->formatStateUsing(fn (bool $state): string => $state ? 'Yes' : 'No')
-                            ->color(fn (bool $state): string => $state ? 'info' : 'gray')
-                            ->visible(fn (Transaction $record): bool => $record->isPayment()),
+                            ->boolean(),
                         TextEntry::make('description')
                             ->label('Description'),
                         TextEntry::make('bankAccount.account.name')
-                            ->label('Bank Account')
-                            ->visible(fn (Transaction $record): bool => $record->bankAccount !== null),
+                            ->label('Account')
+                            ->hidden(static fn (Transaction $record): bool => ! $record->bankAccount),
                         TextEntry::make('payeeable.name')
                             ->label('Payee')
-                            ->visible(fn (Transaction $record): bool => $record->payeeable !== null),
+                            ->hidden(static fn (Transaction $record): bool => ! $record->payeeable_type)
+                            ->url(static function (Transaction $record): ?string {
+                                if (! $record->payeeable_type) {
+                                    return null;
+                                }
+
+                                return match ($record->payeeable_type) {
+                                    Vendor::class => VendorResource::getUrl('view', ['record' => $record->payeeable_id]),
+                                    Client::class => ClientResource::getUrl('view', ['record' => $record->payeeable_id]),
+                                    default => null,
+                                };
+                            })
+                            ->link(),
                         TextEntry::make('account.name')
                             ->label('Category')
-                            ->visible(fn (Transaction $record): bool => $record->account !== null),
+                            ->hidden(static fn (Transaction $record): bool => ! $record->account),
                         TextEntry::make('amount')
                             ->label('Amount')
-                            ->currency(fn (Transaction $record) => $record->bankAccount?->account->currency_code ?? 'USD'),
+                            ->currency(static fn (Transaction $record) => $record->bankAccount?->account->currency_code ?? 'USD'),
                         TextEntry::make('reviewed')
                             ->label('Status')
                             ->badge()
-                            ->formatStateUsing(fn (bool $state): string => $state ? 'Reviewed' : 'Not Reviewed')
-                            ->color(fn (bool $state): string => $state ? 'success' : 'warning'),
+                            ->formatStateUsing(static fn (bool $state): string => $state ? 'Reviewed' : 'Not Reviewed')
+                            ->color(static fn (bool $state): string => $state ? 'success' : 'warning'),
                         TextEntry::make('notes')
                             ->label('Notes')
                             ->columnSpan(2)
-                            ->visible(fn (Transaction $record): bool => filled($record->notes)),
+                            ->visible(static fn (Transaction $record): bool => filled($record->notes)),
                     ]),
             ]);
     }

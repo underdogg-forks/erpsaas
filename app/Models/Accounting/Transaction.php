@@ -9,6 +9,9 @@ use App\Enums\Accounting\AccountCategory;
 use App\Enums\Accounting\AccountType;
 use App\Enums\Accounting\PaymentMethod;
 use App\Enums\Accounting\TransactionType;
+use App\Filament\Company\Resources\Accounting\TransactionResource\Pages\ViewTransaction;
+use App\Filament\Company\Resources\Purchases\BillResource\Pages\ViewBill;
+use App\Filament\Company\Resources\Sales\InvoiceResource\Pages\ViewInvoice;
 use App\Models\Banking\BankAccount;
 use App\Models\Common\Client;
 use App\Models\Common\Contact;
@@ -244,6 +247,18 @@ class Transaction extends Model
             'Clients' => $clients,
             'Vendors' => $vendors,
         ];
+    }
+
+    public function getReportTableUrl(): string
+    {
+        if ($this->transactionable_type && ! $this->is_payment) {
+            return match ($this->transactionable_type) {
+                Bill::class => ViewBill::getUrl(['record' => $this->transactionable_id]),
+                default => ViewInvoice::getUrl(['record' => $this->transactionable_id]),
+            };
+        }
+
+        return ViewTransaction::getUrl(['record' => $this->id]);
     }
 
     protected static function newFactory(): Factory

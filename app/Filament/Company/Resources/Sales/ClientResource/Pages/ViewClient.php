@@ -90,7 +90,8 @@ class ViewClient extends ViewRecord
                             ->label('Primary phone'),
                         TextEntry::make('website')
                             ->label('Website')
-                            ->url(static fn ($state) => $state, true),
+                            ->url(static fn ($state) => $state, true)
+                            ->link(),
                     ]),
                 Section::make('Additional Details')
                     ->columns()

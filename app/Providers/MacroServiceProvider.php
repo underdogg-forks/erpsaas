@@ -19,6 +19,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Field;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Support\Enums\IconPosition;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Contracts\HasTable;
 use Illuminate\Contracts\Support\Htmlable;
@@ -371,6 +372,19 @@ class MacroServiceProvider extends ServiceProvider
                     'options' => CarbonInterface::ONE_DAY_WORDS,
                 ]);
             });
+
+            return $this;
+        });
+
+        TextEntry::macro('link', function (bool $condition = true): static {
+            if ($condition) {
+                $this
+                    ->limit(50)
+                    ->openUrlInNewTab()
+                    ->icon('heroicon-o-arrow-top-right-on-square')
+                    ->iconColor('primary')
+                    ->iconPosition(IconPosition::After);
+            }
 
             return $this;
         });

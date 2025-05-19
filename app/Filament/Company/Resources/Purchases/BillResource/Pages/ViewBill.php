@@ -10,7 +10,6 @@ use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Pages\ViewRecord;
-use Filament\Support\Enums\FontWeight;
 use Filament\Support\Enums\IconPosition;
 
 class ViewBill extends ViewRecord
@@ -55,9 +54,8 @@ class ViewBill extends ViewRecord
                             ->badge(),
                         TextEntry::make('vendor.name')
                             ->label('Vendor')
-                            ->color('primary')
-                            ->weight(FontWeight::SemiBold)
-                            ->url(static fn (Bill $record) => VendorResource::getUrl('view', ['record' => $record->vendor_id])),
+                            ->url(static fn (Bill $record) => VendorResource::getUrl('view', ['record' => $record->vendor_id]))
+                            ->link(),
                         TextEntry::make('total')
                             ->label('Total')
                             ->currency(fn (Bill $record) => $record->currency_code),

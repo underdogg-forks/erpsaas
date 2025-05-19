@@ -14,6 +14,6 @@ class AccountTransactionDTO
         public string $credit,
         public string $balance,
         public ?TransactionType $type,
-        public ?array $tableAction,
+        public ?string $url = null,
     ) {}
 }
