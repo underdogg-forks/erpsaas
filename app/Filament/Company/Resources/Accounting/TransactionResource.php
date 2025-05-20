@@ -100,7 +100,7 @@ class TransactionResource extends Resource
                 Tables\Filters\SelectFilter::make('bank_account_id')
                     ->label('Account')
                     ->searchable()
-                    ->options(static fn () => Transaction::getBankAccountOptions(false)),
+                    ->options(static fn () => Transaction::getBankAccountOptions(excludeArchived: false)),
                 Tables\Filters\SelectFilter::make('account_id')
                     ->label('Category')
                     ->multiple()

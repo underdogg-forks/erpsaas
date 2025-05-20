@@ -115,14 +115,18 @@ class Transaction extends Model
         }
     }
 
-    public static function getBankAccountOptions(?int $excludedAccountId = null, ?int $currentBankAccountId = null): array
+    public static function getBankAccountOptions(?int $excludedAccountId = null, ?int $currentBankAccountId = null, bool $excludeArchived = true): array
     {
         return BankAccount::query()
-            ->whereHas('account', function (Builder $query) {
-                $query->where('archived', false);
+            ->whereHas('account', function (Builder $query) use ($excludeArchived) {
+                if ($excludeArchived) {
+                    $query->where('archived', false);
+                }
             })
-            ->with(['account' => function ($query) {
-                $query->where('archived', false);
+            ->with(['account' => function ($query) use ($excludeArchived) {
+                if ($excludeArchived) {
+                    $query->where('archived', false);
+                }
             }, 'account.subtype' => function ($query) {
                 $query->select(['id', 'name']);
             }])
