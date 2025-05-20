@@ -4,6 +4,7 @@ use App\Enums\Accounting\JournalEntryType;
 use App\Enums\Accounting\TransactionType;
 use App\Filament\Company\Resources\Accounting\TransactionResource\Pages\ListTransactions;
 use App\Filament\Forms\Components\JournalEntryRepeater;
+use App\Filament\Tables\Actions\EditTransactionAction;
 use App\Filament\Tables\Actions\ReplicateBulkAction;
 use App\Models\Accounting\Account;
 use App\Models\Accounting\Transaction;
@@ -254,8 +255,8 @@ it('can add an income or expense transaction', function (TransactionType $transa
         ->account->is($defaultAccount)->toBeTrue()
         ->journalEntries->count()->toBe(2);
 })->with([
-    [TransactionType::Deposit, 'addIncome'],
-    [TransactionType::Withdrawal, 'addExpense'],
+    [TransactionType::Deposit, 'createDeposit'],
+    [TransactionType::Withdrawal, 'createWithdrawal'],
 ]);
 
 it('can add a transfer transaction', function () {
@@ -264,7 +265,7 @@ it('can add a transfer transaction', function () {
     $destinationBankAccount = Account::factory()->withBankAccount('Destination Bank Account')->create();
 
     livewire(ListTransactions::class)
-        ->mountAction('addTransfer')
+        ->mountAction('createTransfer')
         ->assertActionDataSet([
             'posted_at' => today(),
             'type' => TransactionType::Transfer,
@@ -297,7 +298,7 @@ it('can add a journal transaction', function () {
     $undoRepeaterFake = JournalEntryRepeater::fake();
 
     livewire(ListTransactions::class)
-        ->mountAction('addJournalEntry')
+        ->mountAction('createJournalEntry')
         ->assertActionDataSet([
             'posted_at' => today(),
             'journalEntries' => [
@@ -345,7 +346,7 @@ it('can update a deposit or withdrawal transaction', function (TransactionType $
     $newDescription = 'Updated Description';
 
     livewire(ListTransactions::class)
-        ->mountTableAction('editTransaction', $transaction)
+        ->mountTableAction(EditTransactionAction::class, $transaction)
         ->assertTableActionDataSet([
             'type' => $transactionType->value,
             'description' => $transaction->description,
@@ -367,23 +368,6 @@ it('can update a deposit or withdrawal transaction', function (TransactionType $
     TransactionType::Withdrawal,
 ]);
 
-it('does not show Edit Transfer or Edit Journal Transaction for deposit or withdrawal transactions', function (TransactionType $transactionType) {
-    $defaultAccount = Transaction::getUncategorizedAccountByType($transactionType);
-
-    $transaction = Transaction::factory()
-        ->forDefaultBankAccount()
-        ->forAccount($defaultAccount)
-        ->forType($transactionType, 1000)
-        ->create();
-
-    livewire(ListTransactions::class)
-        ->assertTableActionHidden('editTransfer', $transaction)
-        ->assertTableActionHidden('editJournalEntry', $transaction);
-})->with([
-    TransactionType::Deposit,
-    TransactionType::Withdrawal,
-]);
-
 it('can update a transfer transaction', function () {
     $transaction = Transaction::factory()
         ->forDefaultBankAccount()
@@ -394,7 +378,7 @@ it('can update a transfer transaction', function () {
     $newDescription = 'Updated Transfer Description';
 
     livewire(ListTransactions::class)
-        ->mountTableAction('editTransfer', $transaction)
+        ->mountTableAction(EditTransactionAction::class, $transaction)
         ->assertTableActionDataSet([
             'type' => TransactionType::Transfer->value,
             'description' => $transaction->description,
@@ -411,18 +395,6 @@ it('can update a transfer transaction', function () {
 
     expect($transaction->description)->toBe($newDescription)
         ->and($transaction->amount)->toEqual('2,000.00');
-});
-
-it('does not show Edit Transaction or Edit Journal Transaction for transfer transactions', function () {
-    $transaction = Transaction::factory()
-        ->forDefaultBankAccount()
-        ->forDestinationBankAccount()
-        ->asTransfer(1500)
-        ->create();
-
-    livewire(ListTransactions::class)
-        ->assertTableActionHidden('editTransaction', $transaction)
-        ->assertTableActionHidden('editJournalEntry', $transaction);
 });
 
 it('replicates a transaction with correct journal entries', function () {
