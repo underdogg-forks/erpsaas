@@ -7,6 +7,8 @@ use App\Models\Accounting\Account;
 use App\Models\Accounting\Bill;
 use App\Models\Accounting\Invoice;
 use App\Models\Accounting\Transaction;
+use App\Models\Common\Client;
+use App\Models\Common\Vendor;
 use App\Repositories\Accounting\JournalEntryRepository;
 use App\Utilities\Currency\CurrencyAccessor;
 use App\ValueObjects\Money;
@@ -128,21 +130,19 @@ class AccountService
                 ->whereBetween('transactions.posted_at', [$startDate, $endDate])
                 ->join('transactions', 'transactions.id', '=', 'journal_entries.transaction_id')
                 ->orderBy('transactions.posted_at')
-                ->with('transaction:id,type,description,posted_at,is_payment,transactionable_id,transactionable_type');
+                ->with('transaction:id,type,description,posted_at,is_payment,payeeable_id,payeeable_type');
 
             if ($entityId) {
                 $entityId = (int) $entityId;
                 if ($entityId < 0) {
                     $query->whereHas('transaction', function ($query) use ($entityId) {
-                        $query->whereHasMorph('transactionable', [Bill::class], function ($query) use ($entityId) {
-                            $query->where('vendor_id', abs($entityId));
-                        });
+                        $query->where('payeeable_type', Vendor::class)
+                            ->where('payeeable_id', abs($entityId));
                     });
                 } else {
                     $query->whereHas('transaction', function ($query) use ($entityId) {
-                        $query->whereHasMorph('transactionable', [Invoice::class], function ($query) use ($entityId) {
-                            $query->where('client_id', $entityId);
-                        });
+                        $query->where('payeeable_type', Client::class)
+                            ->where('payeeable_id', $entityId);
                     });
                 }
             }

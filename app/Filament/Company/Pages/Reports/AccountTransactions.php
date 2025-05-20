@@ -48,8 +48,8 @@ class AccountTransactions extends BaseReportPage
             $this->setFilterState('selectedAccount', 'all');
         }
 
-        if (empty($this->getFilterState('selectedEntity'))) {
-            $this->setFilterState('selectedEntity', 'all');
+        if (empty($this->getFilterState('selectedPayee'))) {
+            $this->setFilterState('selectedPayee', 'all');
         }
     }
 
@@ -95,8 +95,8 @@ class AccountTransactions extends BaseReportPage
                 ])->extraFieldWrapperAttributes([
                     'class' => 'report-hidden-label',
                 ]),
-                Select::make('selectedEntity')
-                    ->label('Entity')
+                Select::make('selectedPayee')
+                    ->label('Payee')
                     ->options($this->getEntityOptions())
                     ->searchable()
                     ->selectablePlaceholder(false),
@@ -139,7 +139,7 @@ class AccountTransactions extends BaseReportPage
             ->toArray();
 
         $allEntitiesOption = [
-            'All Entities' => ['all' => 'All Entities'],
+            'All Payees' => ['all' => 'All Payees'],
         ];
 
         return $allEntitiesOption + [
@@ -155,7 +155,7 @@ class AccountTransactions extends BaseReportPage
             endDate: $this->getFormattedEndDate(),
             columns: $columns,
             accountId: $this->getFilterState('selectedAccount'),
-            entityId: $this->getFilterState('selectedEntity'),
+            entityId: $this->getFilterState('selectedPayee'),
         );
     }
 
