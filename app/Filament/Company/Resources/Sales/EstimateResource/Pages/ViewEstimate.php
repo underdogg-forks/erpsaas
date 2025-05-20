@@ -14,9 +14,7 @@ use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Pages\ViewRecord;
-use Filament\Support\Enums\FontWeight;
 use Filament\Support\Enums\IconPosition;
-use Filament\Support\Enums\IconSize;
 use Illuminate\Support\HtmlString;
 
 class ViewEstimate extends ViewRecord
@@ -49,8 +47,7 @@ class ViewEstimate extends ViewRecord
                 ->button()
                 ->outlined()
                 ->dropdownPlacement('bottom-end')
-                ->icon('heroicon-c-chevron-down')
-                ->iconSize(IconSize::Small)
+                ->icon('heroicon-m-chevron-down')
                 ->iconPosition(IconPosition::After),
         ];
     }
@@ -95,9 +92,8 @@ class ViewEstimate extends ViewRecord
                                     ->badge(),
                                 TextEntry::make('client.name')
                                     ->label('Client')
-                                    ->color('primary')
-                                    ->weight(FontWeight::SemiBold)
-                                    ->url(static fn (Estimate $record) => ClientResource::getUrl('view', ['record' => $record->client_id])),
+                                    ->url(static fn (Estimate $record) => ClientResource::getUrl('view', ['record' => $record->client_id]))
+                                    ->link(),
                                 TextEntry::make('expiration_date')
                                     ->label('Expiration date')
                                     ->asRelativeDay(),

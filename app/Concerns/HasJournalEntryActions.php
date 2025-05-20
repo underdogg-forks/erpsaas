@@ -4,6 +4,7 @@ namespace App\Concerns;
 
 use App\Enums\Accounting\JournalEntryType;
 use App\Utilities\Currency\CurrencyAccessor;
+use Filament\Tables\Actions\Action;
 
 trait HasJournalEntryActions
 {
@@ -104,7 +105,8 @@ trait HasJournalEntryActions
      */
     public function resetJournalEntryAmounts(): void
     {
-        $this->reset(['debitAmount', 'creditAmount']);
+        $this->debitAmount = 0;
+        $this->creditAmount = 0;
     }
 
     public function adjustJournalEntryAmountsForTypeChange(JournalEntryType $newType, JournalEntryType $oldType, ?string $amount): void
@@ -113,19 +115,29 @@ trait HasJournalEntryActions
             return;
         }
 
-        $amountComplete = $this->ensureCompleteDecimal($amount);
-        $normalizedAmount = $this->convertAmountToCents($amountComplete);
+        $entries = $this instanceof Action
+            ? ($this->getLivewire()->mountedTableActionsData[0]['journalEntries'] ?? [])
+            : ($this->getLivewire()->mountedActionsData[0]['journalEntries'] ?? []);
 
-        if ($normalizedAmount === 0) {
-            return;
-        }
+        // Reset the totals
+        $this->debitAmount = 0;
+        $this->creditAmount = 0;
 
-        if ($oldType->isDebit() && $newType->isCredit()) {
-            $this->debitAmount -= $normalizedAmount;
-            $this->creditAmount += $normalizedAmount;
-        } elseif ($oldType->isCredit() && $newType->isDebit()) {
-            $this->debitAmount += $normalizedAmount;
-            $this->creditAmount -= $normalizedAmount;
+        // Recalculate totals from all entries
+        foreach ($entries as $entry) {
+            if (empty($entry['type']) || empty($entry['amount'])) {
+                continue;
+            }
+
+            $entryType = JournalEntryType::parse($entry['type']);
+            $entryAmount = $this->ensureCompleteDecimal($entry['amount']);
+            $formattedAmount = $this->convertAmountToCents($entryAmount);
+
+            if ($entryType->isDebit()) {
+                $this->debitAmount += $formattedAmount;
+            } else {
+                $this->creditAmount += $formattedAmount;
+            }
         }
     }
 
@@ -140,18 +152,29 @@ trait HasJournalEntryActions
             return;
         }
 
-        $newAmountComplete = $this->ensureCompleteDecimal($newAmount);
-        $oldAmountComplete = $this->ensureCompleteDecimal($oldAmount);
+        $entries = $this instanceof Action
+            ? ($this->getLivewire()->mountedTableActionsData[0]['journalEntries'] ?? [])
+            : ($this->getLivewire()->mountedActionsData[0]['journalEntries'] ?? []);
 
-        $formattedNewAmount = $this->convertAmountToCents($newAmountComplete);
-        $formattedOldAmount = $this->convertAmountToCents($oldAmountComplete);
+        // Reset the totals
+        $this->debitAmount = 0;
+        $this->creditAmount = 0;
 
-        $difference = $formattedNewAmount - $formattedOldAmount;
+        // Recalculate totals from all entries
+        foreach ($entries as $entry) {
+            if (empty($entry['type']) || empty($entry['amount'])) {
+                continue;
+            }
 
-        if ($journalEntryType->isDebit()) {
-            $this->debitAmount += $difference;
-        } else {
-            $this->creditAmount += $difference;
+            $entryType = JournalEntryType::parse($entry['type']);
+            $entryAmount = $this->ensureCompleteDecimal($entry['amount']);
+            $formattedAmount = $this->convertAmountToCents($entryAmount);
+
+            if ($entryType->isDebit()) {
+                $this->debitAmount += $formattedAmount;
+            } else {
+                $this->creditAmount += $formattedAmount;
+            }
         }
     }
 

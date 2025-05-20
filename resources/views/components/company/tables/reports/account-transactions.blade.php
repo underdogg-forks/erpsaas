@@ -1,6 +1,6 @@
 @php
-    use App\Filament\Company\Pages\Accounting\Transactions;
     use App\Models\Accounting\Bill;
+    use App\Filament\Company\Resources\Accounting\TransactionResource;
     use App\Filament\Company\Resources\Purchases\BillResource\Pages\ViewBill;
     use App\Filament\Company\Resources\Sales\InvoiceResource\Pages\ViewInvoice;
 
@@ -49,35 +49,17 @@
                             ])
                         >
                             @if(is_array($cell) && isset($cell['description']))
-                                @if(isset($cell['id']) && $cell['tableAction'])
-                                    @if($cell['tableAction']['type'] === 'transaction')
-                                        <x-filament::link
-                                            :href="Transactions::getUrl(parameters: [
-                                                'tableAction' => $cell['tableAction']['action'],
-                                                'tableActionRecord' => $cell['tableAction']['id'],
-                                            ])"
-                                            target="_blank"
-                                            color="primary"
-                                            icon="heroicon-o-arrow-top-right-on-square"
-                                            :icon-position="$iconPosition"
-                                            icon-size="w-4 h-4 min-w-4 min-h-4"
-                                        >
-                                            {{ $cell['description'] }}
-                                        </x-filament::link>
-                                    @else
-                                        <x-filament::link
-                                            :href="$cell['tableAction']['model'] === Bill::class
-                                                ? ViewBill::getUrl(['record' => $cell['tableAction']['id']])
-                                                : ViewInvoice::getUrl(['record' => $cell['tableAction']['id']])"
-                                            target="_blank"
-                                            color="primary"
-                                            icon="heroicon-o-arrow-top-right-on-square"
-                                            :icon-position="$iconPosition"
-                                            icon-size="w-4 h-4 min-w-4 min-h-4"
-                                        >
-                                            {{ $cell['description'] }}
-                                        </x-filament::link>
-                                    @endif
+                                @if(isset($cell['id']) && isset($cell['url']))
+                                    <x-filament::link
+                                        :href="$cell['url']"
+                                        target="_blank"
+                                        color="primary"
+                                        icon="heroicon-o-arrow-top-right-on-square"
+                                        :icon-position="$iconPosition"
+                                        icon-size="w-4 h-4 min-w-4 min-h-4"
+                                    >
+                                        {{ $cell['description'] }}
+                                    </x-filament::link>
                                 @else
                                     {{ $cell['description'] }}
                                 @endif

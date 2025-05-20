@@ -14,10 +14,7 @@ use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Pages\ViewRecord;
-use Filament\Support\Enums\FontWeight;
 use Filament\Support\Enums\IconPosition;
-use Filament\Support\Enums\IconSize;
-use Filament\Support\Enums\MaxWidth;
 use Illuminate\Support\HtmlString;
 
 class ViewInvoice extends ViewRecord
@@ -47,8 +44,7 @@ class ViewInvoice extends ViewRecord
                 ->button()
                 ->outlined()
                 ->dropdownPlacement('bottom-end')
-                ->icon('heroicon-c-chevron-down')
-                ->iconSize(IconSize::Small)
+                ->icon('heroicon-m-chevron-down')
                 ->iconPosition(IconPosition::After),
         ];
     }
@@ -93,9 +89,8 @@ class ViewInvoice extends ViewRecord
                                     ->badge(),
                                 TextEntry::make('client.name')
                                     ->label('Client')
-                                    ->color('primary')
-                                    ->weight(FontWeight::SemiBold)
-                                    ->url(static fn (Invoice $record) => ClientResource::getUrl('view', ['record' => $record->client_id])),
+                                    ->url(static fn (Invoice $record) => ClientResource::getUrl('view', ['record' => $record->client_id]))
+                                    ->link(),
                                 TextEntry::make('amount_due')
                                     ->label('Amount due')
                                     ->currency(static fn (Invoice $record) => $record->currency_code),

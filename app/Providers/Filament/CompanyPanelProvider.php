@@ -19,13 +19,13 @@ use App\Actions\FilamentCompanies\UpdateUserPassword;
 use App\Actions\FilamentCompanies\UpdateUserProfileInformation;
 use App\Filament\Company\Clusters\Settings;
 use App\Filament\Company\Pages\Accounting\AccountChart;
-use App\Filament\Company\Pages\Accounting\Transactions;
 use App\Filament\Company\Pages\CreateCompany;
 use App\Filament\Company\Pages\ManageCompany;
 use App\Filament\Company\Pages\Reports;
 use App\Filament\Company\Pages\Service\ConnectedAccount;
 use App\Filament\Company\Pages\Service\LiveCurrency;
 use App\Filament\Company\Resources\Accounting\BudgetResource;
+use App\Filament\Company\Resources\Accounting\TransactionResource;
 use App\Filament\Company\Resources\Banking\AccountResource;
 use App\Filament\Company\Resources\Common\OfferingResource;
 use App\Filament\Company\Resources\Purchases\BillResource;
@@ -92,7 +92,7 @@ class CompanyPanelProvider extends PanelProvider
                     ->passwordReset();
             })
             ->tenantMenu(false)
-            ->plugin(
+            ->plugins([
                 FilamentCompanies::make()
                     ->userPanel('user')
                     ->switchCurrentCompany()
@@ -114,8 +114,6 @@ class CompanyPanelProvider extends PanelProvider
                         providers: [Provider::Github],
                         features: [Feature::RememberSession, Feature::ProviderAvatars],
                     ),
-            )
-            ->plugin(
                 PanelShiftDropdown::make()
                     ->logoutItem()
                     ->companySettings()
@@ -123,7 +121,7 @@ class CompanyPanelProvider extends PanelProvider
                         return $builder
                             ->items(Account::getNavigationItems());
                     }),
-            )
+            ])
             ->colors([
                 'primary' => Color::Indigo,
             ])
@@ -158,7 +156,7 @@ class CompanyPanelProvider extends PanelProvider
                             ->items([
                                 // ...BudgetResource::getNavigationItems(),
                                 ...AccountChart::getNavigationItems(),
-                                ...Transactions::getNavigationItems(),
+                                ...TransactionResource::getNavigationItems(),
                             ]),
                         NavigationGroup::make('Banking')
                             ->localizeLabel()
@@ -173,6 +171,7 @@ class CompanyPanelProvider extends PanelProvider
                             ]),
                     ]);
             })
+            ->globalSearch(false)
             ->sidebarCollapsibleOnDesktop()
             ->viteTheme('resources/css/filament/company/theme.css')
             ->brandLogo(static fn () => view('components.icons.logo'))

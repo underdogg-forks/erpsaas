@@ -14,7 +14,6 @@ use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Support\Enums\IconPosition;
-use Filament\Support\Enums\IconSize;
 
 class ViewVendor extends ViewRecord
 {
@@ -51,8 +50,7 @@ class ViewVendor extends ViewRecord
                 ->button()
                 ->outlined()
                 ->dropdownPlacement('bottom-end')
-                ->icon('heroicon-c-chevron-down')
-                ->iconSize(IconSize::Small)
+                ->icon('heroicon-m-chevron-down')
                 ->iconPosition(IconPosition::After),
         ];
     }
@@ -79,7 +77,8 @@ class ViewVendor extends ViewRecord
                             ->label('Primary phone'),
                         TextEntry::make('website')
                             ->label('Website')
-                            ->url(static fn ($state) => $state, true),
+                            ->url(static fn ($state) => $state, true)
+                            ->link(),
                     ]),
                 Section::make('Additional Details')
                     ->columns()

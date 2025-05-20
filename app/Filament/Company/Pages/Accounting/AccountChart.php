@@ -48,7 +48,7 @@ class AccountChart extends Page
     }
 
     #[Computed]
-    public function categories(): Collection
+    public function accountCategories(): Collection
     {
         return AccountSubtype::withCount('accounts')
             ->with(['accounts' => function ($query) {
@@ -58,42 +58,39 @@ class AccountChart extends Page
             ->groupBy('category');
     }
 
-    public function editChartAction(): Action
+    public function editAccountAction(): Action
     {
-        return EditAction::make()
-            ->iconButton()
-            ->name('editChart')
+        return EditAction::make('editAccount')
             ->label('Edit account')
-            ->modalHeading('Edit Account')
+            ->iconButton()
             ->icon('heroicon-m-pencil-square')
-            ->record(fn (array $arguments) => Account::find($arguments['chart']))
-            ->form(fn (Form $form) => $this->getChartForm($form)->operation('edit'));
+            ->record(fn (array $arguments) => Account::find($arguments['account']))
+            ->form(fn (Form $form) => $this->getAccountForm($form)->operation('edit'));
     }
 
-    public function createChartAction(): Action
+    public function createAccountAction(): Action
     {
-        return CreateAction::make()
+        return CreateAction::make('createAccount')
             ->link()
-            ->name('createChart')
             ->model(Account::class)
             ->label('Add a new account')
             ->icon('heroicon-o-plus-circle')
-            ->form(fn (Form $form) => $this->getChartForm($form)->operation('create'))
-            ->fillForm(fn (array $arguments): array => $this->getChartFormDefaults($arguments['subtype']));
+            ->form(fn (Form $form) => $this->getAccountForm($form)->operation('create'))
+            ->fillForm(fn (array $arguments): array => $this->getAccountFormDefaults($arguments['accountSubtype']));
     }
 
-    private function getChartFormDefaults(int $subtypeId): array
+    private function getAccountFormDefaults(int $accountSubtypeId): array
     {
-        $accountSubtype = AccountSubtype::find($subtypeId);
+        $accountSubtype = AccountSubtype::find($accountSubtypeId);
         $generatedCode = AccountCode::generate($accountSubtype);
 
         return [
-            'subtype_id' => $subtypeId,
+            'subtype_id' => $accountSubtypeId,
             'code' => $generatedCode,
         ];
     }
 
-    private function getChartForm(Form $form, bool $useActiveTab = true): Form
+    private function getAccountForm(Form $form, bool $useActiveTab = true): Form
     {
         return $form
             ->schema([
@@ -115,7 +112,7 @@ class AccountChart extends Page
             ->live()
             ->disabledOn('edit')
             ->searchable()
-            ->options($this->getChartSubtypeOptions($useActiveTab))
+            ->options($this->getAccountSubtypeOptions($useActiveTab))
             ->afterStateUpdated(static function (?string $state, Set $set): void {
                 if ($state) {
                     $accountSubtype = AccountSubtype::find($state);
@@ -150,12 +147,12 @@ class AccountChart extends Page
                         return false;
                     }
 
-                    $subtype = $get('subtype_id');
-                    if (empty($subtype)) {
+                    $accountSubtypeId = $get('subtype_id');
+                    if (empty($accountSubtypeId)) {
                         return false;
                     }
 
-                    $accountSubtype = AccountSubtype::find($subtype);
+                    $accountSubtype = AccountSubtype::find($accountSubtypeId);
 
                     if (! $accountSubtype) {
                         return false;
@@ -168,22 +165,22 @@ class AccountChart extends Page
                 })
                 ->afterStateUpdated(static function ($state, Get $get, Set $set) {
                     if ($state) {
-                        $subtypeId = $get('subtype_id');
+                        $accountSubtypeId = $get('subtype_id');
 
-                        if (empty($subtypeId)) {
+                        if (empty($accountSubtypeId)) {
                             return;
                         }
 
-                        $subtype = AccountSubtype::find($subtypeId);
+                        $accountSubtype = AccountSubtype::find($accountSubtypeId);
 
-                        if (! $subtype) {
+                        if (! $accountSubtype) {
                             return;
                         }
 
                         // Set default bank account type based on account category
-                        if ($subtype->category === AccountCategory::Asset) {
+                        if ($accountSubtype->category === AccountCategory::Asset) {
                             $set('bankAccount.type', BankAccountType::Depository->value);
-                        } elseif ($subtype->category === AccountCategory::Liability) {
+                        } elseif ($accountSubtype->category === AccountCategory::Liability) {
                             $set('bankAccount.type', BankAccountType::Credit->value);
                         }
                     } else {
@@ -198,13 +195,13 @@ class AccountChart extends Page
                     Select::make('type')
                         ->label('Bank account type')
                         ->options(function (Get $get) {
-                            $subtype = $get('../subtype_id');
+                            $accountSubtypeId = $get('../subtype_id');
 
-                            if (empty($subtype)) {
+                            if (empty($accountSubtypeId)) {
                                 return [];
                             }
 
-                            $accountSubtype = AccountSubtype::find($subtype);
+                            $accountSubtype = AccountSubtype::find($accountSubtypeId);
 
                             if (! $accountSubtype) {
                                 return [];
@@ -287,14 +284,14 @@ class AccountChart extends Page
             ->hiddenOn('create');
     }
 
-    private function getChartSubtypeOptions($useActiveTab = true): array
+    private function getAccountSubtypeOptions($useActiveTab = true): array
     {
-        $subtypes = $useActiveTab ?
+        $accountSubtypes = $useActiveTab ?
             AccountSubtype::where('category', $this->activeTab)->get() :
             AccountSubtype::all();
 
-        return $subtypes->groupBy(fn (AccountSubtype $subtype) => $subtype->type->getLabel())
-            ->map(fn (Collection $subtypes, string $type) => $subtypes->mapWithKeys(static fn (AccountSubtype $subtype) => [$subtype->id => $subtype->name]))
+        return $accountSubtypes->groupBy(fn (AccountSubtype $accountSubtype) => $accountSubtype->type->getLabel())
+            ->map(fn (Collection $accountSubtypes, string $type) => $accountSubtypes->mapWithKeys(static fn (AccountSubtype $accountSubtype) => [$accountSubtype->id => $accountSubtype->name]))
             ->toArray();
     }
 
@@ -303,9 +300,8 @@ class AccountChart extends Page
         return [
             CreateAction::make()
                 ->button()
-                ->label('Add new account')
                 ->model(Account::class)
-                ->form(fn (Form $form) => $this->getChartForm($form, false)->operation('create')),
+                ->form(fn (Form $form) => $this->getAccountForm($form, false)->operation('create')),
         ];
     }
 

@@ -10,6 +10,10 @@
 
 @config 'tailwind.config.js';
 
+.fi-in-text-item .group-hover\/item\:underline, .fi-ta-text-item .group-hover\/item\:underline {
+    @apply text-primary-600 dark:text-primary-400 font-semibold;
+}
+
 .fi-sidebar-nav {
     scrollbar-width: thin;
 }

@@ -44,7 +44,7 @@ class AccountTransactionReportTransformer extends BaseReportTransformer
                         'description' => [
                             'id' => $transaction->id,
                             'description' => $transaction->description,
-                            'tableAction' => $transaction->tableAction,
+                            'url' => $transaction->url,
                         ],
                         'debit' => $transaction->debit,
                         'credit' => $transaction->credit,

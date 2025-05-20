@@ -1,19 +1,19 @@
 <x-filament-panels::page>
     <div class="flex flex-col gap-y-6">
         <x-filament::tabs>
-            @foreach($this->categories as $categoryValue => $subtypes)
+            @foreach($this->accountCategories as $categoryValue => $accountSubtypes)
                 <x-filament::tabs.item
                     wire:key="tab-item-{{ $categoryValue }}"
                     :active="$activeTab === $categoryValue"
                     wire:click="$set('activeTab', '{{ $categoryValue }}')"
-                    :badge="$subtypes->sum('accounts_count')"
+                    :badge="$accountSubtypes->sum('accounts_count')"
                 >
                     {{ $this->getCategoryLabel($categoryValue) }}
                 </x-filament::tabs.item>
             @endforeach
         </x-filament::tabs>
 
-        @foreach($this->categories as $categoryValue => $subtypes)
+        @foreach($this->accountCategories as $categoryValue => $accountSubtypes)
             @if($activeTab === $categoryValue)
                 <div
                     class="es-table__container overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-950/5 dark:divide-white/10 dark:bg-gray-900 dark:ring-white/10">
@@ -29,7 +29,7 @@
                                 <col span="1" style="width: 10%;">
                                 <col span="1" style="width: 7.5%;">
                             </colgroup>
-                            @foreach($subtypes as $subtype)
+                            @foreach($accountSubtypes as $accountSubtype)
                                 <tbody
                                     class="es-table__rowgroup divide-y divide-gray-200 whitespace-nowrap dark:divide-white/5">
                                 <!-- Subtype Name Header Row -->
@@ -38,10 +38,10 @@
                                         <div class="es-table__row-content flex items-center space-x-2">
                                             <span
                                                 class="es-table__row-title text-gray-800 dark:text-gray-200 font-semibold tracking-wider">
-                                                {{ $subtype->name }}
+                                                {{ $accountSubtype->name }}
                                             </span>
                                             <x-tooltip
-                                                text="{!! $subtype->description !!}"
+                                                text="{!! $accountSubtype->description !!}"
                                                 icon="heroicon-o-question-mark-circle"
                                                 placement="right"
                                                 maxWidth="300"
@@ -51,7 +51,7 @@
                                 </tr>
 
                                 <!-- Chart Rows -->
-                                @forelse($subtype->accounts as $account)
+                                @forelse($accountSubtype->accounts as $account)
                                     <tr class="es-table__row">
                                         <td colspan="1" class="es-table__cell px-4 py-4">{{ $account->code }}</td>
                                         <td colspan="1" class="es-table__cell px-4 py-4">
@@ -78,7 +78,7 @@
                                         <td colspan="1" class="es-table__cell px-4 py-4">
                                             <div>
                                                 @if($account->default === false && !$account->adjustment)
-                                                    {{ ($this->editChartAction)(['chart' => $account->id]) }}
+                                                    {{ ($this->editAccountAction)(['account' => $account->id]) }}
                                                 @endif
                                             </div>
                                         </td>
@@ -88,7 +88,7 @@
                                     <tr class="es-table__row">
                                         <td colspan="5"
                                             class="es-table__cell px-4 py-4 italic text-xs text-gray-500 dark:text-gray-400">
-                                            {{ __("You haven't added any {$subtype->name} accounts yet.") }}
+                                            {{ __("You haven't added any {$accountSubtype->name} accounts yet.") }}
                                         </td>
                                     </tr>
                                 @endforelse
@@ -96,7 +96,7 @@
                                 <!-- Add New Account Row -->
                                 <tr class="es-table__row">
                                     <td colspan="5" class="es-table__cell px-4 py-4">
-                                        {{ ($this->createChartAction)(['subtype' => $subtype->id]) }}
+                                        {{ ($this->createAccountAction)(['accountSubtype' => $accountSubtype->id]) }}
                                     </td>
                                 </tr>
                                 </tbody>
