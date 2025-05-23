@@ -227,6 +227,10 @@ class Invoice extends Document
 
     public function canRecordPayment(): bool
     {
+        if (! $this->client_id) {
+            return false;
+        }
+
         return ! in_array($this->status, [
             InvoiceStatus::Draft,
             InvoiceStatus::Paid,
@@ -236,12 +240,16 @@ class Invoice extends Document
 
     public function canBulkRecordPayment(): bool
     {
+        if (! $this->client_id || $this->currency_code !== CurrencyAccessor::getDefaultCurrency()) {
+            return false;
+        }
+
         return ! in_array($this->status, [
             InvoiceStatus::Draft,
             InvoiceStatus::Paid,
             InvoiceStatus::Void,
             InvoiceStatus::Overpaid,
-        ]) && $this->currency_code === CurrencyAccessor::getDefaultCurrency();
+        ]);
     }
 
     public function canBeOverdue(): bool

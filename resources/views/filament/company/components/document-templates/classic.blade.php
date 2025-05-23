@@ -35,8 +35,8 @@
             <!-- Billing Details -->
             <div class="text-sm">
                 <h3 class="text-gray-600 font-medium mb-1">BILL TO</h3>
-                <p class="text-sm font-bold">{{ $document->client->name }}</p>
-                @if($formattedAddress = $document->client->getFormattedAddressHtml())
+                <p class="text-sm font-bold">{{ $document->client?->name ?? 'Client Not Found' }}</p>
+                @if($document->client && ($formattedAddress = $document->client->getFormattedAddressHtml()))
                     {!! $formattedAddress !!}
                 @endif
             </div>

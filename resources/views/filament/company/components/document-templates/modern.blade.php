@@ -31,9 +31,9 @@
             <div class="text-sm">
                 <h3 class="text-gray-600 font-medium mb-1">BILL TO</h3>
                 <p class="text-sm font-bold"
-                   style="color: {{ $document->accentColor }}">{{ $document->client->name }}</p>
+                   style="color: {{ $document->accentColor }}">{{ $document->client?->name ?? 'Client Not Found' }}</p>
 
-                @if($formattedAddress = $document->client->getFormattedAddressHtml())
+                @if($document->client && ($formattedAddress = $document->client->getFormattedAddressHtml()))
                     {!! $formattedAddress !!}
                 @endif
             </div>

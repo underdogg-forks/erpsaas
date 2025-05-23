@@ -54,7 +54,7 @@ class ViewBill extends ViewRecord
                             ->badge(),
                         TextEntry::make('vendor.name')
                             ->label('Vendor')
-                            ->url(static fn (Bill $record) => VendorResource::getUrl('view', ['record' => $record->vendor_id]))
+                            ->url(static fn (Bill $record) => $record->vendor_id ? VendorResource::getUrl('view', ['record' => $record->vendor_id]) : null)
                             ->link(),
                         TextEntry::make('total')
                             ->label('Total')
