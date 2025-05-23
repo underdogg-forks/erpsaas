@@ -173,18 +173,15 @@ class Client extends Model
 
         if (isset($data['shippingAddress'])) {
             $shippingData = $data['shippingAddress'];
-            $shippingAddress = [
-                'type' => AddressType::Shipping,
-                'recipient' => $shippingData['recipient'] ?? null,
-                'phone' => $shippingData['phone'] ?? null,
-                'notes' => $shippingData['notes'] ?? null,
-            ];
 
             if ($shippingData['same_as_billing'] ?? false) {
                 $billingAddress = $this->billingAddress;
                 if ($billingAddress) {
                     $shippingAddress = [
-                        ...$shippingAddress,
+                        'type' => AddressType::Shipping,
+                        'recipient' => $shippingData['recipient'] ?? null,
+                        'phone' => $shippingData['phone'] ?? null,
+                        'notes' => $shippingData['notes'] ?? null,
                         'parent_address_id' => $billingAddress->id,
                         'address_line_1' => $billingAddress->address_line_1,
                         'address_line_2' => $billingAddress->address_line_2,
@@ -193,10 +190,18 @@ class Client extends Model
                         'city' => $billingAddress->city,
                         'postal_code' => $billingAddress->postal_code,
                     ];
+
+                    $this->shippingAddress()->updateOrCreate(
+                        ['type' => AddressType::Shipping],
+                        $shippingAddress
+                    );
                 }
             } elseif (isset($shippingData['address_line_1'])) {
                 $shippingAddress = [
-                    ...$shippingAddress,
+                    'type' => AddressType::Shipping,
+                    'recipient' => $shippingData['recipient'] ?? null,
+                    'phone' => $shippingData['phone'] ?? null,
+                    'notes' => $shippingData['notes'] ?? null,
                     'parent_address_id' => null,
                     'address_line_1' => $shippingData['address_line_1'],
                     'address_line_2' => $shippingData['address_line_2'] ?? null,
@@ -205,12 +210,12 @@ class Client extends Model
                     'city' => $shippingData['city'] ?? null,
                     'postal_code' => $shippingData['postal_code'] ?? null,
                 ];
-            }
 
-            $this->shippingAddress()->updateOrCreate(
-                ['type' => AddressType::Shipping],
-                $shippingAddress
-            );
+                $this->shippingAddress()->updateOrCreate(
+                    ['type' => AddressType::Shipping],
+                    $shippingAddress
+                );
+            }
         }
 
         return $this;

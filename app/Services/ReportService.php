@@ -968,6 +968,7 @@ class ReportService
                 ->whereNotIn('status', [InvoiceStatus::Draft, InvoiceStatus::Void])
                 ->whereNotNull('approved_at')
                 ->whereNotNull('paid_at')
+                ->whereHas('client')
                 ->with(['client:id,name'])
                 ->get()
                 ->groupBy('client_id'),
@@ -975,6 +976,7 @@ class ReportService
                 ->whereBetween('date', [$startDate, $endDate])
                 ->whereNotIn('status', [BillStatus::Void])
                 ->whereNotNull('paid_at')
+                ->whereHas('vendor')
                 ->with(['vendor:id,name'])
                 ->get()
                 ->groupBy('vendor_id'),
