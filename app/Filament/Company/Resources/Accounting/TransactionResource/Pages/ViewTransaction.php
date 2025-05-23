@@ -123,7 +123,7 @@ class ViewTransaction extends ViewRecord
                             ->label('Payee')
                             ->hidden(static fn (Transaction $record): bool => ! $record->payeeable_type)
                             ->url(static function (Transaction $record): ?string {
-                                if (! $record->payeeable_type) {
+                                if (! $record->payeeable_type || ! $record->payeeable_id) {
                                     return null;
                                 }
 

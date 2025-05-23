@@ -92,7 +92,7 @@ class ViewEstimate extends ViewRecord
                                     ->badge(),
                                 TextEntry::make('client.name')
                                     ->label('Client')
-                                    ->url(static fn (Estimate $record) => ClientResource::getUrl('view', ['record' => $record->client_id]))
+                                    ->url(static fn (Estimate $record) => $record->client_id ? ClientResource::getUrl('view', ['record' => $record->client_id]) : null)
                                     ->link(),
                                 TextEntry::make('expiration_date')
                                     ->label('Expiration date')

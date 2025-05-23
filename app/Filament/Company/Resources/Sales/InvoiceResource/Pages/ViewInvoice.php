@@ -89,7 +89,7 @@ class ViewInvoice extends ViewRecord
                                     ->badge(),
                                 TextEntry::make('client.name')
                                     ->label('Client')
-                                    ->url(static fn (Invoice $record) => ClientResource::getUrl('view', ['record' => $record->client_id]))
+                                    ->url(static fn (Invoice $record) => $record->client_id ? ClientResource::getUrl('view', ['record' => $record->client_id]) : null)
                                     ->link(),
                                 TextEntry::make('amount_due')
                                     ->label('Amount due')
