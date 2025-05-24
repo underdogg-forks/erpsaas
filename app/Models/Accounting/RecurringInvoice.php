@@ -33,10 +33,12 @@ use Filament\Notifications\Notification;
 use Guava\FilamentClusters\Forms\Cluster;
 use Illuminate\Database\Eloquent\Attributes\CollectedBy;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 
 #[CollectedBy(DocumentCollection::class)]
@@ -112,6 +114,17 @@ class RecurringInvoice extends Document
         'discount_total' => MoneyCast::class,
         'total' => MoneyCast::class,
     ];
+
+    protected $appends = [
+        'logo_url',
+    ];
+
+    protected function logoUrl(): Attribute
+    {
+        return Attribute::get(static function (mixed $value, array $attributes): ?string {
+            return $attributes['logo'] ? Storage::disk('public')->url($attributes['logo']) : null;
+        });
+    }
 
     public function client(): BelongsTo
     {

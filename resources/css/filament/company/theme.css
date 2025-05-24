@@ -10,6 +10,14 @@
 
 @config 'tailwind.config.js';
 
+.es-file-upload.document-logo > div {
+    @apply w-48;
+}
+
+.es-file-upload.document-logo-preview > div {
+    @apply w-40;
+}
+
 .fi-in-text-item .group-hover\/item\:underline, .fi-ta-text-item .group-hover\/item\:underline {
     @apply text-primary-600 dark:text-primary-400 font-semibold;
 }

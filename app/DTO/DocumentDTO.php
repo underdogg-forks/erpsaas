@@ -72,7 +72,7 @@ readonly class DocumentDTO
             subheader: $document->subheader,
             footer: $document->footer,
             terms: $document->terms,
-            logo: $document->logo,
+            logo: $document->logo_url ?? $settings->logo_url,
             number: $document->documentNumber(),
             referenceNumber: $document->referenceNumber(),
             date: $document->documentDate(),

@@ -19,8 +19,6 @@ use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Support\Facades\Auth;
-use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class DocumentDefaultResource extends Resource
 {
@@ -88,27 +86,19 @@ class DocumentDefaultResource extends Resource
                 Forms\Components\Grid::make(1)
                     ->schema([
                         Forms\Components\FileUpload::make('logo')
-                            ->openable()
                             ->maxSize(1024)
                             ->localizeLabel()
-                            ->visibility('public')
-                            ->disk('public')
+                            ->openable()
                             ->directory('logos/document')
-                            ->imageResizeMode('contain')
+                            ->image()
                             ->imageCropAspectRatio('3:2')
                             ->panelAspectRatio('3:2')
-                            ->panelLayout('integrated')
-                            ->removeUploadedFileButtonPosition('center bottom')
-                            ->uploadButtonPosition('center bottom')
-                            ->uploadProgressIndicatorPosition('center bottom')
-                            ->getUploadedFileNameForStorageUsing(
-                                static fn (TemporaryUploadedFile $file): string => (string) str($file->getClientOriginalName())
-                                    ->prepend(Auth::user()->currentCompany->id . '_'),
-                            )
+                            ->panelLayout('compact')
                             ->extraAttributes([
-                                'class' => 'aspect-[3/2] w-[9.375rem] max-w-full',
+                                'class' => 'es-file-upload document-logo-preview',
                             ])
-                            ->acceptedFileTypes(['image/png', 'image/jpeg', 'image/gif']),
+                            ->loadingIndicatorPosition('left')
+                            ->removeUploadedFileButtonPosition('right'),
                         Forms\Components\Checkbox::make('show_logo')
                             ->localizeLabel(),
                         Forms\Components\ColorPicker::make('accent_color')
