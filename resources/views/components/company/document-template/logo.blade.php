@@ -1,6 +1,6 @@
 @props([
     'shape' => 'square',
-    'size' => 'md',
+    'size' => 'lg',
 ])
 
 <img {{

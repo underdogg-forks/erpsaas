@@ -8,9 +8,6 @@ use Filament\Forms\Components\Group;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Split;
 use Filament\Forms\Components\TextInput;
-use Filament\Support\Enums\MaxWidth;
-use Illuminate\Support\Facades\Auth;
-use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class DocumentHeaderSection extends Section
 {
@@ -43,25 +40,19 @@ class DocumentHeaderSection extends Section
             Split::make([
                 Group::make([
                     FileUpload::make('logo')
-                        ->openable()
                         ->maxSize(1024)
                         ->localizeLabel()
-                        ->visibility('public')
-                        ->disk('public')
+                        ->openable()
                         ->directory('logos/document')
-                        ->imageResizeMode('contain')
+                        ->image()
                         ->imageCropAspectRatio('3:2')
                         ->panelAspectRatio('3:2')
-                        ->maxWidth(MaxWidth::ExtraSmall)
-                        ->panelLayout('integrated')
-                        ->removeUploadedFileButtonPosition('center bottom')
-                        ->uploadButtonPosition('center bottom')
-                        ->uploadProgressIndicatorPosition('center bottom')
-                        ->getUploadedFileNameForStorageUsing(
-                            static fn (TemporaryUploadedFile $file): string => (string) str($file->getClientOriginalName())
-                                ->prepend(Auth::user()->currentCompany->id . '_'),
-                        )
-                        ->acceptedFileTypes(['image/png', 'image/jpeg', 'image/gif']),
+                        ->panelLayout('compact')
+                        ->extraAttributes([
+                            'class' => 'es-file-upload document-logo',
+                        ])
+                        ->loadingIndicatorPosition('left')
+                        ->removeUploadedFileButtonPosition('right'),
                 ]),
                 Group::make([
                     TextInput::make('header')

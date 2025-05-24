@@ -28,6 +28,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 
 #[CollectedBy(DocumentCollection::class)]
@@ -82,6 +83,17 @@ class Estimate extends Document
         'discount_total' => MoneyCast::class,
         'total' => MoneyCast::class,
     ];
+
+    protected $appends = [
+        'logo_url',
+    ];
+
+    protected function logoUrl(): Attribute
+    {
+        return Attribute::get(static function (mixed $value, array $attributes): ?string {
+            return $attributes['logo'] ? Storage::disk('public')->url($attributes['logo']) : null;
+        });
+    }
 
     public function client(): BelongsTo
     {
