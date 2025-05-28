@@ -15,7 +15,7 @@
 
 
 
-A Laravel and Filament-powered accounting platform, crafting a modern and automated solution for financial management.
+A Laravel and Filament-powered accounting platform featuring full double-entry accrual accounting, delivering modern automation for professional financial management.
 
 # Demo
 
