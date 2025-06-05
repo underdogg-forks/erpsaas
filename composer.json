@@ -1,0 +1,91 @@
+{
+    "name": "andrewdwallo/erpsaas",
+    "type": "project",
+    "description": "The skeleton application for the Laravel framework.",
+    "keywords": [
+        "laravel",
+        "framework"
+    ],
+    "license": "MIT",
+    "require": {
+        "php": "^8.2",
+        "ext-bcmath": "*",
+        "ext-intl": "*",
+        "akaunting/laravel-money": "^5.2.2",
+        "andrewdwallo/filament-companies": "^4.2.2",
+        "andrewdwallo/filament-selectify": "^2.0.9",
+        "andrewdwallo/transmatic": "^1.2",
+        "awcodes/filament-table-repeater": "^3.1.4",
+        "barryvdh/laravel-snappy": "^1.0.4",
+        "codewithdennis/filament-simple-alert": "^3.0.18",
+        "fakerphp/faker": "^1.24.1",
+        "filament/filament": "^3.3.14",
+        "guava/filament-clusters": "^1.5",
+        "guzzlehttp/guzzle": "^7.9.3",
+        "jaocero/radio-deck": "^1.2.10",
+        "laravel/framework": "^11.44.7",
+        "laravel/sanctum": "^4.1.1",
+        "laravel/tinker": "^2.10.1",
+        "squirephp/model": "^3.9",
+        "squirephp/repository": "^3.9",
+        "symfony/intl": "^6.4.21"
+    },
+    "require-dev": {
+        "barryvdh/laravel-debugbar": "^3.15.4",
+        "laravel/pint": "^1.22.1",
+        "laravel/sail": "^1.43",
+        "mockery/mockery": "^1.6.12",
+        "nunomaduro/collision": "^8.8",
+        "pestphp/pest": "^3.8.2",
+        "pestphp/pest-plugin-livewire": "^3.0",
+        "spatie/laravel-ignition": "^2.9.1",
+        "spatie/laravel-ray": "^1.40.2"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/",
+            "Database\\Factories\\": "database/factories/",
+            "Database\\Seeders\\": "database/seeders/"
+        },
+        "files": [
+            "app/Helpers/helpers.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "post-autoload-dump": [
+            "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
+            "@php artisan package:discover --ansi",
+            "@php artisan filament:upgrade"
+        ],
+        "post-update-cmd": [
+            "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
+        ],
+        "post-root-package-install": [
+            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
+        ],
+        "post-create-project-cmd": [
+            "@php artisan key:generate --ansi"
+        ]
+    },
+    "extra": {
+        "laravel": {
+            "dont-discover": []
+        }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true,
+            "php-http/discovery": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
